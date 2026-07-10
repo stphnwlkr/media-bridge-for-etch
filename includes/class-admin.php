@@ -59,7 +59,7 @@ final class Admin {
 		if ( 'media_page_media-bridge-for-etch' !== $hook ) {
 			return;
 		}
-		wp_enqueue_style( 'mbe-admin', MBE_URL . 'assets/admin.css', array(), MBE_VERSION );
+		wp_enqueue_style( 'mbe-admin', FLYW_MBE_URL . 'assets/admin.css', array(), FLYW_MBE_VERSION );
 	}
 
 	public function reconcile(): void {
@@ -175,20 +175,20 @@ final class Admin {
 	}
 
 	private function notices(): void {
-		if ( isset( $_GET['mbe_reconciled'] ) ) {
-			$created     = absint( wp_unslash( $_GET['created'] ?? 0 ) );
-			$mapped      = absint( wp_unslash( $_GET['mapped'] ?? 0 ) );
-			$attachments = absint( wp_unslash( $_GET['attachments'] ?? 0 ) );
-			$errors      = absint( wp_unslash( $_GET['errors'] ?? 0 ) );
+		if ( filter_input( INPUT_GET, 'mbe_reconciled', FILTER_VALIDATE_BOOLEAN ) ) {
+			$created     = absint( filter_input( INPUT_GET, 'created', FILTER_SANITIZE_NUMBER_INT ) );
+			$mapped      = absint( filter_input( INPUT_GET, 'mapped', FILTER_SANITIZE_NUMBER_INT ) );
+			$attachments = absint( filter_input( INPUT_GET, 'attachments', FILTER_SANITIZE_NUMBER_INT ) );
+			$errors      = absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) );
 
 			/* translators: 1: folders created, 2: folders mapped, 3: attachments processed, 4: errors. */
 			$message = sprintf( __( 'Reconciliation complete: %1$d created, %2$d mapped, %3$d attachments processed, %4$d errors.', 'media-bridge-for-etch' ), $created, $mapped, $attachments, $errors );
 			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $message ) );
 		}
-		if ( isset( $_GET['mbe_error'] ) ) {
+		if ( filter_input( INPUT_GET, 'mbe_error', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'The selected providers are not both available.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
-		if ( isset( $_GET['mbe_log_cleared'] ) ) {
+		if ( filter_input( INPUT_GET, 'mbe_log_cleared', FILTER_VALIDATE_BOOLEAN ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Synchronization history cleared.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
 	}

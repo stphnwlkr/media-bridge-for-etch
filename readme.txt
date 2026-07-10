@@ -22,9 +22,6 @@ Features include folder creation, rename and movement synchronization; attachmen
 
 Etch supports two folder levels. Deeper folders in the selected client-side provider remain untouched. Media assigned below level two is represented in Etch by its nearest supported ancestor.
 
-<img width="1223" height="1073" alt="image" src="https://github.com/user-attachments/assets/074aae87-24d0-4b9b-a246-d85f07040bdb" />
-
-
 == Installation ==
 
 1. Install and activate Etch.
