@@ -1,8 +1,9 @@
 === Media Bridge for Etch ===
 Contributors: flyingw
 Tags: etch, media, folders, wicked folders, happyfiles
-Requires at least: 6.6
-Requires PHP: 8.1
+Requires at least: 7.0
+Tested to: 7.0.1
+Requires PHP: 8.3
 Stable tag: 0.1.1
 License: GPLv2 or later
 
