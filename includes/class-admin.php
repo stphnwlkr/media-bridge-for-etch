@@ -1,5 +1,5 @@
 <?php
-namespace MediaBridgeForEtch;
+namespace UplinkPress\MediaBridgeForEtch;
 
 final class Admin {
 	private Plugin $plugin;
@@ -8,8 +8,8 @@ final class Admin {
 		$this->plugin = $plugin;
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
-		add_action( 'admin_post_mbe_reconcile', array( $this, 'reconcile' ) );
-		add_action( 'admin_post_mbe_clear_log', array( $this, 'clear_log' ) );
+		add_action( 'admin_post_uplink_mbe_reconcile', array( $this, 'reconcile' ) );
+		add_action( 'admin_post_uplink_mbe_clear_log', array( $this, 'clear_log' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 	}
 
@@ -25,8 +25,8 @@ final class Admin {
 
 	public function register_settings(): void {
 		register_setting(
-			'mbe_settings_group',
-			'mbe_settings',
+			'uplink_mbe_settings_group',
+			'uplink_mbe_settings',
 			array(
 				'type'              => 'array',
 				'sanitize_callback' => array( $this, 'sanitize_settings' ),
@@ -59,20 +59,20 @@ final class Admin {
 		if ( 'media_page_media-bridge-for-etch' !== $hook ) {
 			return;
 		}
-		wp_enqueue_style( 'mbe-admin', FLYW_MBE_URL . 'assets/admin.css', array(), FLYW_MBE_VERSION );
+		wp_enqueue_style( 'uplink-mbe-admin', UPLINK_MBE_URL . 'assets/admin.css', array(), UPLINK_MBE_VERSION );
 	}
 
 	public function reconcile(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You are not allowed to manage this bridge.', 'media-bridge-for-etch' ) );
 		}
-		check_admin_referer( 'mbe_reconcile' );
+		check_admin_referer( 'uplink_mbe_reconcile' );
 		$engine = $this->plugin->engine();
 		if ( ! $engine ) {
-			$redirect = add_query_arg( 'mbe_error', 'provider', $this->page_url() );
+			$redirect = add_query_arg( 'uplink_mbe_error', 'provider', $this->page_url() );
 		} else {
 			$stats    = $engine->reconcile();
-			$redirect = add_query_arg( array( 'mbe_reconciled' => 1, 'created' => $stats['created'], 'mapped' => $stats['mapped'], 'attachments' => $stats['attachments'], 'errors' => $stats['errors'] ), $this->page_url() );
+			$redirect = add_query_arg( array( 'uplink_mbe_reconciled' => 1, 'created' => $stats['created'], 'mapped' => $stats['mapped'], 'attachments' => $stats['attachments'], 'errors' => $stats['errors'] ), $this->page_url() );
 		}
 		wp_safe_redirect( $redirect );
 		exit;
@@ -82,9 +82,9 @@ final class Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You are not allowed to manage this bridge.', 'media-bridge-for-etch' ) );
 		}
-		check_admin_referer( 'mbe_clear_log' );
+		check_admin_referer( 'uplink_mbe_clear_log' );
 		Logger::clear();
-		wp_safe_redirect( add_query_arg( 'mbe_log_cleared', 1, $this->page_url() ) );
+		wp_safe_redirect( add_query_arg( 'uplink_mbe_log_cleared', 1, $this->page_url() ) );
 		exit;
 	}
 
@@ -100,41 +100,41 @@ final class Admin {
 		$connected = $settings['enabled'] && $etch_ok && $ext_ok;
 		$logs      = Logger::all();
 		?>
-		<div class="wrap mbe-wrap">
+		<div class="wrap uplink-mbe-wrap">
 			<h1><?php esc_html_e( 'Media Bridge for Etch', 'media-bridge-for-etch' ); ?></h1>
-			<p class="mbe-intro"><?php esc_html_e( 'Keep Etch Collections synchronized with a client-facing WordPress media folder provider.', 'media-bridge-for-etch' ); ?></p>
+			<p class="uplink-mbe-intro"><?php esc_html_e( 'Keep Etch Collections synchronized with a client-facing WordPress media folder provider.', 'media-bridge-for-etch' ); ?></p>
 
 			<?php $this->notices(); ?>
 
-			<div class="mbe-grid">
-				<section class="mbe-card mbe-status-card">
+			<div class="uplink-mbe-grid">
+				<section class="uplink-mbe-card uplink-mbe-status-card">
 					<div>
-						<span class="mbe-eyebrow"><?php esc_html_e( 'Bridge status', 'media-bridge-for-etch' ); ?></span>
+						<span class="uplink-mbe-eyebrow"><?php esc_html_e( 'Bridge status', 'media-bridge-for-etch' ); ?></span>
 						<h2><?php echo $connected ? esc_html__( 'Connected', 'media-bridge-for-etch' ) : esc_html__( 'Needs attention', 'media-bridge-for-etch' ); ?></h2>
 					</div>
-					<span class="mbe-status <?php echo $connected ? 'is-connected' : 'is-disconnected'; ?>" role="status" aria-live="polite"><?php echo $connected ? esc_html__( 'Active', 'media-bridge-for-etch' ) : esc_html__( 'Inactive', 'media-bridge-for-etch' ); ?></span>
-					<dl class="mbe-stats">
+					<span class="uplink-mbe-status <?php echo $connected ? 'is-connected' : 'is-disconnected'; ?>" role="status" aria-live="polite"><?php echo $connected ? esc_html__( 'Active', 'media-bridge-for-etch' ) : esc_html__( 'Inactive', 'media-bridge-for-etch' ); ?></span>
+					<dl class="uplink-mbe-stats">
 						<div><dt><?php esc_html_e( 'Etch', 'media-bridge-for-etch' ); ?></dt><dd><?php echo $etch_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
 						<div><dt><?php echo esc_html( $external->label() ); ?></dt><dd><?php echo $ext_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
 						<div><dt><?php esc_html_e( 'Conflict policy', 'media-bridge-for-etch' ); ?></dt><dd><?php echo esc_html( $this->conflict_label( $settings['conflict_mode'], $external->label() ) ); ?></dd></div>
 					</dl>
 				</section>
 
-				<section class="mbe-card">
+				<section class="uplink-mbe-card">
 					<h2><?php esc_html_e( 'Bridge settings', 'media-bridge-for-etch' ); ?></h2>
 					<form action="options.php" method="post">
-						<?php settings_fields( 'mbe_settings_group' ); ?>
-						<label class="mbe-toggle"><input type="checkbox" name="mbe_settings[enabled]" value="1" <?php checked( $settings['enabled'] ); ?>><span><?php esc_html_e( 'Enable automatic synchronization', 'media-bridge-for-etch' ); ?></span></label>
+						<?php settings_fields( 'uplink_mbe_settings_group' ); ?>
+						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[enabled]" value="1" <?php checked( $settings['enabled'] ); ?>><span><?php esc_html_e( 'Enable automatic synchronization', 'media-bridge-for-etch' ); ?></span></label>
 
-						<label for="mbe-provider"><?php esc_html_e( 'Client-side provider', 'media-bridge-for-etch' ); ?></label>
-						<select id="mbe-provider" name="mbe_settings[provider]">
+						<label for="uplink-mbe-provider"><?php esc_html_e( 'Client-side provider', 'media-bridge-for-etch' ); ?></label>
+						<select id="uplink-mbe-provider" name="uplink_mbe_settings[provider]">
 							<?php foreach ( $providers as $id => $provider ) : if ( 'etch' === $id ) { continue; } ?>
 								<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $settings['provider'], $id ); ?>><?php echo esc_html( $provider->label() . ( $provider->is_available() ? '' : ' — not detected' ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 
-						<label for="mbe-conflict"><?php esc_html_e( 'Conflict resolution', 'media-bridge-for-etch' ); ?></label>
-						<select id="mbe-conflict" name="mbe_settings[conflict_mode]">
+						<label for="uplink-mbe-conflict"><?php esc_html_e( 'Conflict resolution', 'media-bridge-for-etch' ); ?></label>
+						<select id="uplink-mbe-conflict" name="uplink_mbe_settings[conflict_mode]">
 							<option value="latest" <?php selected( $settings['conflict_mode'], 'latest' ); ?>><?php esc_html_e( 'Most recent change wins', 'media-bridge-for-etch' ); ?></option>
 							<option value="etch" <?php selected( $settings['conflict_mode'], 'etch' ); ?>><?php esc_html_e( 'Etch always wins', 'media-bridge-for-etch' ); ?></option>
 							<option value="external" <?php selected( $settings['conflict_mode'], 'external' ); ?>><?php
@@ -144,30 +144,30 @@ final class Admin {
 						</select>
 						<p class="description"><?php esc_html_e( 'The default uses the latest folder or assignment action as the authoritative change.', 'media-bridge-for-etch' ); ?></p>
 
-						<label class="mbe-toggle"><input type="checkbox" name="mbe_settings[sync_deletions]" value="1" <?php checked( $settings['sync_deletions'] ); ?>><span><?php esc_html_e( 'Synchronize folder deletions', 'media-bridge-for-etch' ); ?></span></label>
-						<p class="description mbe-warning"><?php esc_html_e( 'Disabled by default. When enabled, deleting a mapped folder deletes its counterpart.', 'media-bridge-for-etch' ); ?></p>
+						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[sync_deletions]" value="1" <?php checked( $settings['sync_deletions'] ); ?>><span><?php esc_html_e( 'Synchronize folder deletions', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description uplink-mbe-warning"><?php esc_html_e( 'Disabled by default. When enabled, deleting a mapped folder deletes its counterpart.', 'media-bridge-for-etch' ); ?></p>
 						<?php submit_button(); ?>
 					</form>
 				</section>
 			</div>
 
-			<section class="mbe-card mbe-tools">
+			<section class="uplink-mbe-card uplink-mbe-tools">
 				<div><h2><?php esc_html_e( 'Reconcile the bridge', 'media-bridge-for-etch' ); ?></h2><p><?php esc_html_e( 'Match existing folders by hierarchical path, create missing counterparts, and synchronize attachment assignments. Client-side folders deeper than two levels remain intact and use their nearest two-level ancestor in Etch.', 'media-bridge-for-etch' ); ?></p></div>
 				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
-					<input type="hidden" name="action" value="mbe_reconcile">
-					<?php wp_nonce_field( 'mbe_reconcile' ); ?>
+					<input type="hidden" name="action" value="uplink_mbe_reconcile">
+					<?php wp_nonce_field( 'uplink_mbe_reconcile' ); ?>
 					<?php submit_button( __( 'Run reconciliation', 'media-bridge-for-etch' ), 'secondary', 'submit', false, $connected ? array() : array( 'disabled' => 'disabled' ) ); ?>
 				</form>
 			</section>
 
-			<section class="mbe-card">
-				<div class="mbe-log-header"><div><h2><?php esc_html_e( 'Sync history', 'media-bridge-for-etch' ); ?></h2><p><?php esc_html_e( 'The latest 200 bridge events are retained.', 'media-bridge-for-etch' ); ?></p></div>
-				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post"><input type="hidden" name="action" value="mbe_clear_log"><?php wp_nonce_field( 'mbe_clear_log' ); ?><?php submit_button( __( 'Clear history', 'media-bridge-for-etch' ), 'link-delete', 'submit', false ); ?></form></div>
+			<section class="uplink-mbe-card">
+				<div class="uplink-mbe-log-header"><div><h2><?php esc_html_e( 'Sync history', 'media-bridge-for-etch' ); ?></h2><p><?php esc_html_e( 'The latest 200 bridge events are retained.', 'media-bridge-for-etch' ); ?></p></div>
+				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post"><input type="hidden" name="action" value="uplink_mbe_clear_log"><?php wp_nonce_field( 'uplink_mbe_clear_log' ); ?><?php submit_button( __( 'Clear history', 'media-bridge-for-etch' ), 'link-delete', 'submit', false ); ?></form></div>
 				<?php if ( ! $logs ) : ?><p><?php esc_html_e( 'No synchronization events have been recorded yet.', 'media-bridge-for-etch' ); ?></p><?php else : ?>
-				<table class="widefat striped mbe-log">
+				<table class="widefat striped uplink-mbe-log">
 					<caption class="screen-reader-text"><?php esc_html_e( 'Media Bridge synchronization history', 'media-bridge-for-etch' ); ?></caption>
 					<thead><tr><th scope="col"><?php esc_html_e( 'Time', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Event', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Details', 'media-bridge-for-etch' ); ?></th></tr></thead><tbody>
-				<?php foreach ( $logs as $entry ) : ?><tr><td><?php echo esc_html( get_date_from_gmt( $entry['time'], 'M j, Y g:i:s a' ) ); ?></td><td><span class="mbe-event"><?php echo esc_html( ucfirst( $entry['type'] ) ); ?></span></td><td><?php echo esc_html( $entry['message'] ); ?><?php if ( ! empty( $entry['context'] ) ) : ?><small><?php echo esc_html( implode( ' · ', array_map( fn( $k, $v ) => "$k: $v", array_keys( $entry['context'] ), $entry['context'] ) ) ); ?></small><?php endif; ?></td></tr><?php endforeach; ?>
+				<?php foreach ( $logs as $entry ) : ?><tr><td><?php echo esc_html( get_date_from_gmt( $entry['time'], 'M j, Y g:i:s a' ) ); ?></td><td><span class="uplink-mbe-event"><?php echo esc_html( ucfirst( $entry['type'] ) ); ?></span></td><td><?php echo esc_html( $entry['message'] ); ?><?php if ( ! empty( $entry['context'] ) ) : ?><small><?php echo esc_html( implode( ' · ', array_map( fn( $k, $v ) => "$k: $v", array_keys( $entry['context'] ), $entry['context'] ) ) ); ?></small><?php endif; ?></td></tr><?php endforeach; ?>
 				</tbody></table><?php endif; ?>
 			</section>
 		</div>
@@ -175,7 +175,7 @@ final class Admin {
 	}
 
 	private function notices(): void {
-		if ( filter_input( INPUT_GET, 'mbe_reconciled', FILTER_VALIDATE_BOOLEAN ) ) {
+		if ( filter_input( INPUT_GET, 'uplink_mbe_reconciled', FILTER_VALIDATE_BOOLEAN ) ) {
 			$created     = absint( filter_input( INPUT_GET, 'created', FILTER_SANITIZE_NUMBER_INT ) );
 			$mapped      = absint( filter_input( INPUT_GET, 'mapped', FILTER_SANITIZE_NUMBER_INT ) );
 			$attachments = absint( filter_input( INPUT_GET, 'attachments', FILTER_SANITIZE_NUMBER_INT ) );
@@ -185,10 +185,10 @@ final class Admin {
 			$message = sprintf( __( 'Reconciliation complete: %1$d created, %2$d mapped, %3$d attachments processed, %4$d errors.', 'media-bridge-for-etch' ), $created, $mapped, $attachments, $errors );
 			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $message ) );
 		}
-		if ( filter_input( INPUT_GET, 'mbe_error', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
+		if ( filter_input( INPUT_GET, 'uplink_mbe_error', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'The selected providers are not both available.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
-		if ( filter_input( INPUT_GET, 'mbe_log_cleared', FILTER_VALIDATE_BOOLEAN ) ) {
+		if ( filter_input( INPUT_GET, 'uplink_mbe_log_cleared', FILTER_VALIDATE_BOOLEAN ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Synchronization history cleared.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
 	}

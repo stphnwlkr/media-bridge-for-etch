@@ -1,5 +1,5 @@
 <?php
-namespace MediaBridgeForEtch;
+namespace UplinkPress\MediaBridgeForEtch;
 
 use WP_Error;
 use WP_Term;
