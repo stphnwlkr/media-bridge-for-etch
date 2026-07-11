@@ -1,5 +1,5 @@
 <?php
-namespace MediaBridgeForEtch;
+namespace UplinkPress\MediaBridgeForEtch;
 
 use WP_Error;
 use WP_Term;
@@ -37,7 +37,7 @@ abstract class Taxonomy_Provider implements Provider_Interface {
 		unset( $args['name'] );
 
 		if ( '' === $name ) {
-			return new WP_Error( 'mbe_empty_term_name', __( 'A synchronized folder must have a name.', 'media-bridge-for-etch' ) );
+			return new WP_Error( 'uplink_mbe_empty_term_name', __( 'A synchronized folder must have a name.', 'media-bridge-for-etch' ) );
 		}
 
 		return wp_insert_term( $name, $this->taxonomy(), $args );
@@ -45,7 +45,7 @@ abstract class Taxonomy_Provider implements Provider_Interface {
 
 	public function update_term( int $term_id, array $args ): array|WP_Error {
 		if ( ! $this->get_term( $term_id ) ) {
-			return new WP_Error( 'mbe_invalid_term', __( 'The synchronized folder no longer exists.', 'media-bridge-for-etch' ) );
+			return new WP_Error( 'uplink_mbe_invalid_term', __( 'The synchronized folder no longer exists.', 'media-bridge-for-etch' ) );
 		}
 
 		return wp_update_term( $term_id, $this->taxonomy(), $this->sanitize_term_args( $args, false ) );

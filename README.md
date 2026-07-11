@@ -1,5 +1,5 @@
 === Media Bridge for Etch ===
-Contributors: flyingw
+Contributors: stphnwlkr
 Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.0

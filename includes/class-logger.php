@@ -1,8 +1,8 @@
 <?php
-namespace MediaBridgeForEtch;
+namespace UplinkPress\MediaBridgeForEtch;
 
 final class Logger {
-	private const OPTION = 'mbe_sync_log';
+	private const OPTION = 'uplink_mbe_sync_log';
 	private const LIMIT  = 200;
 
 	public static function add( string $type, string $message, array $context = array() ): void {

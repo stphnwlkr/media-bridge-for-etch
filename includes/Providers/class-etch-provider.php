@@ -1,7 +1,7 @@
 <?php
-namespace MediaBridgeForEtch\Providers;
+namespace UplinkPress\MediaBridgeForEtch\Providers;
 
-use MediaBridgeForEtch\Taxonomy_Provider;
+use UplinkPress\MediaBridgeForEtch\Taxonomy_Provider;
 
 final class Etch_Provider extends Taxonomy_Provider {
 	public function id(): string { return 'etch'; }
