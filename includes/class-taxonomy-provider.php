@@ -60,9 +60,13 @@ abstract class Taxonomy_Provider implements Provider_Interface {
 		return wp_set_object_terms( $attachment_id, $term_ids, $this->taxonomy(), false );
 	}
 
-	public function get_position( int $term_id ): int {
+	public function get_position( int $term_id ): ?int {
 		$key = $this->order_meta_key();
-		return $key ? (int) get_term_meta( $term_id, $key, true ) : 0;
+		if ( ! $key || ! metadata_exists( 'term', $term_id, $key ) ) {
+			return null;
+		}
+
+		return (int) get_term_meta( $term_id, $key, true );
 	}
 
 	public function set_position( int $term_id, int $position ): void {

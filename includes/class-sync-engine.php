@@ -7,6 +7,7 @@ use WP_Term;
 final class Sync_Engine {
 	private Provider_Interface $etch;
 	private Provider_Interface $external;
+	private array $pending_deletions = array();
 	private static bool $syncing = false;
 
 	public function __construct( Provider_Interface $etch, Provider_Interface $external ) {
@@ -17,6 +18,7 @@ final class Sync_Engine {
 	public function register_hooks(): void {
 		add_action( 'created_term', array( $this, 'term_created' ), 20, 3 );
 		add_action( 'edited_term', array( $this, 'term_edited' ), 20, 3 );
+		add_action( 'pre_delete_term', array( $this, 'term_deleting' ), 20, 2 );
 		add_action( 'delete_term', array( $this, 'term_deleted' ), 20, 5 );
 		add_action( 'set_object_terms', array( $this, 'object_terms_set' ), 20, 6 );
 		add_action( 'updated_term_meta', array( $this, 'term_meta_updated' ), 20, 4 );
@@ -30,30 +32,57 @@ final class Sync_Engine {
 		$this->sync_term_event( $term_id, $taxonomy, 'updated' );
 	}
 
-	public function term_deleted( int $term_id, int $tt_id, string $taxonomy, WP_Term $deleted_term, array $object_ids ): void {
+	public function term_deleting( int $term_id, string $taxonomy ): void {
 		if ( self::$syncing || ! $this->is_bridge_taxonomy( $taxonomy ) ) {
-			return;
-		}
-		if ( ! Plugin::settings()['sync_deletions'] ) {
-			$this->remove_mapping_by_deleted_term( $term_id, $taxonomy );
-			Logger::add( 'notice', 'Folder deletion was not copied because deletion sync is disabled.', array( 'term' => $deleted_term->name ) );
 			return;
 		}
 
 		$source = $this->provider_for_taxonomy( $taxonomy );
 		$target = $this->other_provider( $source );
-		$mapped = $this->mapped_term_id( $source, $term_id, $target );
-		if ( ! $mapped ) {
+		$term   = $source->get_term( $term_id );
+		if ( ! $term ) {
+			return;
+		}
+
+		$this->pending_deletions[ $this->deletion_key( $term_id, $taxonomy ) ] = array(
+			'source' => $source,
+			'target' => $target,
+			'mapped' => $this->mapped_term_id( $source, $term_id, $target ),
+			'name'   => $term->name,
+		);
+	}
+
+	public function term_deleted( int $term_id, int $tt_id, string $taxonomy, WP_Term $deleted_term, array $object_ids ): void {
+		if ( self::$syncing || ! $this->is_bridge_taxonomy( $taxonomy ) ) {
+			return;
+		}
+
+		$key     = $this->deletion_key( $term_id, $taxonomy );
+		$pending = $this->pending_deletions[ $key ] ?? null;
+		unset( $this->pending_deletions[ $key ] );
+		if ( ! $pending ) {
+			return;
+		}
+
+		if ( ! Plugin::settings()['sync_deletions'] ) {
+			if ( $pending['mapped'] ) {
+				delete_term_meta( $pending['mapped'], '_mbe_map_' . $pending['source']->id() );
+			}
+			Logger::add( 'notice', 'Folder deletion was not copied because deletion sync is disabled.', array( 'term' => $pending['name'] ) );
+			return;
+		}
+
+		if ( ! $pending['mapped'] ) {
 			return;
 		}
 
 		self::$syncing = true;
 		try {
-			$result = $target->delete_term( $mapped );
+			$result = $pending['target']->delete_term( $pending['mapped'] );
 			if ( is_wp_error( $result ) ) {
 				Logger::add( 'error', 'Could not copy folder deletion.', array( 'error' => $result->get_error_message() ) );
 			} else {
-				Logger::add( 'delete', 'Folder deletion synchronized.', array( 'folder' => $deleted_term->name, 'source' => $source->label() ) );
+				Logger::add( 'delete', 'Folder deletion synchronized.', array( 'folder' => $pending['name'], 'source' => $pending['source']->label() ) );
 			}
 		} finally {
 			self::$syncing = false;
@@ -90,7 +119,11 @@ final class Sync_Engine {
 		}
 		self::$syncing = true;
 		try {
-			$target->set_position( $mapped, $source->get_position( $term_id ) );
+			$position = $source->get_position( $term_id );
+			if ( null === $position ) {
+				return;
+			}
+			$target->set_position( $mapped, $position );
 			$this->touch_pair( $source, $term_id, $target, $mapped, $source->id() );
 			Logger::add( 'order', 'Folder order synchronized.', array( 'source' => $source->label(), 'target' => $target->label() ) );
 		} finally {
@@ -131,14 +164,20 @@ final class Sync_Engine {
 		$mode = Plugin::settings()['conflict_mode'];
 		if ( 'etch' === $mode && 'etch' !== $source->id() ) {
 			$mapped = $this->mapped_term_id( $source, $term_id, $this->etch );
-			$term   = $mapped ? $this->etch->get_term( $mapped ) : null;
-			$source = $this->etch;
-			$target = $this->external;
+			if ( $mapped ) {
+				$term    = $this->etch->get_term( $mapped );
+				$term_id = $mapped;
+				$source  = $this->etch;
+				$target  = $this->external;
+			}
 		} elseif ( 'external' === $mode && 'etch' === $source->id() ) {
 			$mapped = $this->mapped_term_id( $source, $term_id, $this->external );
-			$term   = $mapped ? $this->external->get_term( $mapped ) : null;
-			$source = $this->external;
-			$target = $this->etch;
+			if ( $mapped ) {
+				$term    = $this->external->get_term( $mapped );
+				$term_id = $mapped;
+				$source  = $this->external;
+				$target  = $this->etch;
+			}
 		}
 		if ( ! $term ) {
 			return;
@@ -179,7 +218,10 @@ final class Sync_Engine {
 				return;
 			}
 
-			$target->set_position( $target_id, $source->get_position( $term_id ) );
+			$position = $source->get_position( $term_id );
+			if ( null !== $position ) {
+				$target->set_position( $target_id, $position );
+			}
 			$this->map_terms( $source, $term_id, $target, $target_id );
 			$this->touch_pair( $source, $term_id, $target, $target_id, $source->id() );
 			Logger::add( $event, "Folder {$event} synchronized.", array( 'folder' => $term->name, 'source' => $source->label(), 'target' => $target->label() ) );
@@ -369,7 +411,10 @@ final class Sync_Engine {
 			$target_id = (int) $created['term_id'];
 		}
 
-		$target->set_position( $target_id, $source->get_position( (int) $term->term_id ) );
+		$position = $source->get_position( (int) $term->term_id );
+		if ( null !== $position ) {
+			$target->set_position( $target_id, $position );
+		}
 		$this->map_terms( $source, (int) $term->term_id, $target, $target_id );
 		$this->touch_pair( $source, (int) $term->term_id, $target, $target_id, $source->id() );
 		return $target_id;
@@ -434,13 +479,8 @@ final class Sync_Engine {
 		}
 	}
 
-	private function remove_mapping_by_deleted_term( int $term_id, string $taxonomy ): void {
-		$source = $this->provider_for_taxonomy( $taxonomy );
-		$target = $this->other_provider( $source );
-		$mapped = $this->mapped_term_id( $source, $term_id, $target );
-		if ( $mapped ) {
-			delete_term_meta( $mapped, '_mbe_map_' . $source->id() );
-		}
+	private function deletion_key( int $term_id, string $taxonomy ): string {
+		return $taxonomy . ':' . $term_id;
 	}
 
 	private function is_bridge_taxonomy( string $taxonomy ): bool {

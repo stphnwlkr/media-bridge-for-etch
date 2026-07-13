@@ -18,6 +18,6 @@ interface Provider_Interface {
 	public function update_term( int $term_id, array $args ): array|WP_Error;
 	public function delete_term( int $term_id ): bool|int|WP_Error;
 	public function set_object_terms( int $attachment_id, array $term_ids ): array|WP_Error;
-	public function get_position( int $term_id ): int;
+	public function get_position( int $term_id ): ?int;
 	public function set_position( int $term_id, int $position ): void;
 }

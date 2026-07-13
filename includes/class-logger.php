@@ -26,7 +26,7 @@ final class Logger {
 	}
 
 	public static function clear(): void {
-		delete_option( self::OPTION );
+		update_option( self::OPTION, array(), false );
 	}
 
 	private static function sanitize_context( array $context ): array {
