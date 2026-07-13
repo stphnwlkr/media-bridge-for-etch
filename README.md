@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.0.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 
 Keeps Etch Collections synchronized with Wicked Folders or HappyFiles.
@@ -12,6 +12,8 @@ Keeps Etch Collections synchronized with Wicked Folders or HappyFiles.
 == Description ==
 
 Media Bridge for Etch provides bidirectional synchronization between Etch Collections and one selected client-side media folder provider.
+
+To update the plugin settings, open Media > Media Bridge in the WordPress admin. The settings are located under the Media tab, not the Settings menu.
 
 Initial providers:
 
@@ -35,6 +37,16 @@ Etch supports two folder levels. Deeper folders in the selected client-side prov
 6. Run reconciliation once before relying on automatic synchronization.
 
 == Changelog ==
+
+= 1.0.2 =
+* Fixed Clear History immediately restoring entries from the legacy log option.
+* Fixed new folder synchronization when a fixed conflict authority is selected, while continuing to enforce that authority for mapped folders.
+* Preserved alphabetical placement for new folders that have no explicit source order, while continuing to synchronize custom ordering when available.
+
+= 1.0.1 =
+* Fixed synchronized folder deletions by preserving mapped counterpart details until WordPress confirms the source folder was deleted.
+* Fixed stale counterpart mappings when a folder is deleted while deletion synchronization is disabled.
+* Clarified that plugin settings are managed under Media > Media Bridge, not the WordPress Settings menu.
 
 = 1.0.0 =
 * First stable release.

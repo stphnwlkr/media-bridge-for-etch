@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Media Bridge for Etch
  * Description: Keeps Etch media collections synchronized with supported WordPress media folder plugins.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Plugin URI: https://uplink.press/code/media-bridge-for-etch/
  * Author: UplinkPress
  * Author URI: https://uplink.press
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'UPLINK_MBE_VERSION', '1.0.0' );
+define( 'UPLINK_MBE_VERSION', '1.0.2' );
 define( 'UPLINK_MBE_FILE', __FILE__ );
 define( 'UPLINK_MBE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'UPLINK_MBE_URL', plugin_dir_url( __FILE__ ) );
