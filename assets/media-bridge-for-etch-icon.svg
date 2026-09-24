@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Uplink Media Bridge for Etch</title>
+  <desc id="desc">Uplink arrow monogram above the words Uplink Media Bridge for Etch.</desc>
+  <rect x="8" y="8" width="1008" height="1008" rx="116" fill="#f7f9fc" stroke="#cbdcea" stroke-width="10"/>
+  <g transform="translate(206 96) scale(.46)">
+    <path d="M809.78,205.91h163.72c82.88,0,150.69,67.84,150.69,150.76s-67.84,150.76-150.69,150.76h-195.75v205.91h195.78c196.07,0,356.47-160.48,356.47-356.68S1169.51,0,973.53,0h-273.83c36.8,68.57,73.42,137.26,110.08,205.91h0Z" fill="#003362" fill-rule="evenodd"/>
+    <path d="M507.19,349.08v364.24c0,82.86-67.78,150.76-150.69,150.76s-150.69-67.84-150.69-150.76v-356.68H0v356.71c0,196.14,160.4,356.65,356.5,356.65s356.5-160.48,356.5-356.65v-364.42c12.8,4.39,26.27,9.52,40.64,15.25,27.75,11.09,58.99-11.99,44.25-43.13-55.1-103.09-107.69-202.01-163.2-305.25-11.32-21.04-38.05-21.04-49.34-.03-55.5,103.29-108.1,202.19-163.2,305.28-14.78,31.14,16.49,54.22,43.13,14.49-5.79,28.01-10.83,40.81-15.11h0Z" fill="#0071cc" fill-rule="evenodd"/>
+  </g>
+  <rect x="170" y="626" width="684" height="18" rx="9" fill="#0071cc"/>
+  <text x="512" y="785" fill="#062b53" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="700" letter-spacing="3" text-anchor="middle">MEDIA BRIDGE</text>
+  <text x="512" y="895" fill="#062b53" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="600" text-anchor="middle">for Etch</text>
+</svg>

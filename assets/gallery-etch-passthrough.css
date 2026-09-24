@@ -1,0 +1,225 @@
+.uplink-mbe-etch-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1000000;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background: rgb(0 0 0 / 60%);
+}
+
+.uplink-mbe-etch-gallery-placeholder {
+	position: relative;
+	display: block !important;
+	box-sizing: border-box;
+	width: 100%;
+	height: auto !important;
+	min-height: auto !important;
+	align-items: flex-start !important;
+	justify-content: flex-start !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+}
+
+.uplink-mbe-etch-gallery-shell {
+	position: relative;
+	width: 100%;
+}
+
+.uplink-mbe-etch-gallery-preview {
+	width: 100%;
+	pointer-events: none;
+}
+
+.uplink-mbe-etch-gallery-toolbar {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 6px 5px 9px;
+	border: 1px solid rgb(255 255 255 / 24%);
+	border-radius: 5px;
+	background: rgb(20 22 25 / 92%);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
+	color: #fff;
+	font: 600 12px/1.2 system-ui, sans-serif;
+	pointer-events: auto;
+}
+
+.uplink-mbe-etch-gallery-edit {
+	min-height: 28px;
+	padding: 4px 9px;
+	border: 0;
+	border-radius: 3px;
+	background: #fff;
+	color: #1d2327;
+	cursor: pointer;
+	font: inherit;
+}
+
+.uplink-mbe-etch-gallery-edit:focus-visible {
+	outline: 3px solid #99c8ff;
+	outline-offset: 2px;
+}
+
+.uplink-mbe-etch-gallery-status {
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	min-height: 100px;
+	padding: 20px;
+	border: 1px dashed rgb(128 128 128 / 55%);
+	border-radius: 4px;
+	background: rgb(128 128 128 / 8%);
+	color: inherit;
+	font: 500 13px/1.4 system-ui, sans-serif;
+	text-align: center;
+}
+
+.uplink-mbe-etch-gallery-status.is-error {
+	border-color: #d63638;
+	color: #d63638;
+}
+
+.uplink-mbe-etch-modal {
+	box-sizing: border-box;
+	width: min(680px, 100%);
+	max-height: calc(100vh - 48px);
+	overflow: auto;
+	padding: 24px;
+	border: 1px solid rgb(255 255 255 / 14%);
+	border-radius: 8px;
+	background: var(--etch-panel-bg, #202124);
+	box-shadow: 0 20px 60px rgb(0 0 0 / 45%);
+	color: var(--etch-text-color, #f5f5f5);
+}
+
+.uplink-mbe-etch-modal h2 {
+	margin: 0 0 20px;
+	font-size: 20px;
+}
+
+.uplink-mbe-etch-form {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.uplink-mbe-etch-field {
+	display: grid;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.uplink-mbe-etch-field.is-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 36px;
+}
+
+.uplink-mbe-etch-field input[type="number"],
+.uplink-mbe-etch-field select {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 36px;
+	padding: 6px 9px;
+	border: 1px solid #76767c;
+	border-radius: 4px;
+	background: var(--etch-input-bg, #151618);
+	color: inherit;
+}
+
+.uplink-mbe-etch-field input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: #72cec8;
+}
+
+.uplink-mbe-etch-field input:focus-visible,
+.uplink-mbe-etch-field select:focus-visible,
+.uplink-mbe-etch-primary:focus-visible,
+.uplink-mbe-etch-secondary:focus-visible {
+	outline: 3px solid #99c8ff;
+	outline-offset: 2px;
+}
+
+.uplink-mbe-etch-modal-notice,
+.uplink-mbe-etch-modal-status,
+.uplink-mbe-etch-modal-actions {
+	grid-column: 1 / -1;
+}
+
+.uplink-mbe-etch-modal-notice {
+	margin: 2px 0 0;
+	opacity: 0.72;
+	font-size: 12px;
+}
+
+.uplink-mbe-etch-modal-status {
+	min-height: 18px;
+	margin: 0;
+	font-size: 13px;
+}
+
+.uplink-mbe-etch-modal-status.is-error {
+	color: #ffb4b4;
+}
+
+.uplink-mbe-etch-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.uplink-mbe-etch-primary,
+.uplink-mbe-etch-secondary {
+	min-width: 44px;
+	min-height: 44px;
+	padding: 7px 14px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+}
+
+.uplink-mbe-etch-primary {
+	border-color: #72cec8;
+	background: #72cec8;
+	color: #102a2a;
+}
+
+.uplink-mbe-etch-secondary {
+	border-color: #76767c;
+	background: transparent;
+	color: inherit;
+}
+
+.uplink-mbe-etch-primary:hover:not(:disabled) {
+	border-color: #8bdad5;
+	background: #8bdad5;
+}
+
+.uplink-mbe-etch-secondary:hover:not(:disabled) {
+	border-color: #9a9aa0;
+	background: rgb(255 255 255 / 8%);
+}
+
+.uplink-mbe-etch-primary:disabled,
+.uplink-mbe-etch-secondary:disabled {
+	cursor: wait;
+	opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+	.uplink-mbe-etch-form {
+		grid-template-columns: 1fr;
+	}
+}

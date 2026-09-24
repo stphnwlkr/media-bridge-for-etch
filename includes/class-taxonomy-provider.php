@@ -76,10 +76,97 @@ abstract class Taxonomy_Provider implements Provider_Interface {
 		}
 	}
 
+	/**
+	 * Keep parents followed by their descendants while preserving each sibling
+	 * group's provider-defined position.
+	 *
+	 * @param WP_Term[] $terms Taxonomy terms.
+	 * @return WP_Term[]
+	 */
+	public function order_terms_hierarchically( array $terms ): array {
+		$children  = array();
+		$positions = array();
+		foreach ( $terms as $term ) {
+			$term_id               = (int) $term->term_id;
+			$children[ (int) $term->parent ][] = $term;
+			$positions[ $term_id ]  = $this->get_position( $term_id ) ?? 0;
+		}
+
+		foreach ( $children as &$siblings ) {
+			usort(
+				$siblings,
+				static function ( WP_Term $first, WP_Term $second ) use ( $positions ): int {
+					$first_id  = (int) $first->term_id;
+					$second_id = (int) $second->term_id;
+					$position  = $positions[ $first_id ] <=> $positions[ $second_id ];
+					if ( 0 !== $position ) {
+						return $position;
+					}
+
+					$name = strcasecmp( $first->name, $second->name );
+					return 0 !== $name ? $name : $first_id <=> $second_id;
+				}
+			);
+		}
+		unset( $siblings );
+
+		$ordered = array();
+		$seen    = array();
+		$append  = static function ( int $parent ) use ( &$append, &$children, &$ordered, &$seen ): void {
+			foreach ( $children[ $parent ] ?? array() as $term ) {
+				$term_id = (int) $term->term_id;
+				if ( isset( $seen[ $term_id ] ) ) {
+					continue;
+				}
+				$seen[ $term_id ] = true;
+				$ordered[]        = $term;
+				$append( $term_id );
+			}
+		};
+		$append( 0 );
+
+		// Preserve any orphaned terms instead of silently omitting them.
+		foreach ( $terms as $term ) {
+			if ( ! isset( $seen[ (int) $term->term_id ] ) ) {
+				$ordered[] = $term;
+			}
+		}
+
+		return $ordered;
+	}
+
+	/**
+	 * Place a newly created or moved term after its current siblings.
+	 */
+	public function append_position( int $term_id, int $parent ): void {
+		$sibling_ids = get_terms(
+			array(
+				'taxonomy'   => $this->taxonomy(),
+				'hide_empty' => false,
+				'parent'     => $parent,
+				'fields'     => 'ids',
+			)
+		);
+		if ( is_wp_error( $sibling_ids ) ) {
+			return;
+		}
+
+		$position = -1;
+		foreach ( $sibling_ids as $sibling_id ) {
+			$sibling_id = (int) $sibling_id;
+			if ( $term_id === $sibling_id ) {
+				continue;
+			}
+			$position = max( $position, $this->get_position( $sibling_id ) ?? 0 );
+		}
+
+		$this->set_position( $term_id, $position + 1 );
+	}
+
 	private function sanitize_term_args( array $args, bool $include_name = true ): array {
 		$clean = array();
 
-		if ( $include_name ) {
+		if ( $include_name || array_key_exists( 'name', $args ) ) {
 			$clean['name'] = sanitize_text_field( (string) ( $args['name'] ?? '' ) );
 		}
 		if ( array_key_exists( 'slug', $args ) ) {

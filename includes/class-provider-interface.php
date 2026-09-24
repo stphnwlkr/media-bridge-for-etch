@@ -20,4 +20,6 @@ interface Provider_Interface {
 	public function set_object_terms( int $attachment_id, array $term_ids ): array|WP_Error;
 	public function get_position( int $term_id ): ?int;
 	public function set_position( int $term_id, int $position ): void;
+	public function order_terms_hierarchically( array $terms ): array;
+	public function append_position( int $term_id, int $parent ): void;
 }

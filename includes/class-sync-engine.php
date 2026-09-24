@@ -110,12 +110,12 @@ final class Sync_Engine {
 		}
 		$mode = Plugin::settings()['conflict_mode'];
 		if ( ( 'etch' === $mode && 'etch' !== $source->id() ) || ( 'external' === $mode && 'etch' === $source->id() ) ) {
-			$authority = $target;
+			$authority    = $target;
 			$authority_id = $mapped;
-			$target = $source;
-			$mapped = $term_id;
-			$source = $authority;
-			$term_id = $authority_id;
+			$target       = $source;
+			$mapped       = $term_id;
+			$source       = $authority;
+			$term_id      = $authority_id;
 		}
 		self::$syncing = true;
 		try {

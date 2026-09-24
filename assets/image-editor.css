@@ -1,0 +1,191 @@
+body.uplink-mbe-image-editor-screen #wpcontent,
+body.uplink-mbe-image-editor-screen #wpbody-content {
+	background: var(--mbe-background);
+}
+
+body.uplink-mbe-image-editor-screen #wpbody-content {
+	box-sizing: border-box;
+	min-height: calc(100vh - 32px);
+	padding: 24px;
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen .wrap {
+	margin: 0;
+}
+
+body.uplink-mbe-image-editor-screen .wrap > h1 {
+	display: inline-block;
+	margin: 0 12px 20px 0;
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen .uplink-mbe-image-editor-back {
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	padding: 0 14px;
+	border-color: var(--mbe-control-border);
+	border-radius: 6px;
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+	font-weight: 600;
+}
+
+body.uplink-mbe-image-editor-screen .uplink-mbe-image-editor-back:hover,
+body.uplink-mbe-image-editor-screen .uplink-mbe-image-editor-back:focus-visible {
+	border-color: var(--mbe-accent);
+	background: var(--mbe-accent-soft);
+	color: var(--mbe-accent-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(#titlediv, .postbox, .stuffbox, .imgedit-wrap) {
+	border-color: var(--mbe-border);
+	border-radius: 6px;
+	background: var(--mbe-surface);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(.postbox-header, #major-publishing-actions, #minor-publishing, #misc-publishing-actions, .misc-pub-section) {
+	border-color: var(--mbe-border);
+	background: var(--mbe-surface);
+}
+
+body.uplink-mbe-image-editor-screen :is(.postbox-header h2, .wrap label, .imgedit-settings, .misc-pub-section, #post-status-info) {
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen #screen-meta {
+	border-color: var(--mbe-border);
+	background: var(--mbe-surface);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(#contextual-help-wrap, #screen-options-wrap),
+body.uplink-mbe-image-editor-screen :is(.contextual-help-tabs, .contextual-help-sidebar) {
+	border-color: var(--mbe-border);
+	background: var(--mbe-surface);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen .contextual-help-tabs .active {
+	border-color: var(--mbe-accent);
+	background: var(--mbe-control);
+	box-shadow: none;
+}
+
+body.uplink-mbe-image-editor-screen .contextual-help-tabs .active a {
+	color: var(--mbe-accent-text);
+}
+
+body.uplink-mbe-image-editor-screen #screen-meta-links .show-settings {
+	border-color: var(--mbe-border);
+	background: var(--mbe-surface);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen #screen-options-wrap label {
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .category-tabs li.tabs {
+	border-color: var(--mbe-accent);
+	background: var(--mbe-accent-soft);
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .category-tabs a {
+	color: var(--mbe-accent-text);
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .category-tabs li.tabs a {
+	color: var(--mbe-accent-text);
+	font-weight: 600;
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .category-tabs a:focus-visible {
+	border-radius: 3px;
+	outline: 2px solid var(--mbe-accent);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .tabs-panel {
+	border-color: var(--mbe-border);
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen #uplink-mbe-etch-collections .categorychecklist label {
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(input[type="text"], input[type="url"], textarea, select) {
+	border-color: var(--mbe-control-border);
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen #titlediv #title {
+	border-color: var(--mbe-control-border);
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(.wp-editor-container, .quicktags-toolbar, .wp-editor-tabs),
+body.uplink-mbe-image-editor-screen :is(.wp-switch-editor, .html-active .switch-html, .tmce-active .switch-tmce) {
+	border-color: var(--mbe-control-border);
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen .quicktags-toolbar {
+	border-block-end: 1px solid var(--mbe-control-border);
+}
+
+body.uplink-mbe-image-editor-screen .button:not(.button-primary) {
+	border-color: var(--mbe-control-border);
+	background: var(--mbe-control);
+	color: var(--mbe-text);
+}
+
+body.uplink-mbe-image-editor-screen .button:not(.button-primary):hover,
+body.uplink-mbe-image-editor-screen .button:not(.button-primary):focus-visible {
+	border-color: var(--mbe-accent);
+	background: var(--mbe-accent-soft);
+	color: var(--mbe-accent-text);
+}
+
+body.uplink-mbe-image-editor-screen :is(.button-primary, .button-primary:focus) {
+	border-color: var(--mbe-accent);
+	background: var(--mbe-accent);
+	color: var(--mbe-accent-icon);
+}
+
+body.uplink-mbe-image-editor-screen a:not(.button) {
+	color: var(--mbe-accent-text);
+}
+
+body.uplink-mbe-image-editor-screen .imgedit-wrap {
+	box-sizing: border-box;
+	padding: 18px;
+	border: 1px solid var(--mbe-border);
+}
+
+body.uplink-mbe-image-editor-screen .imgedit-settings {
+	border-color: var(--mbe-border);
+}
+
+body.uplink-mbe-image-editor-screen .imgedit-menu .button.disabled,
+body.uplink-mbe-image-editor-screen .imgedit-menu .button:disabled {
+	color: var(--mbe-muted);
+	text-shadow: none;
+	box-shadow: none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 782px) {
+	body.uplink-mbe-image-editor-screen #wpbody-content {
+		padding: 16px;
+	}
+}
