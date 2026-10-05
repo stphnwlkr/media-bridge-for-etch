@@ -4,14 +4,14 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.2.4
+Stable tag: 2.2.9
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
 
 == Description ==
 
-Uplink Media Bridge for Etch adds a native Media > Etch Collections workspace for organizing the WordPress media library with Etch itself. Create and edit two-level collections, upload or select media, assign items to multiple collections, drag selected items into a collection, and use bulk assignment tools without installing another folder plugin.
+Uplink Media Bridge for Etch adds a native Media > Etch Collections workspace for organizing the WordPress media library with Etch itself. Create and edit collections, upload or select media, assign items to multiple collections, drag selected items into a collection, and use bulk assignment tools without installing another folder plugin. The Experimental collection-depth setting extends Media Bridge management from Etch's standard two levels to as many as five.
 
 [Read the Uplink Media Bridge for Etch 2.0 overview](https://uplinkplugins.com/articles/uplink-media-bridge-for-etch-version-2/).
 
@@ -34,7 +34,7 @@ Native features include collection creation, rename, movement and deletion; Etch
 
 == Media Health and EXIF ==
 
-The Health workspace scans attachments for broken or empty files, missing image alt text, missing generated image sizes, oversized files, and obsolete BMP or TIFF formats. It also provides dedicated Decorative and Healthy views. Rescan after changing files outside WordPress; normal Media Bridge edits and attachment changes invalidate the cached scan automatically.
+The Health workspace scans attachments for broken or empty files, missing image alt text, missing generated image sizes, oversized files, suspected duplicates, and obsolete BMP or TIFF formats. It also provides dedicated Decorative and Healthy views. Suspected duplicates have byte-for-byte matching file contents, but distinct attachment records may be intentional. Rescan after changing files outside WordPress; normal Media Bridge edits and attachment changes invalidate the cached scan automatically.
 
 The display popover can reveal camera, lens, aperture, focal length, ISO, exposure, capture date, credit, and copyright metadata in the attachment editor when WordPress extracted those values from the file.
 
@@ -68,7 +68,7 @@ Etch Collections loads additional media automatically as you scroll. Administrat
 
 Bridge features include folder creation, rename and movement synchronization; attachment assignment synchronization; provider-specific ordering; optional deletion synchronization; fixed or most-recent conflict authority; reconciliation; and a 200-entry sync history.
 
-Etch supports two folder levels. Deeper folders in the selected client-side provider remain untouched. Media assigned below level two is represented in Etch by its nearest supported ancestor.
+Etch's Asset Manager supports two folder levels. The Experimental collection-depth setting lets Media Bridge create and manage as many as five levels through its WordPress interfaces. Etch 1.6.8 displays those deeper collections, but its Asset Manager cannot create or move them beyond two levels. Folders deeper than the configured limit in HappyFiles or Wicked Folders remain untouched, and their media is represented in Etch by the nearest supported ancestor.
 
 == Installation ==
 
@@ -97,9 +97,9 @@ Recommended migration procedure:
 
 Switching to native mode stops the bridge hooks. It does not delete Etch Collections, attachment assignments, or media files. The original provider data is separate and may remain in the database after deactivation; uninstall behavior depends on that provider.
 
-Etch supports two collection levels. Top-level folders, second-level folders, and their media assignments are preserved. For folders deeper than two levels, the deeper provider folders remain untouched while the bridge is active, but Etch represents their media using the nearest supported two-level ancestor. The exact third-level-or-deeper hierarchy cannot be preserved in native Etch Collections.
+Etch's Asset Manager supports two collection levels. Media Bridge can experimentally preserve and manage as many as five levels when that limit is selected under Media > Media Bridge. Etch 1.6.8 displays those deeper collections, but its Asset Manager cannot create or move them beyond two levels. Provider folders deeper than the configured limit remain untouched while the bridge is active, and Etch represents their media using the nearest supported ancestor.
 
-For rollback, restore the site backup for a complete restoration of provider-specific data. Alternatively, reinstall or reactivate the provider, select it under Media > Media Bridge, and reconcile from Etch; this can rebuild the supported two-level folder structure and assignments, but it cannot reconstruct provider-only deeper hierarchy or settings that the provider removed during uninstall.
+For rollback, restore the site backup for a complete restoration of provider-specific data. Alternatively, reinstall or reactivate the provider, select it under Media > Media Bridge, and reconcile from Etch. This can rebuild the Etch hierarchy up to the configured limit, but it cannot reconstruct provider-only deeper hierarchy or settings that the provider removed during uninstall.
 
 == Collection galleries ==
 
@@ -168,6 +168,26 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.2.9 =
+
+Fixes Site Icon and Site Logo selection in the WordPress Appearance editor when the Enhanced Manager is active.
+
+= 2.2.8 =
+
+Adds an Experimental option to manage up to five Etch Collection levels through Media Bridge while Etch's Asset Manager remains limited to two-level editing.
+
+= 2.2.7 =
+
+Makes newly created or changed collections immediately available as upload destinations without reloading the page.
+
+= 2.2.6 =
+
+Saves attachment metadata edits made in the Enhanced Manager inserter before inserting or leaving the attachment.
+
+= 2.2.5 =
+
+Adds suspected duplicate detection and visible filenames to Media Health.
 
 = 2.2.4 =
 
@@ -246,6 +266,28 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.2.9 =
+
+* Fixes Site Icon and Site Logo media selection in the WordPress Appearance editor when the Enhanced Manager is active.
+
+= 2.2.8 =
+
+* Adds an Experimental Etch Collection depth setting for managing up to five levels in the WordPress media interfaces. Etch 1.6.8 displays deeper collections, but its Asset Manager cannot create or move them beyond two levels.
+
+= 2.2.7 =
+
+* Refreshes upload destinations after collection changes so newly created folders are immediately available without reloading the page.
+
+= 2.2.6 =
+
+* Saves title, alt text, decorative state, caption, and description changes made in the Enhanced Manager inserter automatically and before insertion or attachment navigation.
+
+= 2.2.5 =
+
+* Adds a Suspected duplicates view to Media Health for byte-identical attachments, with filenames shown directly on health cards and available in full on hover.
+* Expands media search to match WordPress attachment fields and filenames, including filename wildcard searches such as `*-1.png`.
+* Reports failed uploads in the Enhanced Manager and lets the remaining upload queue continue instead of leaving the media dialog stalled.
 
 = 2.2.4 =
 

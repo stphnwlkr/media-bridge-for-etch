@@ -177,6 +177,12 @@
 			keepOriginals: false,
 			uploading: false,
 			uploadModels: new Map(),
+			batchFiles: [],
+			successfulIds: new Set(),
+			failures: new Map(),
+			fileErrors: new Map(),
+			batchSummary: '',
+			batchFinished: false,
 		};
 		uploadWorkspaceFrames.set( frame, state );
 
@@ -201,6 +207,9 @@
 			$( '<option />' ).val( 0 ).text( config.strings.topLevel )
 		);
 		( config.uploadDestinations || [] ).forEach( ( destination ) => {
+			if ( Number( destination.depth ) >= Number( config.maxCollectionDepth || 2 ) - 1 ) {
+				return;
+			}
 			$collectionParent.append(
 				$( '<option />' )
 					.val( destination.id )
@@ -281,6 +290,10 @@
 			)
 		);
 
+		function fileKey( file ) {
+			return `${ file?.name || '' }\u0000${ Number( file?.size ) || 0 }`;
+		}
+
 		function renderFiles() {
 			$list.empty();
 			let readyCount = 0;
@@ -288,31 +301,36 @@
 			let invalidCount = 0;
 			state.files.forEach( ( file, index ) => {
 				const invalid = Number( file.size ) > Number( config.maxUploadBytes );
+				const uploadError = state.fileErrors.get( fileKey( file ) ) || '';
 				if ( invalid ) invalidCount += 1;
 				else {
 					readyCount += 1;
 					readyBytes += Number( file.size ) || 0;
 				}
-				const status = invalid ? config.strings.fileOverLimit : ( state.keepOriginals ? config.strings.fileKeptOriginal : ( cimoAvailable ? config.strings.fileWillOptimize : config.strings.fileReady ) );
-				const $item = $( '<div class="uplink-mbe-upload-file" role="listitem" />' ).toggleClass( 'is-invalid', invalid ).append(
+				const status = invalid ? config.strings.fileOverLimit : ( uploadError || ( state.keepOriginals ? config.strings.fileKeptOriginal : ( cimoAvailable ? config.strings.fileWillOptimize : config.strings.fileReady ) ) );
+				const $item = $( '<div class="uplink-mbe-upload-file" role="listitem" />' ).toggleClass( 'is-invalid', invalid ).toggleClass( 'is-error', Boolean( uploadError ) ).append(
 					$( '<span class="uplink-mbe-upload-file-icon" />' ).html( fileIcon ),
 					$( '<span class="uplink-mbe-upload-file-details" />' ).append( $( '<strong />' ).text( file.name ), $( '<span />' ).text( `${ formatBytes( file.size ) } · ${ status }` ) ),
 					$( '<button type="button" class="uplink-mbe-upload-remove" />' ).attr( 'aria-label', formatString( config.strings.removeFile, [ file.name ] ) ).html( removeIcon )
 				);
 				$item.find( '.uplink-mbe-upload-remove' ).on( 'click', () => {
+					state.fileErrors.delete( fileKey( file ) );
 					state.files.splice( index, 1 );
+					state.batchSummary = '';
 					renderFiles();
 				} );
 				$list.append( $item );
 			} );
 
-			if ( state.files.length ) {
+			if ( state.batchSummary ) {
+				$summary.text( state.batchSummary );
+			} else if ( state.files.length ) {
 				$summary.text( formatString( config.strings.filesReady, [ readyCount, formatBytes( readyBytes ) ] ) + ( invalidCount ? ` · ${ formatString( config.strings.filesOverLimit, [ invalidCount ] ) }` : '' ) );
 			} else {
 				$summary.text( '' );
 			}
 			$clear.prop( 'hidden', ! state.files.length );
-			$upload.prop( 'disabled', ! readyCount ).text( formatString( config.strings.uploadFiles, [ readyCount ] ) );
+			$upload.prop( 'disabled', ! readyCount ).text( formatString( state.fileErrors.size ? config.strings.retryFiles : config.strings.uploadFiles, [ readyCount ] ) );
 			$keep.prop( 'disabled', Boolean( state.files.length ) );
 			$workspace.toggleClass( 'has-files', Boolean( state.files.length ) );
 		}
@@ -376,7 +394,9 @@
 				config.uploadDestinations.push( created );
 				const optionText = `${ '\u00a0'.repeat( created.depth * 3 ) }${ created.name }`;
 				$destination.append( $( '<option />' ).val( created.id ).text( optionText ) ).val( String( created.id ) ).trigger( 'change' );
-				$collectionParent.append( $( '<option />' ).val( created.id ).text( optionText ) );
+				if ( created.depth < Number( config.maxCollectionDepth || 2 ) - 1 ) {
+					$collectionParent.append( $( '<option />' ).val( created.id ).text( optionText ) );
+				}
 				$collectionName.val( '' );
 				$collectionStatus.text( config.strings.collectionCreated );
 				window.setTimeout( () => {
@@ -415,19 +435,21 @@
 		} );
 		$clear.on( 'click', () => {
 			state.files = [];
+			state.fileErrors.clear();
+			state.batchSummary = '';
 			renderFiles();
 		} );
 		$workspace.find( '.uplink-mbe-upload-cancel' ).on( 'click', () => frame.close() );
 
 		function updateUploadProgress() {
 			const total = Number( frame.uplinkMbeStagedUploadCount ) || state.uploadModels.size;
-			let complete = 0;
-			let progress = 0;
+			const complete = state.successfulIds.size + state.failures.size;
+			let progress = complete * 100;
 			state.uploadModels.forEach( ( item ) => {
 				const uploading = Boolean( item.attachment.get( 'uploading' ) );
-				const hasId = Boolean( item.attachment.get( 'id' ) || item.attachment.id );
-				if ( ! uploading && hasId ) complete += 1;
-				progress += uploading ? Number( item.attachment.get( 'percent' ) ) || 0 : ( hasId ? 100 : 0 );
+				if ( uploading && ! state.failures.has( item.fileKey ) ) {
+					progress += Number( item.attachment.get( 'percent' ) ) || 0;
+				}
 			} );
 			const percent = total ? Math.min( 100, Math.round( progress / total ) ) : 0;
 			$progress.prop( 'hidden', false );
@@ -436,17 +458,73 @@
 			$progressBar.css( 'width', `${ percent }%` );
 		}
 
+		function restoreUploadControls() {
+			state.uploading = false;
+			$workspace.removeAttr( 'aria-busy' ).removeClass( 'is-uploading' );
+			$workspace.find( 'input, select, button' ).prop( 'disabled', false );
+			renderFiles();
+		}
+
+		async function finishUploadBatch() {
+			const total = Number( frame.uplinkMbeStagedUploadCount ) || state.batchFiles.length;
+			const settled = state.successfulIds.size + state.failures.size;
+			if ( state.batchFinished || ! total || settled < total ) return;
+
+			state.batchFinished = true;
+			updateUploadProgress();
+			if ( ! state.failures.size && 'function' === typeof frame.uplinkMbeFinishSuccessfulUploadBatch ) {
+				await frame.uplinkMbeFinishSuccessfulUploadBatch( Array.from( state.successfulIds ) );
+				return;
+			}
+
+			const failedKeys = new Set( state.failures.keys() );
+			state.files = state.files.filter( ( file ) => Number( file.size ) > Number( config.maxUploadBytes ) || failedKeys.has( fileKey( file ) ) );
+			state.batchSummary = state.failures.size
+				? formatString( config.strings.uploadResult, [ state.successfulIds.size, state.failures.size ] )
+				: formatString( config.strings.uploadComplete, [ state.successfulIds.size ] );
+			$progressText.text( state.batchSummary );
+			if ( state.successfulIds.size ) frame.uplinkMbeRefreshUploadResults?.();
+			restoreUploadControls();
+		}
+
+		const recordUploadSuccess = async ( id ) => {
+			if ( ! state.uploading ) return false;
+			state.successfulIds.add( Number( id ) );
+			updateUploadProgress();
+			await finishUploadBatch();
+			return true;
+		};
+		frame.uplinkMbeRecordUploadSuccess = recordUploadSuccess;
+
+		const handleUploadError = ( errorModel ) => {
+			if ( ! state.uploading ) return;
+			const uploadFile = errorModel?.get?.( 'file' ) || errorModel?.file;
+			const key = fileKey( uploadFile );
+			const queuedFile = state.batchFiles.find( ( file ) => fileKey( file ) === key );
+			if ( ! queuedFile || state.failures.has( key ) ) return;
+
+			const message = errorModel?.get?.( 'message' ) || errorModel?.message || config.strings.uploadFailed;
+			state.failures.set( key, { file: queuedFile, message } );
+			state.fileErrors.set( key, message );
+			updateUploadProgress();
+			finishUploadBatch().catch( () => restoreUploadControls() );
+		};
+		wp.Uploader?.errors?.on?.( 'add', handleUploadError );
+
 		frame.uplinkMbeTrackUpload = ( attachment ) => {
 			if ( ! state.uploading || state.uploadModels.has( attachment.cid ) ) return;
 			const update = () => updateUploadProgress();
-			state.uploadModels.set( attachment.cid, { attachment, update } );
+			const attachmentFile = attachment.get( 'file' );
+			state.uploadModels.set( attachment.cid, { attachment, update, fileKey: fileKey( attachmentFile || { name: attachment.get( 'filename' ), size: attachment.get( 'size' ) } ) } );
 			attachment.on( 'change:percent change:uploading change:id', update );
 			updateUploadProgress();
 		};
 
 		frame.once( 'close', () => {
 			state.uploadModels.forEach( ( item ) => item.attachment.off( null, item.update ) );
+			wp.Uploader?.errors?.off?.( 'add', handleUploadError );
 			delete frame.uplinkMbeTrackUpload;
+			if ( frame.uplinkMbeRecordUploadSuccess === recordUploadSuccess ) delete frame.uplinkMbeRecordUploadSuccess;
 		} );
 
 		$upload.on( 'click', function () {
@@ -454,6 +532,14 @@
 			const uploader = frame.uploader?.uploader?.uploader;
 			if ( ! files.length || ! uploader?.addFile ) return;
 			state.uploading = true;
+			state.batchFiles = files.slice();
+			state.successfulIds.clear();
+			state.failures.clear();
+			state.fileErrors.clear();
+			state.batchSummary = '';
+			state.batchFinished = false;
+			state.uploadModels.forEach( ( item ) => item.attachment.off( null, item.update ) );
+			state.uploadModels.clear();
 			frame.uplinkMbeUploadDestinationId = Number( $destination.val() ) || 0;
 			frame.uplinkMbeStagedUploadCount = files.length;
 			frame.uplinkMbeCompletedUploadIds = [];
@@ -587,6 +673,8 @@
 			'click .uplink-mbe-modal-inspector-insert': 'insertInspected',
 			'click .uplink-mbe-modal-inspector-tab': 'switchInspectorTab',
 			'keydown .uplink-mbe-modal-inspector-tab': 'navigateInspectorTabs',
+			'input .uplink-mbe-modal-inspector-title, .uplink-mbe-modal-inspector-alt, .uplink-mbe-modal-inspector-caption, .uplink-mbe-modal-inspector-description': 'scheduleInspectorSave',
+			'change .uplink-mbe-modal-inspector-title, .uplink-mbe-modal-inspector-alt, .uplink-mbe-modal-inspector-caption, .uplink-mbe-modal-inspector-description': 'saveInspectorChange',
 			'change .uplink-mbe-modal-inspector-decorative': 'toggleDecorative',
 			'submit .uplink-mbe-modal-search': 'searchMedia',
 			'input #uplink-mbe-modal-search-input': 'scheduleSearch',
@@ -603,15 +691,25 @@
 		initialize( options ) {
 			this.controller = options.controller;
 			this.selection = this.controller.state().get( 'selection' );
+			const library = this.controller.state().get( 'library' );
 			// ACF customizes the native attachment browser through its toolbar.
 			// The enhanced browser owns its filters, but exposing the same minimal
 			// interface lets ACF finish opening image and file field frames.
 			this.toolbar = { get: () => null };
 			this.filter = this.controller.uplinkMbeCollectionFilter || 'all';
 			this.collectionId = Number( this.controller.uplinkMbeCollectionId ) || 0;
-			// Instant Images refreshes the active WordPress media view through this
-			// collection method before selecting the imported attachment.
-			this.collection = { _requery: () => this.resetAndFetch() };
+			// Gutenberg's specialized media pickers (including Site Icon) expect the
+			// active content view to expose WordPress's full attachments collection.
+			// Keep that native contract instead of using a partial refresh shim.
+			this.collection = library || wp.media.query( this.controller.options?.library || {} );
+			const nativeRequery = 'function' === typeof this.collection._requery
+				? this.collection._requery.bind( this.collection )
+				: null;
+			this.collection._requery = ( ...args ) => {
+				const result = nativeRequery ? nativeRequery( ...args ) : this.collection.more();
+				this.resetAndFetch();
+				return result;
+			};
 			this.controller.uplinkMbeCollectionsView = this;
 			this.search = '';
 			this.searchTimer = null;
@@ -641,6 +739,10 @@
 			this.requestId = 0;
 			this.inspectedId = 0;
 			this.inspectorTab = 'details';
+			this.inspectorDirty = false;
+			this.inspectorSaveTimer = null;
+			this.inspectorSaveChain = Promise.resolve( true );
+			this.inspectorSavesPending = 0;
 			this.pendingSelectionId = 0;
 			this.view = 'grid';
 			try {
@@ -652,7 +754,6 @@
 				// Storage may be unavailable in privacy-restricted browsers.
 			}
 
-			const library = this.controller.state().get( 'library' );
 			const type = library?.props?.get( 'type' );
 			const acfFieldKey = this.controller.acf?.get?.( 'field' ) || '';
 			const acfFieldType = acfFieldKey
@@ -740,7 +841,10 @@
 			const form = $( '<form class="uplink-mbe-modal-search" role="search" />' );
 			form.append(
 				$( '<label class="screen-reader-text" for="uplink-mbe-modal-search-input" />' ).text( config.strings.searchLabel ),
-				$( '<input id="uplink-mbe-modal-search-input" type="search" />' ).attr( 'placeholder', config.strings.searchPlaceholder ),
+				$( '<input id="uplink-mbe-modal-search-input" type="search" />' ).attr( {
+					placeholder: config.strings.searchPlaceholder,
+					title: config.strings.searchWildcardHelp,
+				} ),
 				$( '<button type="submit" class="button uplink-mbe-modal-search-button" />' )
 					.attr( { 'aria-label': config.strings.search, title: config.strings.search } )
 					.html( '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>' )
@@ -878,6 +982,8 @@
 
 		remove() {
 			window.clearTimeout( this.searchTimer );
+			window.clearTimeout( this.inspectorSaveTimer );
+			if ( this.inspectorDirty ) this.persistInspectorChanges();
 			this.controller.$el.closest( '.media-modal' ).removeClass( 'uplink-mbe-collections-active uplink-mbe-has-selection uplink-mbe-has-inspector uplink-mbe-metadata-only' );
 			return wp.media.View.prototype.remove.apply( this, arguments );
 		},
@@ -1237,15 +1343,18 @@
 			} );
 		},
 
-		inspectAttachment( event ) {
+		async inspectAttachment( event ) {
 			event.preventDefault();
 			event.stopPropagation();
+			if ( ! await this.persistInspectorChanges() ) return;
 			this.showInspector( Number( event.currentTarget.dataset.id ) );
 		},
 
 		showInspector( id ) {
 			const media = this.media.find( ( item ) => Number( item.id ) === Number( id ) );
 			if ( ! media ) return;
+			window.clearTimeout( this.inspectorSaveTimer );
+			this.inspectorDirty = false;
 			const opening = ! this.inspectedId;
 			this.inspectedId = Number( id );
 			const index = this.media.indexOf( media );
@@ -1305,7 +1414,7 @@
 			this.$inspectorExifList.empty();
 			exif.forEach( ( item ) => this.$inspectorExifList.append( row( item.label, item.value ) ) );
 			this.$inspectorExifTab.prop( 'hidden', ! exif.length );
-			this.$inspectorNotice.text( '' ).removeClass( 'is-error' );
+			this.$inspectorNotice.text( '' ).removeClass( 'is-error is-saving is-saved' );
 			this.$inspectorInsert.text( this.actionLabel() );
 			this.$inspectorHeader.find( '.uplink-mbe-modal-inspector-position' ).text( `${ index + 1 } of ${ this.media.length }` );
 			this.$inspectorHeader.find( '.uplink-mbe-modal-inspector-previous' ).prop( 'disabled', index <= 0 );
@@ -1313,7 +1422,8 @@
 			this.setInspectorTab( opening ? 'details' : this.inspectorTab );
 		},
 
-		closeInspector() {
+		async closeInspector() {
+			if ( ! await this.persistInspectorChanges() ) return;
 			this.inspectedId = 0;
 			this.$inspector.attr( 'hidden', 'hidden' );
 			this.$content.removeClass( 'has-inspector' );
@@ -1321,41 +1431,106 @@
 			this.controller.$el.closest( '.media-modal' ).removeClass( 'uplink-mbe-has-inspector' );
 		},
 
-		previousInspectorItem() {
+		async previousInspectorItem() {
 			const index = this.media.findIndex( ( item ) => Number( item.id ) === this.inspectedId );
+			if ( ! await this.persistInspectorChanges() ) return;
 			if ( index > 0 ) this.showInspector( this.media[ index - 1 ].id );
 		},
 
-		nextInspectorItem() {
+		async nextInspectorItem() {
 			const index = this.media.findIndex( ( item ) => Number( item.id ) === this.inspectedId );
+			if ( ! await this.persistInspectorChanges() ) return;
 			if ( index >= 0 && index < this.media.length - 1 ) this.showInspector( this.media[ index + 1 ].id );
 		},
 
 		toggleDecorative() {
 			this.$inspectorAlt.prop( 'disabled', this.$inspectorDecorative.prop( 'checked' ) );
 			if ( this.$inspectorDecorative.prop( 'checked' ) ) this.$inspectorAlt.val( '' );
+			this.saveInspectorChange();
 		},
 
-		async saveInspector() {
+		inspectorValues() {
+			return {
+				attachment_id: this.inspectedId,
+				title: this.$inspectorTitle.val(),
+				alt_text: this.$inspectorAlt.val(),
+				decorative: this.$inspectorDecorative.prop( 'checked' ) ? '1' : '0',
+				caption: this.$inspectorCaption.val(),
+				description: this.$inspectorDescription.val(),
+			};
+		},
+
+		syncInspectorAttachmentModel( values ) {
+			const attachment = wp.media.attachment( Number( values.attachment_id ) );
+			attachment.set( {
+				title: values.title,
+				alt: '1' === values.decorative ? '' : values.alt_text,
+				caption: values.caption,
+				description: values.description,
+			} );
+		},
+
+		scheduleInspectorSave() {
 			if ( ! this.inspectedId ) return;
-			try {
-				const data = await request( 'uplink_mbe_update_attachment', {
-					attachment_id: this.inspectedId,
-					title: this.$inspectorTitle.val(),
-					alt_text: this.$inspectorAlt.val(),
-					decorative: this.$inspectorDecorative.prop( 'checked' ) ? '1' : '0',
-					caption: this.$inspectorCaption.val(),
-					description: this.$inspectorDescription.val(),
-				} );
-				const index = this.media.findIndex( ( item ) => Number( item.id ) === this.inspectedId );
-				if ( index >= 0 ) this.media[ index ] = data;
-				this.$inspectorNotice.text( config.strings.saved );
-				this.renderMedia();
-				this.showInspector( this.inspectedId );
-				this.$inspectorNotice.text( config.strings.saved );
-			} catch ( error ) {
-				this.$inspectorNotice.text( error.message ).addClass( 'is-error' );
+			this.inspectorDirty = true;
+			this.syncInspectorAttachmentModel( this.inspectorValues() );
+			window.clearTimeout( this.inspectorSaveTimer );
+			this.inspectorSaveTimer = window.setTimeout( () => this.persistInspectorChanges(), 500 );
+		},
+
+		saveInspectorChange() {
+			if ( ! this.inspectedId ) return;
+			this.inspectorDirty = true;
+			this.syncInspectorAttachmentModel( this.inspectorValues() );
+			window.clearTimeout( this.inspectorSaveTimer );
+			this.persistInspectorChanges();
+		},
+
+		persistInspectorChanges( force = false ) {
+			if ( ! this.inspectedId || ( ! force && ! this.inspectorDirty ) ) return this.inspectorSaveChain;
+			window.clearTimeout( this.inspectorSaveTimer );
+			const values = this.inspectorValues();
+			const attachmentId = Number( values.attachment_id );
+			this.inspectorDirty = false;
+			this.syncInspectorAttachmentModel( values );
+			this.inspectorSavesPending += 1;
+			if ( this.inspectedId === attachmentId ) {
+				this.$inspectorNotice.removeClass( 'is-error is-saved' ).addClass( 'is-saving' ).text( config.strings.savingChanges );
 			}
+
+			this.inspectorSaveChain = this.inspectorSaveChain
+				.catch( () => false )
+				.then( async () => {
+					let saved = false;
+					try {
+						const data = await request( 'uplink_mbe_update_attachment', values );
+						const index = this.media.findIndex( ( item ) => Number( item.id ) === attachmentId );
+						if ( index >= 0 ) this.media[ index ] = data;
+						saved = true;
+						return true;
+					} catch ( error ) {
+						if ( this.inspectedId === attachmentId ) {
+							this.inspectorDirty = true;
+							this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( error.message );
+						}
+						return false;
+					} finally {
+						this.inspectorSavesPending = Math.max( 0, this.inspectorSavesPending - 1 );
+						if ( saved && this.inspectedId === attachmentId && 0 === this.inspectorSavesPending ) {
+							this.$inspectorNotice.removeClass( 'is-error is-saving' ).addClass( 'is-saved' ).text( config.strings.saved );
+						}
+					}
+				} );
+			return this.inspectorSaveChain;
+		},
+
+		async saveInspector( event ) {
+			event?.preventDefault?.();
+			const attachmentId = this.inspectedId;
+			if ( ! await this.persistInspectorChanges( true ) || this.inspectedId !== attachmentId ) return;
+			this.renderMedia();
+			this.showInspector( attachmentId );
+			this.$inspectorNotice.addClass( 'is-saved' ).text( config.strings.saved );
 		},
 
 		editInspectedImage( event ) {
@@ -1376,7 +1551,7 @@
 					openEditor();
 				} else {
 					attachment.fetch().done( openEditor ).fail( () => {
-						this.$inspectorNotice.text( config.strings.error ).addClass( 'is-error' );
+						this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( config.strings.error );
 					} );
 				}
 				return;
@@ -1390,11 +1565,23 @@
 		async insertInspected( event ) {
 			event.preventDefault();
 			if ( ! this.inspectedId || ! this.selection ) return;
+			const attachmentId = this.inspectedId;
+			const actionLabel = this.actionLabel();
+			const committing = this.inspectorDirty || this.inspectorSavesPending > 0;
+			this.$inspectorInsert.prop( 'disabled', true ).attr( 'aria-busy', 'true' ).addClass( 'is-busy' );
+			this.$inspectorInsert.text( committing ? config.strings.savingChanges : config.strings.inserting );
+			this.$inspectorNotice.removeClass( 'is-error is-saved' ).addClass( 'is-saving' ).text( committing ? config.strings.savingChanges : config.strings.inserting );
+			if ( ! await this.persistInspectorChanges() ) {
+				this.$inspectorInsert.prop( 'disabled', false ).removeAttr( 'aria-busy' ).removeClass( 'is-busy' ).text( actionLabel );
+				return;
+			}
+			this.$inspectorInsert.text( config.strings.inserting );
+			this.$inspectorNotice.removeClass( 'is-error is-saved' ).addClass( 'is-saving' ).text( config.strings.inserting );
 
-			const attachment = wp.media.attachment( this.inspectedId );
+			const attachment = wp.media.attachment( attachmentId );
 			try {
-				const hydrated = await hydrateAttachment( attachment, this.inspectedId );
-				this.selection.reset( [ selectionAttachment( hydrated, this.inspectedId ) ] );
+				const hydrated = await hydrateAttachment( attachment, attachmentId );
+				this.selection.reset( [ selectionAttachment( hydrated, attachmentId ) ] );
 				this.updateSelected();
 
 				const $insertButton = this.controller.$el
@@ -1410,7 +1597,8 @@
 				this.controller.state().trigger( 'select' );
 				this.controller.reset();
 			} catch ( error ) {
-				this.$inspectorNotice.text( config.strings.error ).addClass( 'is-error' );
+				this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( config.strings.error );
+				this.$inspectorInsert.prop( 'disabled', false ).removeAttr( 'aria-busy' ).removeClass( 'is-busy' ).text( actionLabel );
 			}
 		},
 

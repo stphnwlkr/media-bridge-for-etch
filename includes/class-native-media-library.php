@@ -8,7 +8,7 @@ final class Native_Media_Library {
 	private const PAGE_SLUG = 'etch-collections';
 	private const NONCE     = 'uplink_mbe_native_media';
 	private const PAGE_SIZE = 40;
-	private const HEALTH_TRANSIENT = 'uplink_mbe_media_health_v1';
+	private const HEALTH_TRANSIENT = 'uplink_mbe_media_health_v3';
 	private Provider_Interface $etch;
 	private array $etch_optimization_before = array();
 
@@ -73,6 +73,7 @@ final class Native_Media_Library {
 				'maxUploadBytes' => wp_max_upload_size(),
 				'maxUploadSize' => size_format( wp_max_upload_size() ),
 				'uploadDestinations' => $upload_destinations,
+				'maxCollectionDepth' => Plugin::etch_collection_depth(),
 				'canManageCollections' => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
 				'cimoAvailable' => defined( 'CIMO_FILE' ),
 				'altIconUrl' => UPLINK_MBE_URL . 'assets/universal-access-circle-stroke-sharp.svg',
@@ -113,6 +114,8 @@ final class Native_Media_Library {
 					'editImage'      => __( 'Edit image', 'media-bridge-for-etch' ),
 					'saveChanges'    => __( 'Save changes', 'media-bridge-for-etch' ),
 					'insertMedia'    => __( 'Insert', 'media-bridge-for-etch' ),
+					'savingChanges'  => __( 'Saving changes…', 'media-bridge-for-etch' ),
+					'inserting'      => __( 'Inserting…', 'media-bridge-for-etch' ),
 					'replaceFeaturedImage' => __( 'Replace featured image', 'media-bridge-for-etch' ),
 					'saved'          => __( 'Attachment saved.', 'media-bridge-for-etch' ),
 					'empty'          => __( 'No media found in this collection.', 'media-bridge-for-etch' ),
@@ -155,6 +158,7 @@ final class Native_Media_Library {
 					'images'         => __( 'Images', 'media-bridge-for-etch' ),
 					'search'         => __( 'Search media', 'media-bridge-for-etch' ),
 					'searchPlaceholder' => __( 'Search', 'media-bridge-for-etch' ),
+					'searchWildcardHelp' => __( 'Use * as a filename wildcard, for example *-1.png.', 'media-bridge-for-etch' ),
 					'viewMode'       => __( 'View mode', 'media-bridge-for-etch' ),
 					'listView'       => __( 'List view', 'media-bridge-for-etch' ),
 					'gridView'       => __( 'Grid view', 'media-bridge-for-etch' ),
@@ -195,9 +199,16 @@ final class Native_Media_Library {
 					'filesOverLimit' => __( '%d over limit', 'media-bridge-for-etch' ),
 					/* translators: %d is the number of files ready to upload. */
 					'uploadFiles' => __( 'Upload %d', 'media-bridge-for-etch' ),
+					/* translators: %d is the number of failed files ready to retry. */
+					'retryFiles' => __( 'Retry %d', 'media-bridge-for-etch' ),
 					'uploading' => __( 'Uploading…', 'media-bridge-for-etch' ),
-					/* translators: 1: number of completed uploads, 2: total number of uploads. */
-					'uploadingFiles' => __( '%1$d of %2$d uploaded', 'media-bridge-for-etch' ),
+					/* translators: 1: number of finished uploads, 2: total number of uploads. */
+					'uploadingFiles' => __( '%1$d of %2$d finished', 'media-bridge-for-etch' ),
+					/* translators: 1: number of successful uploads, 2: number of failed uploads. */
+					'uploadResult' => __( '%1$d uploaded · %2$d failed', 'media-bridge-for-etch' ),
+					/* translators: %d is the number of successful uploads. */
+					'uploadComplete' => __( '%d uploaded', 'media-bridge-for-etch' ),
+					'uploadFailed' => __( 'WordPress could not upload this file.', 'media-bridge-for-etch' ),
 				),
 			)
 		);
@@ -230,6 +241,7 @@ final class Native_Media_Library {
 				'collections' => $this->native_collection_data(),
 				'counts'      => $this->native_collection_counts(),
 				'parentCountDisplay' => Plugin::settings()['parent_count_display'],
+				'maxCollectionDepth' => Plugin::etch_collection_depth(),
 				'canAssign'   => $taxonomy && current_user_can( $taxonomy->cap->assign_terms ),
 				'canManage'   => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
 				'strings'     => array(
@@ -695,6 +707,7 @@ final class Native_Media_Library {
 				'pageSize'     => self::PAGE_SIZE,
 				'pagination'   => ! empty( Plugin::settings()['native_pagination'] ),
 				'parentCountDisplay' => Plugin::settings()['parent_count_display'],
+				'maxCollectionDepth' => Plugin::etch_collection_depth(),
 				'galleryEnabled' => $gallery_enabled,
 				'canCustomizeAppearance' => current_user_can( 'manage_options' ),
 				'appearance'    => $settings['appearance'],
@@ -795,12 +808,14 @@ final class Native_Media_Library {
 					'missingSizesDescription' => __( 'Images missing one or more sizes registered with WordPress.', 'media-bridge-for-etch' ),
 					'oversized'            => __( 'Oversized', 'media-bridge-for-etch' ),
 					'oversizedDescription' => __( 'Size limits: images 1 MB, fonts 0.5 MB, documents 5 MB, audio 10 MB, and video 50 MB.', 'media-bridge-for-etch' ),
+					'suspectedDuplicates'       => __( 'Suspected duplicates', 'media-bridge-for-etch' ),
+					'suspectedDuplicatesDescription' => __( 'Files whose contents match another attachment. Different titles or filenames may be intentional, so review the matching attachments before deleting anything.', 'media-bridge-for-etch' ),
 					'obsoleteFormat'       => __( 'Obsolete format', 'media-bridge-for-etch' ),
 					'obsoleteFormatDescription' => __( 'BMP or TIFF media that should be converted to a modern web format.', 'media-bridge-for-etch' ),
 					'decorative'           => __( 'Decorative', 'media-bridge-for-etch' ),
 					'decorativeDescription' => __( 'Images intentionally marked as decorative.', 'media-bridge-for-etch' ),
 					'healthy'              => __( 'Healthy', 'media-bridge-for-etch' ),
-					'healthyDescription'   => __( 'Media with none of the file, metadata, size, or format issues checked here.', 'media-bridge-for-etch' ),
+					'healthyDescription'   => __( 'Media with none of the file, metadata, size, format, or duplicate issues checked here.', 'media-bridge-for-etch' ),
 					'scannedNow'           => __( 'Scanned just now', 'media-bridge-for-etch' ),
 					'galleryChoose'         => __( 'Choose a collection to preview its gallery.', 'media-bridge-for-etch' ),
 					'shortcodeCopied'       => __( 'Shortcode copied.', 'media-bridge-for-etch' ),
@@ -951,7 +966,7 @@ final class Native_Media_Library {
 							<div class="uplink-mbe-library-drawer-bar">
 								<form id="uplink-mbe-media-search" role="search">
 									<label class="screen-reader-text" for="uplink-mbe-search-input"><?php esc_html_e( 'Search media', 'media-bridge-for-etch' ); ?></label>
-									<input type="search" id="uplink-mbe-search-input" placeholder="<?php esc_attr_e( 'Search', 'media-bridge-for-etch' ); ?>">
+									<input type="search" id="uplink-mbe-search-input" placeholder="<?php esc_attr_e( 'Search', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Use * as a filename wildcard, for example *-1.png.', 'media-bridge-for-etch' ); ?>">
 									<button type="submit" class="uplink-mbe-toolbar-button" aria-label="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
 								</form>
 								<button type="button" class="uplink-mbe-toolbar-button uplink-mbe-library-drawer-toggle" id="uplink-mbe-library-drawer-toggle" aria-expanded="false" aria-controls="uplink-mbe-library-drawer-panel" aria-label="<?php esc_attr_e( 'Open filters', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Filter media', 'media-bridge-for-etch' ); ?>">
@@ -1321,6 +1336,11 @@ final class Native_Media_Library {
 		$page       = max( 1, absint( $_POST['page'] ?? 1 ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$taxonomy   = $this->etch->taxonomy();
+		$filename_pattern = '';
+		if ( str_contains( $search, '*' ) ) {
+			$filename_pattern = '(^|/)' . str_replace( '\\*', '.*', preg_quote( $search, '/' ) ) . '$';
+		}
+		$query_search = '' === $filename_pattern ? $search : '';
 
 		$args = array(
 			'post_type'      => 'attachment',
@@ -1329,10 +1349,10 @@ final class Native_Media_Library {
 			'paged'          => $page,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
-			's'              => $search,
+			's'              => $query_search,
 		);
 		$restricted_ids = null;
-		if ( in_array( $health_filter, array( 'all_issues', 'broken', 'missing_alt', 'missing_sizes', 'oversized', 'obsolete_format', 'decorative', 'healthy' ), true ) ) {
+		if ( in_array( $health_filter, array( 'all_issues', 'broken', 'missing_alt', 'missing_sizes', 'oversized', 'suspected_duplicates', 'obsolete_format', 'decorative', 'healthy' ), true ) ) {
 			$restricted_ids = array_map( 'absint', $this->media_health_scan()['ids'][ $health_filter ] ?? array() );
 		}
 
@@ -1368,15 +1388,24 @@ final class Native_Media_Library {
 		} elseif ( 'unattached' === $attachment_status ) {
 			$args['post_parent'] = 0;
 		}
-		if ( preg_match( '/^[a-z0-9]{1,10}$/', $extension ) ) {
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- The attachment filename is the authoritative source for an extension-specific media filter.
-			$args['meta_query'] = array(
-				array(
-					'key'     => '_wp_attached_file',
-					'value'   => '\\.' . preg_quote( $extension, '/' ) . '$',
-					'compare' => 'REGEXP',
-				),
+		$attachment_meta_query = array();
+		if ( '' !== $filename_pattern ) {
+			$attachment_meta_query[] = array(
+				'key'     => '_wp_attached_file',
+				'value'   => $filename_pattern,
+				'compare' => 'REGEXP',
 			);
+		}
+		if ( preg_match( '/^[a-z0-9]{1,10}$/', $extension ) ) {
+			$attachment_meta_query[] = array(
+				'key'     => '_wp_attached_file',
+				'value'   => '\\.' . preg_quote( $extension, '/' ) . '$',
+				'compare' => 'REGEXP',
+			);
+		}
+		if ( $attachment_meta_query ) {
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filename wildcard and extension filters must query the attachment path.
+			$args['meta_query'] = $attachment_meta_query;
 		}
 		if ( preg_match( '/^(\d{4})-(\d{2})$/', $date, $date_parts ) ) {
 			$args['year']     = absint( $date_parts[1] );
@@ -1413,11 +1442,17 @@ final class Native_Media_Library {
 			);
 		}
 
-		if ( '' !== $search ) {
+		if ( '' !== $query_search ) {
+			// WordPress treats a leading hyphen as a search exclusion by default. Media searches commonly
+			// contain filename suffixes such as "-1.png", so treat hyphens literally for this query.
+			add_filter( 'wp_query_search_exclusion_prefix', '__return_empty_string', PHP_INT_MAX );
 			// WordPress keeps filename searching opt-in for attachment queries and consumes this filter on the next query.
 			add_filter( 'wp_allow_query_attachment_by_filename', '__return_true' );
 		}
 		$query = new WP_Query( $args );
+		if ( '' !== $query_search ) {
+			remove_filter( 'wp_query_search_exclusion_prefix', '__return_empty_string', PHP_INT_MAX );
+		}
 		$media = array();
 		foreach ( $query->posts as $attachment ) {
 			$media[] = $this->attachment_data( (int) $attachment->ID );
@@ -1433,6 +1468,10 @@ final class Native_Media_Library {
 			wp_send_json_error( array( 'message' => $terms->get_error_message() ), 500 );
 		}
 		$terms = $this->etch->order_terms_hierarchically( $terms );
+		$parents = array();
+		foreach ( $terms as $term ) {
+			$parents[ (int) $term->term_id ] = (int) $term->parent;
+		}
 
 		$count_mode  = Plugin::settings()['parent_count_display'];
 		$needs_total = in_array( $count_mode, array( 'cumulative', 'direct_total' ), true );
@@ -1450,10 +1489,19 @@ final class Native_Media_Library {
 					}
 				}
 			}
+			$depth  = 0;
+			$parent = (int) $term->parent;
+			$seen   = array();
+			while ( $parent && isset( $parents[ $parent ] ) && ! isset( $seen[ $parent ] ) ) {
+				$seen[ $parent ] = true;
+				++$depth;
+				$parent = $parents[ $parent ];
+			}
 			$collections[] = array(
 				'id'         => $term_id,
 				'name'       => $term->name,
 				'parent'     => (int) $term->parent,
+				'depth'      => $depth,
 				'count'      => $direct_count,
 				'totalCount' => $total_count,
 			);
@@ -1522,20 +1570,6 @@ final class Native_Media_Library {
 			$term = $this->etch->get_term( $term_id );
 			if ( ! $term ) {
 				wp_send_json_error( array( 'message' => __( 'The collection no longer exists.', 'media-bridge-for-etch' ) ), 404 );
-			}
-
-			if ( $parent ) {
-				$children = get_terms(
-					array(
-						'taxonomy'   => $this->etch->taxonomy(),
-						'hide_empty' => false,
-						'parent'     => $term_id,
-						'fields'     => 'ids',
-					)
-				);
-				if ( ! is_wp_error( $children ) && $children ) {
-					wp_send_json_error( array( 'message' => __( 'A collection with sub-collections cannot be moved below another collection.', 'media-bridge-for-etch' ) ), 400 );
-				}
 			}
 
 			$position_needed = (int) $term->parent !== $parent || null === $this->etch->get_position( $term_id );
@@ -1929,7 +1963,7 @@ final class Native_Media_Library {
 			}
 		}
 
-		$ids = array_fill_keys( array( 'all_issues', 'broken', 'missing_alt', 'missing_sizes', 'oversized', 'obsolete_format', 'decorative', 'healthy' ), array() );
+		$ids = array_fill_keys( array( 'all_issues', 'broken', 'missing_alt', 'missing_sizes', 'oversized', 'suspected_duplicates', 'obsolete_format', 'decorative', 'healthy' ), array() );
 		$attachment_ids = get_posts(
 			array(
 				'post_type'      => 'attachment',
@@ -1940,8 +1974,10 @@ final class Native_Media_Library {
 				'order'          => 'ASC',
 			)
 		);
-		$registered_sizes = wp_get_registered_image_subsizes();
-		$max_bytes = array( 'image' => MB_IN_BYTES, 'font' => (int) ( MB_IN_BYTES / 2 ), 'application' => 5 * MB_IN_BYTES, 'audio' => 10 * MB_IN_BYTES, 'video' => 50 * MB_IN_BYTES );
+		$registered_sizes      = wp_get_registered_image_subsizes();
+		$max_bytes             = array( 'image' => MB_IN_BYTES, 'font' => (int) ( MB_IN_BYTES / 2 ), 'application' => 5 * MB_IN_BYTES, 'audio' => 10 * MB_IN_BYTES, 'video' => 50 * MB_IN_BYTES );
+		$issues_by_attachment = array();
+		$duplicate_candidates = array();
 
 		foreach ( $attachment_ids as $attachment_id ) {
 			$attachment_id = (int) $attachment_id;
@@ -1951,8 +1987,14 @@ final class Native_Media_Library {
 			$is_image      = str_starts_with( $mime, 'image/' ) && 'svg' !== $extension;
 			$decorative    = $is_image && '1' === (string) get_post_meta( $attachment_id, '_uplink_mbe_decorative', true );
 			$issues        = array();
-			if ( ! $file || ! is_file( $file ) || ! is_readable( $file ) || 0 === (int) @filesize( $file ) ) {
+			$file_size     = $file && is_file( $file ) && is_readable( $file ) ? (int) @filesize( $file ) : 0;
+			if ( ! $file || ! is_file( $file ) || ! is_readable( $file ) || 0 === $file_size ) {
 				$issues[] = 'broken';
+			} else {
+				$duplicate_candidates[ $file_size ][] = array(
+					'id'   => $attachment_id,
+					'file' => $file,
+				);
 			}
 			if ( $is_image && '' === trim( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) && ! $decorative ) {
 				$issues[] = 'missing_alt';
@@ -1961,7 +2003,7 @@ final class Native_Media_Library {
 				$issues[] = 'obsolete_format';
 			}
 			$bucket = str_starts_with( $mime, 'image/' ) ? 'image' : ( str_starts_with( $mime, 'audio/' ) ? 'audio' : ( str_starts_with( $mime, 'video/' ) ? 'video' : ( str_starts_with( $mime, 'font/' ) ? 'font' : 'application' ) ) );
-			if ( $file && is_file( $file ) && (int) filesize( $file ) > $max_bytes[ $bucket ] ) {
+			if ( $file_size > $max_bytes[ $bucket ] ) {
 				$issues[] = 'oversized';
 			}
 			if ( $is_image && $file && is_file( $file ) ) {
@@ -1984,7 +2026,41 @@ final class Native_Media_Library {
 					$issues[] = 'missing_sizes';
 				}
 			}
-			$issues = array_values( array_unique( $issues ) );
+			$issues_by_attachment[ $attachment_id ] = array_values( array_unique( $issues ) );
+			if ( $decorative ) {
+				$ids['decorative'][] = $attachment_id;
+			}
+		}
+
+		$file_hashes = array();
+		foreach ( $duplicate_candidates as $candidates ) {
+			if ( count( $candidates ) < 2 ) {
+				continue;
+			}
+			$hash_groups = array();
+			foreach ( $candidates as $candidate ) {
+				$file = $candidate['file'];
+				if ( ! array_key_exists( $file, $file_hashes ) ) {
+					$file_hashes[ $file ] = @hash_file( 'sha256', $file ) ?: '';
+				}
+				$hash = $file_hashes[ $file ];
+				if ( '' !== $hash ) {
+					$hash_groups[ $hash ][] = (int) $candidate['id'];
+				}
+			}
+			foreach ( $hash_groups as $duplicate_ids ) {
+				if ( count( $duplicate_ids ) < 2 ) {
+					continue;
+				}
+				foreach ( $duplicate_ids as $attachment_id ) {
+					$issues_by_attachment[ $attachment_id ][] = 'suspected_duplicates';
+				}
+			}
+		}
+
+		foreach ( $attachment_ids as $attachment_id ) {
+			$attachment_id = (int) $attachment_id;
+			$issues = array_values( array_unique( $issues_by_attachment[ $attachment_id ] ?? array() ) );
 			foreach ( $issues as $issue ) {
 				$ids[ $issue ][] = $attachment_id;
 			}
@@ -1992,9 +2068,6 @@ final class Native_Media_Library {
 				$ids['all_issues'][] = $attachment_id;
 			} else {
 				$ids['healthy'][] = $attachment_id;
-			}
-			if ( $decorative ) {
-				$ids['decorative'][] = $attachment_id;
 			}
 		}
 
@@ -2774,22 +2847,58 @@ final class Native_Media_Library {
 	}
 
 	private function validate_parent( int $parent, int $term_id = 0 ): string {
-		if ( ! $parent ) {
-			return '';
-		}
 		if ( $parent === $term_id ) {
 			return __( 'A collection cannot be its own parent.', 'media-bridge-for-etch' );
 		}
 
-		$parent_term = $this->etch->get_term( $parent );
-		if ( ! $parent_term ) {
-			return __( 'The selected parent collection no longer exists.', 'media-bridge-for-etch' );
+		$parent_depth = 0;
+		if ( $parent ) {
+			$parent_term = $this->etch->get_term( $parent );
+			if ( ! $parent_term ) {
+				return __( 'The selected parent collection no longer exists.', 'media-bridge-for-etch' );
+			}
+
+			$ancestors = get_ancestors( $parent, $this->etch->taxonomy(), 'taxonomy' );
+			if ( $term_id && in_array( $term_id, array_map( 'intval', $ancestors ), true ) ) {
+				return __( 'A collection cannot be moved inside one of its sub-collections.', 'media-bridge-for-etch' );
+			}
+			$parent_depth = count( $ancestors ) + 1;
 		}
-		if ( $parent_term->parent ) {
-			return __( 'Etch Collections support a maximum of two levels.', 'media-bridge-for-etch' );
+
+		$subtree_height = $term_id ? $this->collection_subtree_height( $term_id ) : 1;
+		$max_depth      = Plugin::etch_collection_depth();
+		if ( $parent_depth + $subtree_height > $max_depth ) {
+			/* translators: %d is the configured maximum number of collection levels. */
+			return sprintf( __( 'Etch Collections are limited to %d levels by the Media Bridge setting.', 'media-bridge-for-etch' ), $max_depth );
 		}
 
 		return '';
+	}
+
+	private function collection_subtree_height( int $term_id ): int {
+		$terms = $this->etch->get_terms();
+		if ( is_wp_error( $terms ) ) {
+			return 1;
+		}
+
+		$children = array();
+		foreach ( $terms as $term ) {
+			$children[ (int) $term->parent ][] = (int) $term->term_id;
+		}
+
+		$height = function ( int $current, array $visited = array() ) use ( &$height, $children ): int {
+			if ( isset( $visited[ $current ] ) ) {
+				return 1;
+			}
+			$visited[ $current ] = true;
+			$max_child_height = 0;
+			foreach ( $children[ $current ] ?? array() as $child_id ) {
+				$max_child_height = max( $max_child_height, $height( $child_id, $visited ) );
+			}
+			return 1 + $max_child_height;
+		};
+
+		return $height( $term_id );
 	}
 
 	/**

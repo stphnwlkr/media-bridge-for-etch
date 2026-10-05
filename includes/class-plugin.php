@@ -189,6 +189,7 @@ final class Plugin {
 			'sync_deletions'   => 0,
 			'native_pagination' => 0,
 			'parent_count_display' => 'direct',
+			'etch_collection_depth' => 2,
 			'appearance'       => 'auto',
 			'manager_label'    => 'Etch Collections',
 			'default_media_screen' => 0,
@@ -206,6 +207,14 @@ final class Plugin {
 			}
 		}
 		return $defaults;
+	}
+
+	/**
+	 * Return the configured Etch Collection depth, including the top level.
+	 */
+	public static function etch_collection_depth(): int {
+		$settings = self::settings();
+		return min( 5, max( 2, absint( $settings['etch_collection_depth'] ?? 2 ) ) );
 	}
 
 	/**

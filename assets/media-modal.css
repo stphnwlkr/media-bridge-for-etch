@@ -597,7 +597,8 @@
 	background: var(--mbe-modal-control);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid {
+.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid,
+.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error {
 	border-color: var(--mbe-modal-danger, #d63638);
 }
 
@@ -632,7 +633,9 @@
 }
 
 .media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-file-details span,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-remove {
+.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-remove,
+.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error .uplink-mbe-upload-file-details span,
+.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error .uplink-mbe-upload-remove {
 	color: var(--mbe-modal-danger, #d63638);
 }
 
@@ -2121,20 +2124,66 @@ button.uplink-mbe-modal-collection-toggle:focus-visible {
 .uplink-mbe-modal-inspector-field textarea { box-sizing: border-box; width: 100%; min-block-size: 4.75rem; max-width: none; border-color: var(--mbe-modal-border); background: var(--mbe-modal-surface); color: var(--mbe-modal-text); line-height: 1.45; resize: vertical; text-transform: none; }
 .uplink-mbe-modal-inspector-description { min-block-size: 6.5rem; }
 .uplink-mbe-modal-inspector-check { display: flex; align-items: center; gap: 8px; color: var(--mbe-modal-muted); font-size: 12px; }
-.uplink-mbe-modal-inspector-notice { min-height: 18px; margin: 0; color: var(--mbe-modal-accent-text); font-size: 12px; }
-.uplink-mbe-modal-inspector-notice.is-error { color: var(--mbe-modal-danger); }
-
-.uplink-mbe-modal-inspector-actions {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 10px;
+.uplink-mbe-modal-inspector-notice {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 0;
+	margin: 0;
+	border: 1px solid transparent;
+	border-radius: 5px;
+	color: var(--mbe-modal-accent-text);
+	font-size: 12px;
+	font-weight: 600;
 }
 
-.uplink-mbe-modal-inspector-actions .uplink-mbe-modal-inspector-edit-image[hidden] {
+.uplink-mbe-modal-inspector-notice:not(:empty) {
+	min-height: 20px;
+	padding: 7px 9px;
+	border-color: var(--mbe-modal-border);
+	background: var(--mbe-modal-accent-soft);
+}
+
+.uplink-mbe-modal-inspector-notice.is-saving::before {
+	box-sizing: border-box;
+	width: 14px;
+	height: 14px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	content: "";
+	animation: uplink-mbe-spin 0.7s linear infinite;
+}
+
+.uplink-mbe-modal-inspector-notice.is-saved::before {
+	content: "\f147";
+	font: 18px/1 dashicons;
+}
+
+.uplink-mbe-modal-inspector-notice.is-error {
+	border-color: var(--mbe-modal-danger);
+	background: var(--mbe-modal-surface);
+	color: var(--mbe-modal-danger);
+}
+
+@keyframes uplink-mbe-spin {
+	to { transform: rotate(360deg); }
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+	padding-top: 16px;
+	margin-top: 18px;
+	border-top: 1px solid var(--mbe-modal-border);
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .uplink-mbe-modal-inspector-edit-image[hidden] {
 	display: none;
 }
 
-.uplink-mbe-modal-inspector-edit-image .dashicons {
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .uplink-mbe-modal-inspector-edit-image .dashicons {
 	width: 18px;
 	height: 18px;
 	margin-right: 7px;
@@ -2142,16 +2191,50 @@ button.uplink-mbe-modal-collection-toggle:focus-visible {
 	line-height: 18px;
 }
 
-.uplink-mbe-modal-inspector-actions:has(.uplink-mbe-modal-inspector-edit-image[hidden]) {
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions:has(.uplink-mbe-modal-inspector-edit-image[hidden]) {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.uplink-mbe-modal-inspector-actions .button {
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	width: 100%;
 	min-height: 42px;
+	padding: 8px 14px;
 	margin: 0;
+	border-radius: 6px;
+	font-weight: 600;
+	line-height: 1.25;
+	white-space: normal;
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .uplink-mbe-modal-inspector-edit-image {
+	border-color: var(--mbe-modal-guide-border);
+	background: var(--mbe-modal-guide);
+	color: var(--mbe-modal-guide-text);
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .uplink-mbe-modal-inspector-edit-image:is(:hover, :focus-visible) {
+	border-color: var(--mbe-modal-accent);
+	background: var(--mbe-modal-accent-soft);
+	color: var(--mbe-modal-accent);
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .button-primary {
+	border-color: var(--wp-admin-theme-color);
+	background: var(--wp-admin-theme-color);
+	color: #fff;
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .button-primary:is(:hover, :focus-visible) {
+	border-color: var(--wp-admin-theme-color-darker-10);
+	background: var(--wp-admin-theme-color-darker-10);
+	color: #fff;
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .button.is-busy {
+	cursor: wait;
 }
 
 @media (min-width: 901px) {

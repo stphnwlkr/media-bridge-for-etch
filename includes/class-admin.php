@@ -52,6 +52,7 @@ final class Admin {
 		if ( ! in_array( $parent_count_display, array( 'direct', 'cumulative', 'direct_total' ), true ) ) {
 			$parent_count_display = 'direct';
 		}
+		$etch_collection_depth = min( 5, max( 2, absint( $input['etch_collection_depth'] ?? $current['etch_collection_depth'] ?? 2 ) ) );
 		$manager_label = sanitize_text_field( $input['manager_label'] ?? $current['manager_label'] ?? '' );
 		if ( '' === trim( $manager_label ) ) {
 			$manager_label = 'Etch Collections';
@@ -72,6 +73,7 @@ final class Admin {
 			'sync_deletions'   => $flag( 'sync_deletions' ),
 			'native_pagination' => $flag( 'native_pagination' ),
 			'parent_count_display' => $parent_count_display,
+			'etch_collection_depth' => $etch_collection_depth,
 			'manager_label'    => $manager_label,
 			'default_media_screen' => $default_media_screen,
 			'native_media_collections' => $flag( 'native_media_collections' ),
@@ -207,6 +209,13 @@ final class Admin {
 									<option value="direct_total" <?php selected( $settings['parent_count_display'], 'direct_total' ); ?>><?php esc_html_e( 'Direct / including sub-collections', 'media-bridge-for-etch' ); ?></option>
 								</select>
 								<p class="description"><?php esc_html_e( 'Controls the number shown beside parent Etch Collections. For example, 17/23 means 17 items are assigned directly and 23 appear when the parent and its sub-collections are viewed together.', 'media-bridge-for-etch' ); ?></p>
+								<label for="uplink-mbe-etch-collection-depth"><?php esc_html_e( 'Maximum collection depth (Experimental)', 'media-bridge-for-etch' ); ?></label>
+								<select id="uplink-mbe-etch-collection-depth" name="uplink_mbe_settings[etch_collection_depth]">
+									<?php for ( $depth = 2; $depth <= 5; ++$depth ) : ?>
+										<option value="<?php echo (int) $depth; ?>" <?php selected( (int) $settings['etch_collection_depth'], $depth ); ?>><?php echo (int) $depth; ?></option>
+									<?php endfor; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Experimental. Media Bridge can create and manage deeper collections. Etch 1.6.8 can display them, but its Asset Manager cannot create or move collections beyond two levels.', 'media-bridge-for-etch' ); ?></p>
 							</div>
 						<?php endif; ?>
 					</section>
@@ -318,7 +327,7 @@ final class Admin {
 
 			<?php if ( ! $native ) : ?>
 			<section class="uplink-mbe-card uplink-mbe-tools">
-				<div><h2><?php esc_html_e( 'Reconcile the bridge', 'media-bridge-for-etch' ); ?></h2><p><?php esc_html_e( 'Match existing folders by hierarchical path, create missing counterparts, and synchronize attachment assignments. Client-side folders deeper than two levels remain intact and use their nearest two-level ancestor in Etch.', 'media-bridge-for-etch' ); ?></p></div>
+				<div><h2><?php esc_html_e( 'Reconcile the bridge', 'media-bridge-for-etch' ); ?></h2><p><?php esc_html_e( 'Match existing folders by hierarchical path, create missing counterparts, and synchronize attachment assignments. Client-side folders deeper than the configured Etch Collection limit remain intact and use their nearest supported ancestor in Etch.', 'media-bridge-for-etch' ); ?></p></div>
 				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
 					<input type="hidden" name="action" value="uplink_mbe_reconcile">
 					<?php wp_nonce_field( 'uplink_mbe_reconcile' ); ?>

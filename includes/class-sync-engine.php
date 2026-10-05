@@ -183,7 +183,8 @@ final class Sync_Engine {
 			return;
 		}
 
-		if ( $source->id() !== 'etch' && $this->term_depth( $term, $source ) > 2 ) {
+		$target_max_depth = $target->max_depth();
+		if ( null !== $target_max_depth && $this->term_depth( $term, $source ) > $target_max_depth ) {
 			Logger::add( 'depth', 'A deeper client-side folder remains external-only.', array( 'folder' => $term->name, 'provider' => $source->label() ) );
 			return;
 		}
@@ -299,8 +300,9 @@ final class Sync_Engine {
 			return $stats;
 		}
 		usort( $terms, fn( WP_Term $a, WP_Term $b ): int => $this->term_depth( $a, $source ) <=> $this->term_depth( $b, $source ) );
+		$target_max_depth = $target->max_depth();
 		foreach ( $terms as $term ) {
-			if ( $source->id() !== 'etch' && $this->term_depth( $term, $source ) > 2 ) {
+			if ( null !== $target_max_depth && $this->term_depth( $term, $source ) > $target_max_depth ) {
 				$stats['skipped']++;
 				continue;
 			}
@@ -323,13 +325,14 @@ final class Sync_Engine {
 		}
 
 		$target_ids = array();
+		$target_max_depth = $target->max_depth();
 		foreach ( $source_ids as $source_id ) {
 			$term = $source->get_term( (int) $source_id );
 			if ( ! $term ) {
 				continue;
 			}
-			if ( $target->id() === 'etch' && $this->term_depth( $term, $source ) > 2 ) {
-				$term = $this->nearest_supported_ancestor( $term, $source );
+			if ( null !== $target_max_depth && $this->term_depth( $term, $source ) > $target_max_depth ) {
+				$term = $this->nearest_supported_ancestor( $term, $source, $target_max_depth );
 				if ( ! $term ) {
 					continue;
 				}
@@ -342,11 +345,12 @@ final class Sync_Engine {
 
 		// Preserve external folders below Etch's supported depth when an Etch change is copied outward.
 		if ( $source->id() === 'etch' && $target->id() !== 'etch' ) {
+			$source_max_depth = $source->max_depth();
 			$current = $target->get_object_terms( $attachment_id );
 			if ( ! is_wp_error( $current ) ) {
 				foreach ( $current as $current_id ) {
 					$current_term = $target->get_term( (int) $current_id );
-					if ( $current_term && $this->term_depth( $current_term, $target ) > 2 ) {
+					if ( $current_term && null !== $source_max_depth && $this->term_depth( $current_term, $target ) > $source_max_depth ) {
 						$target_ids[] = (int) $current_id;
 					}
 				}
@@ -420,8 +424,8 @@ final class Sync_Engine {
 		return $target_id;
 	}
 
-	private function nearest_supported_ancestor( WP_Term $term, Provider_Interface $provider ): ?WP_Term {
-		while ( $this->term_depth( $term, $provider ) > 2 && $term->parent ) {
+	private function nearest_supported_ancestor( WP_Term $term, Provider_Interface $provider, int $max_depth ): ?WP_Term {
+		while ( $this->term_depth( $term, $provider ) > $max_depth && $term->parent ) {
 			$parent = $provider->get_term( (int) $term->parent );
 			if ( ! $parent ) {
 				return null;

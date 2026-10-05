@@ -237,7 +237,7 @@
 			if ( config.canManage ) {
 				const actions = document.createElement( 'div' );
 				actions.className = 'uplink-mbe-native-collection-actions';
-				if ( ! Number( collection.parent ) ) {
+				if ( Number( collection.depth ) < Number( config.maxCollectionDepth || 2 ) - 1 ) {
 					actions.append( collectionActionButton( 'add-child', config.strings.addChild, 'plus-alt2', collection ) );
 				}
 				actions.append(
@@ -319,14 +319,48 @@
 		return button;
 	}
 
-	function fillCollectionSelect( select, includeUncategorized = false ) {
+	function collectionDescendantIds( collectionId ) {
+		const descendants = new Set();
+		const visit = ( parent ) => {
+			( childrenByParent.get( Number( parent ) ) || [] ).forEach( ( child ) => {
+				const childId = Number( child.id );
+				if ( descendants.has( childId ) ) {
+					return;
+				}
+				descendants.add( childId );
+				visit( childId );
+			} );
+		};
+		visit( Number( collectionId ) );
+		return descendants;
+	}
+
+	function collectionSubtreeHeight( collectionId, visited = new Set() ) {
+		const normalizedId = Number( collectionId );
+		if ( visited.has( normalizedId ) ) {
+			return 1;
+		}
+		const nextVisited = new Set( visited );
+		nextVisited.add( normalizedId );
+		return 1 + ( childrenByParent.get( normalizedId ) || [] ).reduce( ( height, child ) => Math.max( height, collectionSubtreeHeight( child.id, nextVisited ) ), 0 );
+	}
+
+	function fillCollectionSelect( select, includeUncategorized = false, parentMode = false, editedCollection = null ) {
 		const selected = select.value;
+		const excluded = editedCollection ? collectionDescendantIds( editedCollection.id ) : new Set();
+		if ( editedCollection ) {
+			excluded.add( Number( editedCollection.id ) );
+		}
+		const subtreeHeight = editedCollection ? collectionSubtreeHeight( editedCollection.id ) : 1;
 		select.replaceChildren();
 		const first = document.createElement( 'option' );
 		first.value = '0';
 		first.textContent = includeUncategorized ? config.strings.uncategorized : config.strings.topLevel;
 		select.append( first );
 		config.collections.forEach( ( collection ) => {
+			if ( parentMode && ( Number( collection.depth ) + 1 + subtreeHeight > Number( config.maxCollectionDepth || 2 ) || excluded.has( Number( collection.id ) ) ) ) {
+				return;
+			}
 			const option = document.createElement( 'option' );
 			option.value = String( collection.id );
 			option.textContent = `${ '\u00a0\u00a0'.repeat( Number( collection.depth ) || 0 ) }${ collection.name }`;
@@ -452,7 +486,7 @@
 		setCollectionData( state.collections );
 		config.counts = state.counts || config.counts;
 		renderPanelBody( panel, view );
-		panel.querySelectorAll( '.uplink-mbe-native-collection-parent' ).forEach( ( select ) => fillCollectionSelect( select ) );
+		panel.querySelectorAll( '.uplink-mbe-native-collection-parent' ).forEach( ( select ) => fillCollectionSelect( select, false, true ) );
 		document.querySelectorAll( '.uplink-mbe-native-upload-select' ).forEach( ( select ) => fillCollectionSelect( select, true ) );
 	}
 
@@ -683,7 +717,7 @@
 		parentLabel.textContent = config.strings.parentCollection;
 		const parentSelect = document.createElement( 'select' );
 		parentSelect.className = 'uplink-mbe-native-collection-parent';
-		fillCollectionSelect( parentSelect );
+		fillCollectionSelect( parentSelect, false, true );
 		parentLabel.append( parentSelect );
 		const formActions = document.createElement( 'div' );
 		formActions.className = 'uplink-mbe-native-collection-form-actions';
@@ -738,11 +772,8 @@
 				creationForm.hidden = false;
 				creationForm.dataset.termId = String( Number( collection?.id ) || 0 );
 				nameInput.value = collection?.name || '';
-				fillCollectionSelect( parentSelect );
+				fillCollectionSelect( parentSelect, false, true, collection );
 				parentSelect.value = String( Number( collection?.parent ) || Number( parent ) || 0 );
-				Array.from( parentSelect.options ).forEach( ( option ) => {
-					option.disabled = Boolean( collection && Number( option.value ) === Number( collection.id ) );
-				} );
 				newCollection.setAttribute( 'aria-expanded', 'true' );
 				nameInput.focus();
 			};

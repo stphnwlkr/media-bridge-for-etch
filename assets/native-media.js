@@ -694,6 +694,13 @@
 
 	function applyStateData( data, append = false ) {
 		state.collections = data.collections || [];
+		if ( window.uplinkMbeMediaModal ) {
+			window.uplinkMbeMediaModal.uploadDestinations = state.collections.map( ( collection ) => ( {
+				id: Number( collection.id ),
+				name: collection.name,
+				depth: Number( collection.depth ) || 0,
+			} ) );
+		}
 		if ( append ) {
 			const existing = new Set( state.media.map( ( media ) => media.id ) );
 			state.media = state.media.concat( ( data.media || [] ).filter( ( media ) => ! existing.has( media.id ) ) );
@@ -757,7 +764,7 @@
 		placeholder.value = '';
 		elements.galleryCollection.append( placeholder );
 		state.collections.forEach( ( collection ) => {
-			const option = createElement( 'option', '', `${ collection.parent ? '— ' : '' }${ collection.name }` );
+			const option = createElement( 'option', '', collectionOptionLabel( collection ) );
 			option.value = String( collection.id );
 			elements.galleryCollection.append( option );
 		} );
@@ -1098,6 +1105,49 @@
 		return state.collections.filter( ( collection ) => Number( collection.parent ) === Number( parent ) );
 	}
 
+	function collectionDepth( collection ) {
+		return Math.max( 0, Number( collection?.depth ) || 0 );
+	}
+
+	function collectionOptionLabel( collection ) {
+		return `${ '\u00a0\u00a0'.repeat( collectionDepth( collection ) ) }${ collection.name }`;
+	}
+
+	function collectionDescendantIds( collectionId ) {
+		const descendants = new Set();
+		const visit = ( parent ) => {
+			siblingCollections( parent ).forEach( ( child ) => {
+				const childId = Number( child.id );
+				if ( descendants.has( childId ) ) {
+					return;
+				}
+				descendants.add( childId );
+				visit( childId );
+			} );
+		};
+		visit( Number( collectionId ) );
+		return descendants;
+	}
+
+	function collectionSubtreeHeight( collectionId, visited = new Set() ) {
+		const normalizedId = Number( collectionId );
+		if ( visited.has( normalizedId ) ) {
+			return 1;
+		}
+		const nextVisited = new Set( visited );
+		nextVisited.add( normalizedId );
+		return 1 + siblingCollections( normalizedId ).reduce( ( height, child ) => Math.max( height, collectionSubtreeHeight( child.id, nextVisited ) ), 0 );
+	}
+
+	function eligibleCollectionParents( collection = null ) {
+		const excluded = collection ? collectionDescendantIds( collection.id ) : new Set();
+		const subtreeHeight = collection ? collectionSubtreeHeight( collection.id ) : 1;
+		if ( collection ) {
+			excluded.add( Number( collection.id ) );
+		}
+		return state.collections.filter( ( item ) => collectionDepth( item ) + 1 + subtreeHeight <= Number( config.maxCollectionDepth || 2 ) && ! excluded.has( Number( item.id ) ) );
+	}
+
 	function applyCollectionOrder( parent, orderedIds ) {
 		const rank = new Map( orderedIds.map( ( id, index ) => [ Number( id ), index ] ) );
 		const groups = new Map();
@@ -1265,9 +1315,9 @@
 		elements.tree.append( special );
 
 		const list = createElement( 'ul', 'uplink-mbe-collection-list' );
-		state.collections.filter( ( item ) => 0 === Number( item.parent ) ).forEach( ( collection ) => {
+		const appendBranch = ( collection, parentList ) => {
 			const collectionId = Number( collection.id );
-			const children = state.collections.filter( ( child ) => Number( child.parent ) === collectionId );
+			const children = siblingCollections( collectionId );
 			const isCollapsed = state.collapsedCollections.has( collectionId );
 			const item = createElement( 'li', 'uplink-mbe-collection-item' );
 			item.classList.toggle( 'is-collapsed', isCollapsed );
@@ -1276,15 +1326,12 @@
 				const childList = createElement( 'ul', 'uplink-mbe-subcollection-list' );
 				childList.id = `uplink-mbe-subcollections-${ collectionId }`;
 				childList.hidden = isCollapsed;
-				children.forEach( ( child ) => {
-					const childItem = createElement( 'li', 'uplink-mbe-collection-item' );
-					childItem.append( collectionRow( child, false ) );
-					childList.append( childItem );
-				} );
+				children.forEach( ( child ) => appendBranch( child, childList ) );
 				item.append( childList );
 			}
-			list.append( item );
-		} );
+			parentList.append( item );
+		};
+		state.collections.filter( ( item ) => 0 === Number( item.parent ) ).forEach( ( collection ) => appendBranch( collection, list ) );
 		elements.tree.append( list );
 	}
 
@@ -1298,6 +1345,7 @@
 			[ 'missing_alt', config.strings.missingAlt, config.strings.missingAltDescription ],
 			[ 'missing_sizes', config.strings.missingSizes, config.strings.missingSizesDescription ],
 			[ 'oversized', config.strings.oversized, config.strings.oversizedDescription ],
+			[ 'suspected_duplicates', config.strings.suspectedDuplicates, config.strings.suspectedDuplicatesDescription ],
 			[ 'obsolete_format', config.strings.obsoleteFormat, config.strings.obsoleteFormatDescription ],
 			[ 'decorative', config.strings.decorative, config.strings.decorativeDescription ],
 			[ 'healthy', config.strings.healthy, config.strings.healthyDescription ],
@@ -1341,10 +1389,17 @@
 	}
 
 	async function setWorkspaceMode( mode ) {
-		state.mode = 'health' === mode ? 'health' : 'library';
+		const nextMode = 'health' === mode ? 'health' : 'library';
+		const modeChanged = state.mode !== nextMode;
+		state.mode = nextMode;
 		const healthMode = 'health' === state.mode;
 		state.filter = 'all';
 		state.collection = 0;
+		if ( modeChanged && state.search ) {
+			state.search = '';
+			elements.searchInput.value = '';
+			elements.searchStatus.textContent = '';
+		}
 		elements.libraryTab.setAttribute( 'aria-selected', String( ! healthMode ) );
 		elements.healthTab.setAttribute( 'aria-selected', String( healthMode ) );
 		elements.libraryNavigation.hidden = healthMode;
@@ -1417,7 +1472,7 @@
 
 		if ( config.canManage ) {
 			const actions = createElement( 'div', 'uplink-mbe-collection-actions' );
-			if ( ! collection.parent ) {
+			if ( collectionDepth( collection ) < Number( config.maxCollectionDepth || 2 ) - 1 ) {
 				const add = createElement( 'button', 'button-link', '+' );
 				add.type = 'button';
 				add.title = config.strings.newSubcollection;
@@ -1470,7 +1525,7 @@
 		placeholder.value = '';
 		elements.bulkCollection.append( placeholder );
 		state.collections.forEach( ( collection ) => {
-			const option = createElement( 'option', '', `${ collection.parent ? '— ' : '' }${ collection.name }` );
+			const option = createElement( 'option', '', collectionOptionLabel( collection ) );
 			option.value = String( collection.id );
 			elements.bulkCollection.append( option );
 		} );
@@ -1578,9 +1633,14 @@
 			card.setAttribute( 'aria-labelledby', title.id );
 			title.addEventListener( 'click', ( event ) => activateMedia( event, media, mediaIndex, title ) );
 			details.append( title );
+			if ( 'health' === state.mode && media.filename ) {
+				const filename = createElement( 'div', 'uplink-mbe-media-filename', media.filename );
+				filename.title = media.filename;
+				details.append( filename );
+			}
 			const metadata = createElement( 'div', 'uplink-mbe-media-card-meta' );
 			const metadataValues = {
-				filename: media.filename,
+				filename: 'health' === state.mode ? '' : media.filename,
 				author: media.author,
 				date: media.date,
 				mime: media.mime,
@@ -1813,8 +1873,8 @@
 		const top = createElement( 'option', '', config.strings.noParent );
 		top.value = '0';
 		elements.collectionParent.append( top );
-		state.collections.filter( ( item ) => 0 === item.parent && ( ! collection || item.id !== collection.id ) ).forEach( ( item ) => {
-			const option = createElement( 'option', '', item.name );
+		eligibleCollectionParents( collection ).forEach( ( item ) => {
+			const option = createElement( 'option', '', collectionOptionLabel( item ) );
 			option.value = String( item.id );
 			elements.collectionParent.append( option );
 		} );
@@ -1874,8 +1934,8 @@
 		const top = createElement( 'option', '', config.strings.noParent );
 		top.value = '0';
 		elements.bulkCollectionParent.append( top );
-		state.collections.filter( ( collection ) => ! collection.parent ).forEach( ( collection ) => {
-			const option = createElement( 'option', '', collection.name );
+		eligibleCollectionParents().forEach( ( collection ) => {
+			const option = createElement( 'option', '', collectionOptionLabel( collection ) );
 			option.value = String( collection.id );
 			elements.bulkCollectionParent.append( option );
 		} );
@@ -1887,7 +1947,7 @@
 			checkbox.type = 'checkbox';
 			checkbox.value = String( collection.id );
 			checkbox.addEventListener( 'change', updateCollectionManagerSelection );
-			label.append( checkbox, createElement( 'span', '', `${ collection.parent ? '— ' : '' }${ collection.name }` ), createElement( 'span', 'uplink-mbe-collection-count', String( collection.count ) ) );
+			label.append( checkbox, createElement( 'span', '', `${ '— '.repeat( collectionDepth( collection ) ) }${ collection.name }` ), createElement( 'span', 'uplink-mbe-collection-count', String( collection.count ) ) );
 			elements.collectionManagerList.append( label );
 		} );
 		elements.selectAllCollections.checked = false;
@@ -2111,11 +2171,11 @@
 			renderedCollectionIds.add( Number( collection.id ) );
 			return label;
 		};
-		state.collections.filter( ( collection ) => ! Number( collection.parent ) ).forEach( ( collection ) => {
+		const appendCollectionGroup = ( collection, container, isChild = false ) => {
 			const group = createElement( 'div', 'uplink-mbe-attachment-collection-group' );
-			const children = state.collections.filter( ( child ) => Number( child.parent ) === Number( collection.id ) );
+			const children = siblingCollections( collection.id );
 			group.classList.toggle( 'has-children', Boolean( children.length ) );
-			const parentOption = createCollectionOption( collection );
+			const parentOption = createCollectionOption( collection, isChild );
 			parentOption.classList.toggle( 'has-children', Boolean( children.length ) );
 			group.append( parentOption );
 			if ( children.length ) {
@@ -2123,10 +2183,13 @@
 				childOptions.setAttribute( 'role', 'group' );
 				childOptions.setAttribute( 'aria-label', `${ config.strings.subcollections }: ${ collection.name }` );
 				childOptions.append( createElement( 'span', 'uplink-mbe-attachment-collection-children-label', config.strings.subcollections ) );
-				children.forEach( ( child ) => childOptions.append( createCollectionOption( child, true ) ) );
+				children.forEach( ( child ) => appendCollectionGroup( child, childOptions, true ) );
 				group.append( childOptions );
 			}
-			elements.attachmentCollectionOptions.append( group );
+			container.append( group );
+		};
+		state.collections.filter( ( collection ) => ! Number( collection.parent ) ).forEach( ( collection ) => {
+			appendCollectionGroup( collection, elements.attachmentCollectionOptions );
 		} );
 		state.collections.filter( ( collection ) => ! renderedCollectionIds.has( Number( collection.id ) ) ).forEach( ( collection ) => {
 			const group = createElement( 'div', 'uplink-mbe-attachment-collection-group' );
@@ -2754,6 +2817,17 @@
 		let createdAttachmentChain = Promise.resolve();
 		frame.uplinkMbeManagerUpload = true;
 		frame.uplinkMbeUploadDestinationId = 'collection' === state.filter ? Number( state.collection ) || 0 : 0;
+		frame.uplinkMbeFinishSuccessfulUploadBatch = async ( ids ) => {
+			const completedIds = ( ids || frame.uplinkMbeCompletedUploadIds || [] ).map( Number ).filter( Boolean );
+			if ( ! completedIds.length || 'closed' === frame.uplinkMbeManagerUploadState ) return;
+
+			frame.uplinkMbeManagerUploadState = 'closed';
+			frame.close();
+			await loadState();
+			const attachment = await request( 'uplink_mbe_get_attachment', { attachment_id: completedIds[ 0 ] } );
+			openAttachmentModal( attachment, elements.upload );
+		};
+		frame.uplinkMbeRefreshUploadResults = () => loadState();
 		frame.uplinkMbeHandleCreatedAttachment = ( id ) => {
 			createdAttachmentChain = createdAttachmentChain.then( async () => {
 				const attachmentId = Number( id );
@@ -2761,25 +2835,25 @@
 				const destinationId = Number( frame.uplinkMbeUploadDestinationId ) || 0;
 
 				if ( destinationId ) {
-					await request( 'uplink_mbe_assign_media', {
-						media_ids: JSON.stringify( [ attachmentId ] ),
-						collection: destinationId,
-						mode: 'add',
-					} );
+					try {
+						await request( 'uplink_mbe_assign_media', {
+							media_ids: JSON.stringify( [ attachmentId ] ),
+							collection: destinationId,
+							mode: 'add',
+						} );
+					} catch ( error ) {
+						showNotice( error.message, 'error' );
+					}
 				}
 				frame.uplinkMbeCompletedUploadIds = frame.uplinkMbeCompletedUploadIds || [];
-				frame.uplinkMbeCompletedUploadIds.push( attachmentId );
+				if ( ! frame.uplinkMbeCompletedUploadIds.includes( attachmentId ) ) frame.uplinkMbeCompletedUploadIds.push( attachmentId );
+				if ( 'function' === typeof frame.uplinkMbeRecordUploadSuccess && await frame.uplinkMbeRecordUploadSuccess( attachmentId ) ) return;
+
+				// Imports from another media tab do not pass through the staged upload
+				// workspace. Keep their existing one-file completion behavior.
 				const expectedUploads = Number( frame.uplinkMbeStagedUploadCount ) || 1;
 				if ( frame.uplinkMbeCompletedUploadIds.length < expectedUploads ) return;
-
-				if ( 'closed' !== frame.uplinkMbeManagerUploadState ) {
-					frame.uplinkMbeManagerUploadState = 'closed';
-					frame.close();
-				}
-
-				await loadState();
-				const attachment = await request( 'uplink_mbe_get_attachment', { attachment_id: frame.uplinkMbeCompletedUploadIds[ 0 ] || attachmentId } );
-				openAttachmentModal( attachment, elements.upload );
+				await frame.uplinkMbeFinishSuccessfulUploadBatch( frame.uplinkMbeCompletedUploadIds );
 			} ).catch( ( error ) => showNotice( error.message, 'error' ) );
 			return createdAttachmentChain;
 		};
