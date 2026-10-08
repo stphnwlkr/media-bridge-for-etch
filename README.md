@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.2.11
+Stable tag: 2.2.12
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -174,6 +174,10 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.2.12 =
+
+Adds 16:9, 4:3, and 1:1 aspect-ratio choices to uniform grids in the Enhanced Manager and Etch Asset Manager.
+
 = 2.2.11 =
 
 Fixes top-level collection creation in the single and bulk collection tools.
@@ -279,6 +283,10 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.2.12 =
+
+* Adds remembered 16:9, 4:3, and 1:1 thumbnail aspect ratios to uniform grids in the Enhanced Manager and Etch Asset Manager.
 
 = 2.2.11 =
 

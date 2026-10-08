@@ -58,14 +58,27 @@
 	inset-block-start: calc(100% + var(--etch-space-sm));
 	inset-inline-end: 0;
 	display: grid;
-	grid-template-columns: 110px 42px;
-	align-items: center;
 	gap: var(--etch-space-sm);
 	padding: 8px;
 	background-color: var(--etch-neutral-dark);
 	border: 1px solid var(--etch-neutral-medium);
 	border-radius: var(--etch-border-radius);
 	box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+.asset-core .uplink-mbe-asset-size-row {
+	display: grid;
+	grid-template-columns: 110px 54px;
+	align-items: center;
+	gap: var(--etch-space-sm);
+}
+
+.asset-core .uplink-mbe-asset-ratio-row {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--etch-space-sm);
+	color: var(--e-foreground-color-muted);
+	font-size: 11px;
 }
 
 .asset-core .uplink-mbe-uniform-grid-size[hidden] {
@@ -76,6 +89,39 @@
 	inline-size: 110px;
 	margin: 0;
 	accent-color: var(--etch-accent);
+}
+
+.asset-core .uplink-mbe-asset-ratio-options {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	overflow: hidden;
+	border: 1px solid var(--etch-neutral-medium);
+	border-radius: var(--etch-border-radius);
+}
+
+.asset-core .uplink-mbe-asset-ratio-options button {
+	min-inline-size: 0;
+	padding: 5px 8px;
+	border: 0;
+	border-inline-start: 1px solid var(--etch-neutral-medium);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.asset-core .uplink-mbe-asset-ratio-options button:first-child {
+	border-inline-start: 0;
+}
+
+.asset-core .uplink-mbe-asset-ratio-options button[aria-pressed='true'] {
+	background-color: var(--etch-neutral-medium);
+	color: var(--e-foreground-color);
+	font-weight: 700;
+}
+
+.asset-core .uplink-mbe-asset-ratio-options button:disabled {
+	cursor: not-allowed;
 }
 
 .asset-core .uplink-mbe-uniform-grid-size output {
@@ -105,7 +151,7 @@
 .asset-core.uplink-mbe-uniform-grid .asset-grid-item {
 	inline-size: 100%;
 	block-size: auto;
-	aspect-ratio: 1;
+	aspect-ratio: var(--uplink-mbe-asset-tile-ratio, 1 / 1);
 	margin-block-end: 0;
 	background-color: var(--etch-neutral-dark);
 }
@@ -114,6 +160,6 @@
 .asset-core.uplink-mbe-uniform-grid .asset-grid-item__placeholder {
 	inline-size: 100%;
 	block-size: 100%;
-	aspect-ratio: 1;
+	aspect-ratio: var(--uplink-mbe-asset-tile-ratio, 1 / 1);
 	object-fit: cover;
 }

@@ -249,6 +249,55 @@ body.media_page_etch-collections #wpcontent {
 	margin-bottom: 14px;
 }
 
+.uplink-mbe-grid-ratio-control {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18px;
+	min-height: 38px;
+	margin-bottom: 8px;
+	color: var(--mbe-muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.uplink-mbe-grid-ratio-options {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	overflow: hidden;
+	border: 1px solid var(--mbe-border);
+	border-radius: 6px;
+}
+
+.uplink-mbe-grid-ratio-options button {
+	min-width: 48px;
+	padding: 6px 8px;
+	border: 0;
+	border-left: 1px solid var(--mbe-border);
+	background: var(--mbe-surface);
+	color: var(--mbe-muted);
+	font: inherit;
+	cursor: pointer;
+}
+
+.uplink-mbe-grid-ratio-options button:first-child {
+	border-left: 0;
+}
+
+.uplink-mbe-grid-ratio-options button[aria-pressed='true'] {
+	background: var(--mbe-accent);
+	color: var(--mbe-accent-icon);
+	font-weight: 700;
+}
+
+.uplink-mbe-grid-ratio-options button:disabled {
+	cursor: not-allowed;
+}
+
+.uplink-mbe-grid-ratio-control.is-disabled {
+	opacity: 0.55;
+}
+
 .uplink-mbe-display-toggle {
 	display: flex;
 	align-items: center;
@@ -2050,7 +2099,7 @@ body.media_page_etch-collections #wpfooter {
 	width: 100%;
 	padding: 0;
 	border: 0;
-	aspect-ratio: 4 / 3;
+	aspect-ratio: var(--mbe-card-ratio, 4 / 3);
 	background: var(--mbe-preview);
 	overflow: hidden;
 	cursor: pointer;

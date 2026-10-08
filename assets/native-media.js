@@ -23,6 +23,7 @@
 		grid: document.getElementById( 'uplink-mbe-media-grid' ),
 		gridSize: document.getElementById( 'uplink-mbe-grid-size' ),
 		gridSizeValue: document.getElementById( 'uplink-mbe-grid-size-value' ),
+		gridRatios: Array.from( document.querySelectorAll( '[data-grid-ratio]' ) ),
 		infoToggle: document.getElementById( 'uplink-mbe-info-toggle' ),
 		infoPopup: document.getElementById( 'uplink-mbe-info-popup' ),
 		pagination: document.getElementById( 'uplink-mbe-media-pagination' ),
@@ -538,6 +539,21 @@
 		}
 	}
 
+	function applyGridRatio( value, remember = true ) {
+		const ratio = [ '16/9', '4/3', '1/1' ].includes( value ) ? value : '4/3';
+		elements.wrap.style.setProperty( '--mbe-card-ratio', ratio.replace( '/', ' / ' ) );
+		elements.gridRatios.forEach( ( button ) => {
+			button.setAttribute( 'aria-pressed', button.dataset.gridRatio === ratio ? 'true' : 'false' );
+		} );
+		if ( remember ) {
+			try {
+				window.localStorage.setItem( 'uplinkMbeGridRatio', ratio );
+			} catch ( error ) {
+				// Storage can be unavailable in privacy-restricted browser sessions.
+			}
+		}
+	}
+
 	function closeInfoPopup( restoreFocus = false ) {
 		if ( elements.infoPopup.hidden ) {
 			return;
@@ -959,6 +975,10 @@
 		elements.masonryView.classList.toggle( 'is-active', 'masonry' === state.view );
 		elements.gridSize.disabled = 'list' === state.view;
 		elements.gridSize.closest( '.uplink-mbe-grid-size-control' )?.classList.toggle( 'is-disabled', 'list' === state.view );
+		elements.gridRatios.forEach( ( button ) => {
+			button.disabled = 'grid' !== state.view;
+		} );
+		elements.gridRatios[ 0 ]?.closest( '.uplink-mbe-grid-ratio-control' )?.classList.toggle( 'is-disabled', 'grid' !== state.view );
 		elements.displayToggles.forEach( ( toggle ) => {
 			toggle.checked = Boolean( state.display[ toggle.dataset.displayField ] );
 		} );
@@ -2730,6 +2750,9 @@
 		}
 	} );
 	elements.gridSize.addEventListener( 'input', () => applyGridSize( elements.gridSize.value ) );
+	elements.gridRatios.forEach( ( button ) => {
+		button.addEventListener( 'click', () => applyGridRatio( button.dataset.gridRatio ) );
+	} );
 	elements.infoToggle.addEventListener( 'click', toggleInfoPopup );
 	document.addEventListener( 'click', ( event ) => {
 		if ( ! elements.infoPopup.hidden && ! event.target.closest( '.uplink-mbe-native-title-group' ) ) {
@@ -2886,10 +2909,12 @@
 	}
 
 	let savedGridSize = 240;
+	let savedGridRatio = '4/3';
 	try {
 		savedGridSize = Number( window.localStorage.getItem( 'uplinkMbeGridSize' ) ) || 240;
+		savedGridRatio = window.localStorage.getItem( 'uplinkMbeGridRatio' ) || '4/3';
 	} catch ( error ) {
-		// Use the 240px default when browser storage is unavailable.
+		// Use the default size and ratio when browser storage is unavailable.
 	}
 	try {
 		const savedView = window.localStorage.getItem( 'uplinkMbeView' );
@@ -2910,6 +2935,7 @@
 		// Keep the default display fields when saved preferences are invalid.
 	}
 	applyGridSize( savedGridSize, false );
+	applyGridRatio( savedGridRatio, false );
 	applySavedAppearance();
 	colorSchemeQuery?.addEventListener?.( 'change', () => {
 		if ( 'auto' === savedAppearance && ( ! elements.appearancePanel || elements.appearancePanel.hidden ) ) {

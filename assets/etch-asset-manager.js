@@ -3,6 +3,7 @@
 
 	const storageKey = 'uplink-mbe-etch-asset-uniform-grid';
 	const sizeStorageKey = 'uplink-mbe-etch-asset-thumbnail-width';
+	const ratioStorageKey = 'uplink-mbe-etch-asset-thumbnail-ratio';
 	const originStorageKey = 'uplink-mbe-etch-asset-origin-view';
 	const activeClass = 'uplink-mbe-uniform-grid';
 	const buttonClass = 'uplink-mbe-uniform-grid-toggle';
@@ -12,6 +13,7 @@
 	const config = window.uplinkMbeEtchAssetManager || {};
 	const label = config.uniformGridLabel || 'Uniform grid';
 	const sizeLabel = config.thumbnailWidthLabel || 'Thumbnail width';
+	const ratioLabel = config.thumbnailRatioLabel || 'Aspect ratio';
 	let observer;
 	let syncing = false;
 	let pendingUniform = false;
@@ -74,6 +76,16 @@
 		return Math.max( 180, Math.min( 400, Math.round( value / 10 ) * 10 ) );
 	}
 
+	function thumbnailRatio() {
+		let value = '1/1';
+		try {
+			value = window.localStorage.getItem( ratioStorageKey ) || value;
+		} catch ( error ) {
+			// Use the default when browser storage is unavailable.
+		}
+		return [ '16/9', '4/3', '1/1' ].includes( value ) ? value : '1/1';
+	}
+
 	function applyThumbnailWidth( core, control, value, remember ) {
 		const size = Math.max( 180, Math.min( 400, Math.round( Number( value ) / 10 ) * 10 ) );
 		const input = control.querySelector( 'input' );
@@ -94,6 +106,23 @@
 				window.localStorage.setItem( sizeStorageKey, String( size ) );
 			} catch ( error ) {
 				// The size still applies when browser storage is unavailable.
+			}
+		}
+	}
+
+	function applyThumbnailRatio( core, control, value, remember ) {
+		const ratio = [ '16/9', '4/3', '1/1' ].includes( value ) ? value : '1/1';
+		core.querySelectorAll( '.asset-grid' ).forEach( function ( grid ) {
+			grid.style.setProperty( '--uplink-mbe-asset-tile-ratio', ratio.replace( '/', ' / ' ) );
+		} );
+		control.querySelectorAll( '[data-ratio]' ).forEach( function ( button ) {
+			button.setAttribute( 'aria-pressed', button.dataset.ratio === ratio ? 'true' : 'false' );
+		} );
+		if ( remember ) {
+			try {
+				window.localStorage.setItem( ratioStorageKey, ratio );
+			} catch ( error ) {
+				// The ratio still applies when browser storage is unavailable.
 			}
 		}
 	}
@@ -122,6 +151,9 @@
 			setSizePopover( widget, false );
 		}
 		control.querySelector( 'input' ).disabled = ! canResize;
+		control.querySelectorAll( '[data-ratio]' ).forEach( function ( button ) {
+			button.disabled = ! canResize;
+		} );
 	}
 
 	function setSizePopover( widget, open ) {
@@ -166,6 +198,10 @@
 
 	function makeSizeControl( core ) {
 		const control = document.createElement( 'div' );
+		const sizeRow = document.createElement( 'div' );
+		const ratioRow = document.createElement( 'div' );
+		const ratioText = document.createElement( 'span' );
+		const ratioOptions = document.createElement( 'div' );
 		const input = document.createElement( 'input' );
 		const output = document.createElement( 'output' );
 		control.className = sizeControlClass;
@@ -179,8 +215,28 @@
 		input.addEventListener( 'input', function () {
 			applyThumbnailWidth( core, control, input.value, true );
 		} );
-		control.append( input, output );
+		sizeRow.className = 'uplink-mbe-asset-size-row';
+		sizeRow.append( input, output );
+		ratioRow.className = 'uplink-mbe-asset-ratio-row';
+		ratioText.textContent = ratioLabel;
+		ratioOptions.className = 'uplink-mbe-asset-ratio-options';
+		ratioOptions.setAttribute( 'role', 'group' );
+		ratioOptions.setAttribute( 'aria-label', ratioLabel );
+		[ '16/9', '4/3', '1/1' ].forEach( function ( ratio ) {
+			const button = document.createElement( 'button' );
+			button.type = 'button';
+			button.dataset.ratio = ratio;
+			button.setAttribute( 'aria-pressed', 'false' );
+			button.textContent = ratio.replace( '/', ':' );
+			button.addEventListener( 'click', function () {
+				applyThumbnailRatio( core, control, ratio, true );
+			} );
+			ratioOptions.append( button );
+		} );
+		ratioRow.append( ratioText, ratioOptions );
+		control.append( sizeRow, ratioRow );
 		applyThumbnailWidth( core, control, thumbnailWidth(), false );
+		applyThumbnailRatio( core, control, thumbnailRatio(), false );
 		return control;
 	}
 
@@ -307,6 +363,7 @@
 
 		if ( sizeControl ) {
 			applyThumbnailWidth( core, sizeControl, thumbnailWidth(), false );
+			applyThumbnailRatio( core, sizeControl, thumbnailRatio(), false );
 			syncSizeControl( core, sizeControl );
 		}
 		setActive( core, button, pendingUniform || preference() );

@@ -42,6 +42,7 @@ final class Etch_Asset_Manager {
 			array(
 				'uniformGridLabel'    => __( 'Uniform grid', 'media-bridge-for-etch' ),
 				'thumbnailWidthLabel' => __( 'Thumbnail width', 'media-bridge-for-etch' ),
+				'thumbnailRatioLabel' => __( 'Aspect ratio', 'media-bridge-for-etch' ),
 			)
 		);
 	}
