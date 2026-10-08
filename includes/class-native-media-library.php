@@ -2847,7 +2847,7 @@ final class Native_Media_Library {
 	}
 
 	private function validate_parent( int $parent, int $term_id = 0 ): string {
-		if ( $parent === $term_id ) {
+		if ( $term_id && $parent === $term_id ) {
 			return __( 'A collection cannot be its own parent.', 'media-bridge-for-etch' );
 		}
 
