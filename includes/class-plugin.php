@@ -70,6 +70,7 @@ final class Plugin {
 		if ( ! empty( self::settings()['exif_dynamic_data'] ) ) {
 			new Etch_Dynamic_Data();
 		}
+		new Etch_Asset_Manager();
 		new Native_Media_Library( $this->providers['etch'], is_admin() );
 		add_action( 'init', array( $this, 'boot' ), 100 );
 		if ( is_admin() ) {
@@ -194,6 +195,7 @@ final class Plugin {
 			'manager_label'    => 'Etch Collections',
 			'default_media_screen' => 0,
 			'native_media_collections' => 1,
+			'etch_asset_manager_controls' => 1,
 			'collection_gallery' => 1,
 			'exif_dynamic_data' => 1,
 			'exif_gps'         => 0,

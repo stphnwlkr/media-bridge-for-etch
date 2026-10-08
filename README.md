@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.2.9
+Stable tag: 2.2.10
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -24,6 +24,8 @@ WordPress 7.0 and newer also exposes the manager and Media Bridge settings throu
 Administrators who choose the Enhanced Media Manager can change its label. The default remains Etch Collections. The custom name is used in the Media menu, manager title, information popup, WordPress media-selection tab, and Command Palette. Searching the Command Palette for Etch continues to find the manager and Media Bridge settings, even when the manager uses a custom name.
 
 The Media Library experience setting offers two exclusive choices in Etch-only mode. WordPress Media Library keeps the native screens and can add Etch Collection tools to them. Enhanced Media Manager replaces the Media screen and WordPress media-selection dialogs with the custom-labeled manager and its inserter.
+
+In the Etch builder Asset Manager, Media Bridge adds a uniform square-grid view alongside Etch's list and masonry views. Uniform Grid includes a remembered thumbnail-width control using the same range as the Enhanced Manager.
 
 Optional providers:
 
@@ -172,6 +174,10 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.2.10 =
+
+Adds an optional uniform-grid view with thumbnail resizing to the Etch builder Asset Manager. It is enabled by default.
+
 = 2.2.9 =
 
 Fixes Site Icon and Site Logo selection in the WordPress Appearance editor when the Enhanced Manager is active.
@@ -269,6 +275,10 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.2.10 =
+
+* Adds an optional uniform square-grid with remembered thumbnail resizing to the Etch builder Asset Manager, enabled by default.
 
 = 2.2.9 =
 

@@ -77,6 +77,7 @@ final class Admin {
 			'manager_label'    => $manager_label,
 			'default_media_screen' => $default_media_screen,
 			'native_media_collections' => $flag( 'native_media_collections' ),
+			'etch_asset_manager_controls' => $flag( 'etch_asset_manager_controls' ),
 			'collection_gallery' => $flag( 'collection_gallery' ),
 			'exif_dynamic_data' => $flag( 'exif_dynamic_data' ),
 			'exif_gps'         => $flag( 'exif_gps' ),
@@ -269,6 +270,14 @@ final class Admin {
 							<p class="description uplink-mbe-warning"><?php esc_html_e( 'Disabled by default. When enabled, deleting a mapped folder deletes its counterpart.', 'media-bridge-for-etch' ); ?></p>
 						</section>
 					<?php endif; ?>
+
+					<section class="uplink-mbe-card">
+						<h2><?php esc_html_e( 'Etch Asset Manager', 'media-bridge-for-etch' ); ?></h2>
+						<p><?php esc_html_e( 'Choose whether Media Bridge adds its layout and thumbnail controls to the Etch builder Asset Manager.', 'media-bridge-for-etch' ); ?></p>
+						<input type="hidden" name="uplink_mbe_settings[etch_asset_manager_controls]" value="0">
+						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[etch_asset_manager_controls]" value="1" <?php checked( $settings['etch_asset_manager_controls'] ); ?>><span><?php esc_html_e( 'Enable Uniform Grid with thumbnail resizing', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description"><?php esc_html_e( 'Enabled by default. Thumbnail resizing applies only to Uniform Grid. Turn this off to use only Etch’s built-in Asset Manager layouts and controls.', 'media-bridge-for-etch' ); ?></p>
+					</section>
 				</div>
 
 				<div class="uplink-mbe-sidebar">
