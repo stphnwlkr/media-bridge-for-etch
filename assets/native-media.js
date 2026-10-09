@@ -104,6 +104,9 @@
 		attachmentTitleInput: document.getElementById( 'uplink-mbe-attachment-title-input' ),
 		attachmentPosition: document.getElementById( 'uplink-mbe-attachment-position' ),
 		attachmentNotice: document.getElementById( 'uplink-mbe-attachment-notice' ),
+		attachmentFullPath: document.getElementById( 'uplink-mbe-attachment-full-path' ),
+		attachmentCopyFull: document.getElementById( 'uplink-mbe-attachment-copy-full' ),
+		attachmentReplace: document.getElementById( 'uplink-mbe-attachment-replace' ),
 		attachmentPath: document.getElementById( 'uplink-mbe-attachment-path' ),
 		attachmentCopy: document.getElementById( 'uplink-mbe-attachment-copy' ),
 		attachmentType: document.getElementById( 'uplink-mbe-attachment-type' ),
@@ -146,6 +149,7 @@
 	let attachmentTrigger = null;
 	let currentAttachment = null;
 	let currentCompatSnapshot = '';
+	let attachmentSaving = false;
 	let attachmentCompatGeneration = 0;
 	let attachmentNavigationBusy = false;
 	let infiniteLoading = false;
@@ -2272,11 +2276,13 @@
 			return;
 		}
 		elements.attachmentCompatibilityForm.innerHTML = media.compat?.html || '';
+		elements.attachmentCompatibilityForm.querySelector( '[data-mbe-replace-id]' )?.closest( 'tr' )?.remove();
 		elements.attachmentCompatibility.hidden = ! elements.attachmentCompatibilityForm.childElementCount;
 		if ( ! elements.attachmentCompatibility.hidden && window.jQuery && window.rwmb ) {
 			window.jQuery( document ).trigger( 'mb_ready' );
 		}
 		currentCompatSnapshot = compatibilitySnapshot();
+		updateAttachmentSaveState();
 	}
 
 	async function loadAttachmentCompatibility( media ) {
@@ -2324,6 +2330,17 @@
 		}
 	}
 
+	document.addEventListener( 'uplink-mbe-file-replaced', async ( event ) => {
+		try {
+			await loadState();
+			if ( currentAttachment?.id === event.detail.id ) {
+				const media = await request( 'uplink_mbe_get_attachment', { attachment_id: event.detail.id } );
+				media.url += `${ media.url.includes( '?' ) ? '&' : '?' }mbe=${ Date.now() }`;
+				showAttachment( media );
+			}
+		} catch ( error ) { showToast( error.message, 'error' ); }
+	} );
+
 	function showAttachment( media ) {
 		currentAttachment = media;
 		clearAttachmentNotice();
@@ -2340,6 +2357,8 @@
 		elements.attachmentTitleInput.value = media.title || '';
 		elements.attachmentFilename.textContent = media.filename || '—';
 		elements.attachmentPath.textContent = media.filePath || media.filename;
+		elements.attachmentFullPath.textContent = media.fullFilePath || media.url || '';
+		elements.attachmentReplace.hidden = ! media.canEdit || ! window.uplinkMbeReplacement;
 		elements.attachmentType.textContent = media.mime || media.fileType || '—';
 		elements.attachmentSize.textContent = media.fileSize || '—';
 		elements.attachmentAuthor.textContent = media.author || '—';
@@ -2432,6 +2451,7 @@
 		}
 
 		elements.attachmentDelete.hidden = ! media.canDelete;
+		updateAttachmentSaveState();
 		updateAttachmentNavigation();
 	}
 
@@ -2582,6 +2602,10 @@
 		closeAttachmentModal();
 	}
 
+	function updateAttachmentSaveState() {
+		elements.attachmentSaveAlt.disabled = attachmentSaving || ! attachmentIsDirty();
+	}
+
 	function attachmentIsDirty() {
 		const selectedCollections = Array.from( elements.attachmentCollectionOptions.querySelectorAll( 'input:checked' ) ).map( ( input ) => Number( input.value ) ).sort( ( a, b ) => a - b );
 		const currentCollections = ( currentAttachment?.collections || [] ).map( Number ).sort( ( a, b ) => a - b );
@@ -2612,12 +2636,17 @@
 			throw new Error( config.strings.error );
 		}
 		currentCompatSnapshot = compatibilitySnapshot();
+		updateAttachmentSaveState();
 	}
 
 	async function saveAttachmentAlt( announce = true ) {
 		if ( ! currentAttachment ) {
 			return false;
 		}
+		if ( attachmentSaving ) return false;
+		if ( ! attachmentIsDirty() ) return true;
+		attachmentSaving = true;
+		updateAttachmentSaveState();
 		try {
 			const collections = Array.from( elements.attachmentCollectionOptions.querySelectorAll( 'input:checked' ) ).map( ( input ) => Number( input.value ) );
 			const data = await request( 'uplink_mbe_update_attachment', {
@@ -2644,12 +2673,15 @@
 		} catch ( error ) {
 			showAttachmentNotice( error.message, 'error' );
 			return false;
+		} finally {
+			attachmentSaving = false;
+			updateAttachmentSaveState();
 		}
 	}
 
-	async function copyAttachmentPath() {
+	async function copyAttachmentPath( full = false ) {
 		try {
-			await navigator.clipboard.writeText( elements.attachmentPath.textContent );
+			await navigator.clipboard.writeText( ( full ? elements.attachmentFullPath : elements.attachmentPath ).textContent );
 			showAttachmentNotice( config.strings.copied );
 		} catch ( error ) {
 			showAttachmentNotice( config.strings.error, 'error' );
@@ -2935,7 +2967,9 @@
 		updateCollectionManagerSelection();
 	} );
 	elements.collectionForm.addEventListener( 'submit', saveCollection );
-	elements.attachmentSaveAlt.addEventListener( 'click', saveAttachmentAlt );
+	elements.attachmentSaveAlt.addEventListener( 'click', () => saveAttachmentAlt() );
+	elements.attachmentModal.addEventListener( 'input', updateAttachmentSaveState );
+	elements.attachmentModal.addEventListener( 'change', updateAttachmentSaveState );
 	elements.attachmentDecorative.addEventListener( 'change', () => {
 		elements.attachmentAlt.disabled = elements.attachmentDecorative.checked;
 		if ( elements.attachmentDecorative.checked ) {
@@ -2959,7 +2993,15 @@
 			closeAppearancePanel( false );
 		}
 	} );
-	elements.attachmentCopy.addEventListener( 'click', copyAttachmentPath );
+	elements.attachmentCopy.addEventListener( 'click', () => copyAttachmentPath() );
+	elements.attachmentCopyFull.addEventListener( 'click', () => copyAttachmentPath( true ) );
+	elements.attachmentReplace.addEventListener( 'click', async () => {
+		if ( ! currentAttachment || ! await saveAttachmentAlt( false ) ) return;
+		const id = currentAttachment.id;
+		if ( await window.uplinkMbeReplaceFile( currentAttachment ) ) {
+			document.dispatchEvent( new CustomEvent( 'uplink-mbe-file-replaced', { detail: { id } } ) );
+		}
+	} );
 	elements.attachmentDelete.addEventListener( 'click', () => currentAttachment && deleteMedia( [ currentAttachment.id ], true ) );
 	elements.attachmentPrevious.addEventListener( 'click', () => navigateAttachment( -1 ) );
 	elements.attachmentNext.addEventListener( 'click', () => navigateAttachment( 1 ) );

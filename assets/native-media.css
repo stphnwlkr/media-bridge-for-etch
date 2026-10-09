@@ -4134,3 +4134,47 @@ body.uplink-mbe-modal-open {
 }
 
 .uplink-mbe-media-drop-marker.is-vertical.is-label-left .uplink-mbe-media-drop-label { left: auto; right: 12px; }
+
+.uplink-mbe-attachment-actions:has(#uplink-mbe-attachment-replace:not([hidden])) {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.uplink-mbe-attachment-actions:has(#uplink-mbe-attachment-edit[hidden]):has(#uplink-mbe-attachment-replace:not([hidden])) {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 700px) {
+	.uplink-mbe-attachment-actions:has(#uplink-mbe-attachment-replace:not([hidden])) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* Wrap whole actions onto another row, never their labels. */
+.uplink-mbe-attachment-inspector .uplink-mbe-attachment-actions,
+.uplink-mbe-attachment-actions {
+	display: flex;
+	flex-wrap: wrap;
+}
+.uplink-mbe-attachment-actions .button {
+	flex: 1 1 auto;
+	width: auto;
+	min-width: max-content;
+	white-space: nowrap;
+}
+
+.uplink-mbe-action-icon {
+	width: 20px;
+	height: 20px;
+	flex: 0 0 20px;
+	margin-inline-end: 7px;
+	color: inherit;
+}
+
+/* Preserve the primary action color while clearly showing the inactive state. */
+#uplink-mbe-attachment-save-alt:disabled {
+	background: var(--wp-admin-theme-color, #2271b1) !important;
+	border-color: var(--wp-admin-theme-color, #2271b1) !important;
+	color: #fff !important;
+	opacity: .6;
+	box-shadow: none !important;
+	text-shadow: none !important;
+	cursor: default;
+}

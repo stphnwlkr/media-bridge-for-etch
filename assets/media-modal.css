@@ -1,4 +1,5 @@
-.uplink-mbe-modal-browser {
+.uplink-mbe-modal-browser,
+.uplink-mbe-replace-dialog {
 	--mbe-modal-bg: #f6f7f7;
 	--mbe-modal-surface: #fff;
 	--mbe-modal-card: #fff;
@@ -41,7 +42,8 @@
 	overflow: hidden;
 }
 
-.uplink-mbe-modal-browser.uplink-mbe-theme-dark {
+.uplink-mbe-modal-browser.uplink-mbe-theme-dark,
+.uplink-mbe-replace-dialog.uplink-mbe-theme-dark {
 	--mbe-modal-bg: #171a1d;
 	--mbe-modal-surface: #23272b;
 	--mbe-modal-card: #23272b;
@@ -305,12 +307,12 @@
 	background: var(--mbe-modal-bg);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-workspace {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace {
 	position: absolute;
 	top: 20px;
-	right: max(20px, calc((100% - 920px) / 2));
+	right: max(20px, calc((100% - 90vw) / 2));
 	bottom: 20px;
-	left: max(20px, calc((100% - 920px) / 2));
+	left: max(20px, calc((100% - 90vw) / 2));
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr) auto;
 	box-sizing: border-box;
@@ -322,7 +324,7 @@
 	text-align: left;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-header {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header {
 	position: relative;
 	z-index: 2;
 	display: flex;
@@ -334,28 +336,28 @@
 	background: var(--mbe-modal-surface);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-header h2 {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header h2 {
 	margin: 0;
 	color: var(--mbe-modal-text);
 	font-size: 24px;
 	line-height: 1.25;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-header p {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header p {
 	margin: 6px 0 0;
 	color: var(--mbe-modal-muted);
 	font-size: 14px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-header-content {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header-content {
 	min-width: 0;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-header .uplink-mbe-upload-keep {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header .uplink-mbe-upload-keep {
 	margin-top: 12px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-max {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-max {
 	flex: 0 0 auto;
 	padding: 4px 10px;
 	border: 1px solid var(--mbe-modal-border);
@@ -364,12 +366,12 @@
 	font-size: 13px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-body {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-body {
 	overflow-y: auto;
 	padding: 24px 28px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-destination-heading {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-destination-heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -377,7 +379,7 @@
 	margin-bottom: 8px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-destination-heading label {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-destination-heading label {
 	color: var(--mbe-modal-muted);
 	font-size: 12px;
 	font-weight: 700;
@@ -385,7 +387,7 @@
 	text-transform: uppercase;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-new-collection {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-new-collection {
 	padding: 2px 0;
 	border: 0;
 	background: transparent;
@@ -394,7 +396,7 @@
 	cursor: pointer;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-destination-control {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-destination-control {
 	position: relative;
 	display: grid;
 	grid-template-columns: 44px minmax(0, 1fr);
@@ -405,7 +407,7 @@
 	background: var(--mbe-modal-control);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-destination-control::after {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-destination-control::after {
 	position: absolute;
 	top: 50%;
 	right: 18px;
@@ -418,7 +420,7 @@
 	transform: translateY(-70%) rotate(45deg);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-folder-icon {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-folder-icon {
 	display: grid;
 	width: 32px;
 	height: 32px;
@@ -429,10 +431,10 @@
 	color: var(--mbe-modal-accent);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-folder-icon svg,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-drop-icon svg,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file-icon svg,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-remove svg {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-folder-icon svg,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-drop-icon svg,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file-icon svg,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-remove svg {
 	width: 22px;
 	height: 22px;
 	fill: none;
@@ -442,7 +444,7 @@
 	stroke-width: 1.8;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-destination {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-destination {
 	appearance: none;
 	width: 100%;
 	max-width: none;
@@ -456,7 +458,7 @@
 	box-shadow: none;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 	align-items: end;
@@ -469,12 +471,12 @@
 	background: var(--mbe-modal-bg);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form[hidden] {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form[hidden] {
 	display: none;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form label,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form label > span {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form label,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form label > span {
 	display: grid;
 	gap: 6px;
 	color: var(--mbe-modal-muted);
@@ -482,7 +484,7 @@
 	font-weight: 600;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form :is(input, select) {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form :is(input, select) {
 	width: 100%;
 	max-width: none;
 	min-height: 40px;
@@ -492,18 +494,18 @@
 	color: var(--mbe-modal-text);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-actions {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-actions {
 	display: flex;
 	gap: 8px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-status {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-status {
 	grid-column: 1 / -1;
 	margin: 0;
 	color: var(--mbe-modal-muted);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-dropzone {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone {
 	position: relative;
 	display: flex;
 	min-height: 230px;
@@ -519,12 +521,12 @@
 	transition: border-color .15s ease, background-color .15s ease;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-dropzone.is-dragging {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone.is-dragging {
 	border-color: var(--mbe-modal-accent);
 	background: var(--mbe-modal-accent-soft);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-input {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-input {
 	position: absolute !important;
 	width: 1px !important;
 	height: 1px !important;
@@ -534,7 +536,7 @@
 	white-space: nowrap !important;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-drop-icon {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-drop-icon {
 	display: grid;
 	width: 52px;
 	height: 52px;
@@ -544,20 +546,20 @@
 	color: var(--mbe-modal-accent);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-dropzone > strong {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone > strong {
 	font-size: 19px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-limits {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-limits {
 	color: var(--mbe-modal-muted);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-choose {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-choose {
 	margin-top: 8px;
 	cursor: pointer;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-queue-heading {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-queue-heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -565,27 +567,27 @@
 	margin-top: 20px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-summary {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-summary {
 	margin: 0;
 	color: var(--mbe-modal-muted);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-clear,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-remove,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-help {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-clear,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-remove,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-help {
 	border: 0;
 	background: transparent;
 	color: var(--mbe-modal-text);
 	cursor: pointer;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-list {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-list {
 	display: grid;
 	gap: 10px;
 	margin-top: 12px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file {
 	display: grid;
 	grid-template-columns: 46px minmax(0, 1fr) 40px;
 	align-items: center;
@@ -597,12 +599,12 @@
 	background: var(--mbe-modal-control);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-invalid,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-error {
 	border-color: var(--mbe-modal-danger, #d63638);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file-icon {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file-icon {
 	display: grid;
 	width: 42px;
 	height: 42px;
@@ -612,14 +614,14 @@
 	color: var(--mbe-modal-muted);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file-details {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file-details {
 	display: flex;
 	min-width: 0;
 	flex-direction: column;
 	gap: 3px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file-details strong {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file-details strong {
 	overflow: hidden;
 	color: var(--mbe-modal-text);
 	font-size: 15px;
@@ -627,19 +629,19 @@
 	white-space: nowrap;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file-details span {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file-details span {
 	color: var(--mbe-modal-muted);
 	font-size: 13px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-file-details span,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-remove,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error .uplink-mbe-upload-file-details span,
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-file.is-error .uplink-mbe-upload-remove {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-file-details span,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-invalid .uplink-mbe-upload-remove,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-error .uplink-mbe-upload-file-details span,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file.is-error .uplink-mbe-upload-remove {
 	color: var(--mbe-modal-danger, #d63638);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-remove {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-remove {
 	display: grid;
 	width: 36px;
 	height: 36px;
@@ -647,7 +649,7 @@
 	place-items: center;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-footer {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer {
 	display: flex;
 	min-height: 72px;
 	align-items: center;
@@ -658,7 +660,7 @@
 	background: var(--mbe-modal-surface);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-progress {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-progress {
 	display: grid;
 	min-width: 180px;
 	margin-right: auto;
@@ -667,11 +669,11 @@
 	color: var(--mbe-modal-muted);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-progress[hidden] {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-progress[hidden] {
 	display: none;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-progress-track {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-progress-track {
 	display: block;
 	width: min(360px, 100%);
 	height: 7px;
@@ -680,7 +682,7 @@
 	background: var(--mbe-modal-control);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-progress-value {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-progress-value {
 	display: block;
 	width: 0;
 	height: 100%;
@@ -689,33 +691,33 @@
 	transition: width .15s ease;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-workspace.is-uploading .uplink-mbe-upload-body {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace.is-uploading .uplink-mbe-upload-body {
 	opacity: .72;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep[hidden] {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep[hidden] {
 	display: none;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep label {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep label {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	cursor: pointer;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep input {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep input {
 	position: absolute;
 	opacity: 0;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-switch {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-switch {
 	position: relative;
 	width: 38px;
 	height: 22px;
@@ -724,7 +726,7 @@
 	transition: background-color .15s ease;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-switch::after {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-switch::after {
 	position: absolute;
 	top: 3px;
 	left: 3px;
@@ -736,21 +738,21 @@
 	transition: transform .15s ease;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep input:checked + .uplink-mbe-upload-switch {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep input:checked + .uplink-mbe-upload-switch {
 	background: var(--mbe-modal-accent);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep input:checked + .uplink-mbe-upload-switch::after {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep input:checked + .uplink-mbe-upload-switch::after {
 	background: var(--mbe-modal-accent-icon);
 	transform: translateX(16px);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-keep input:focus-visible + .uplink-mbe-upload-switch {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-keep input:focus-visible + .uplink-mbe-upload-switch {
 	outline: 2px solid var(--mbe-modal-accent);
 	outline-offset: 2px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-help {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-help {
 	width: 20px;
 	height: 20px;
 	padding: 0;
@@ -762,12 +764,12 @@
 	line-height: 18px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-help-wrap {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-help-wrap {
 	position: relative;
 	display: inline-flex;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-help-popover {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-help-popover {
 	position: absolute;
 	top: calc(100% + 10px);
 	bottom: auto;
@@ -787,82 +789,82 @@
 	transform: translateX(-50%);
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-help-popover[hidden] {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-help-popover[hidden] {
 	display: none;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-actions {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-actions {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 }
 
-.media-modal.uplink-mbe-frame .uplink-mbe-upload-actions .button {
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-actions .button {
 	min-width: 100px;
 }
 
 @media (max-width: 700px) {
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-workspace {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace {
 		top: 10px;
 		right: 10px;
 		bottom: 10px;
 		left: 10px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-header,
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-body,
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-footer {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header,
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-body,
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer {
 		padding-right: 16px;
 		padding-left: 16px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-collection-form {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-collection-form {
 		grid-template-columns: 1fr;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-header p {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header p {
 		font-size: 13px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-dropzone {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone {
 		min-height: 190px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-footer {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer {
 		flex-wrap: wrap;
 		align-items: stretch;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-progress {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-progress {
 		flex-basis: 100%;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-actions .button {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-actions .button {
 		flex: 1;
 	}
 }
 
 @media (max-height: 820px) {
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-workspace {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace {
 		top: 12px;
 		bottom: 12px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-header {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-header {
 		padding-top: 14px;
 		padding-bottom: 14px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-body {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-body {
 		padding-top: 16px;
 		padding-bottom: 16px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-dropzone {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone {
 		min-height: 170px;
 	}
 
-	.media-modal.uplink-mbe-frame .uplink-mbe-upload-footer {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer {
 		min-height: 60px;
 	}
 }
@@ -2482,3 +2484,149 @@ button.uplink-mbe-modal-collection-toggle:focus-visible {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='18' viewBox='0 0 14 18' fill='none' stroke='%23b2b8bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 7 4-4 4 4M3 11l4 4 4-4'/%3E%3C/svg%3E") !important;
 	}
 }
+
+.uplink-mbe-upload-rename { display: grid; gap: 6px; margin-top: 10px; }
+.uplink-mbe-upload-rename-control { display: flex; align-items: center; gap: 8px; }
+.uplink-mbe-upload-rename-control input { flex: 1; min-width: 0; width: 100%; }
+.uplink-mbe-upload-rename-control > span { flex: 0 0 auto; opacity: .8; }
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions {
+	display: flex;
+	flex-wrap: wrap;
+}
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-actions .button {
+	flex: 1 1 auto;
+	width: auto;
+	min-width: max-content;
+	white-space: nowrap;
+}
+.uplink-mbe-modal-inspector-data-list dd .button-link {
+	margin-inline-start: .75em;
+	white-space: nowrap;
+}
+
+.uplink-mbe-action-icon {
+	width: 20px;
+	height: 20px;
+	flex: 0 0 20px;
+	margin-inline-end: 7px;
+	color: inherit;
+}
+
+/* Show the complete queued image, including the result of pre-upload optimization. */
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-preview {
+	grid-column: 1 / -1;
+	display: block;
+	width: 100%;
+	height: 220px;
+	object-fit: contain;
+	border-radius: 5px;
+	background: var(--mbe-modal-bg, #f6f7f7);
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-image-preview .uplink-mbe-upload-file-icon {
+	display: none;
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-image-preview .uplink-mbe-upload-file-details {
+	grid-column: 1 / 3;
+}
+@media (max-width: 480px) {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-preview {
+		height: 160px;
+	}
+}
+
+.wp-core-ui .media-modal.uplink-mbe-frame .uplink-mbe-modal-inspector-save:disabled {
+	background: var(--mbe-modal-control) !important;
+	border-color: var(--mbe-modal-border) !important;
+	color: var(--mbe-modal-text) !important;
+	opacity: .6;
+	box-shadow: none !important;
+	text-shadow: none !important;
+	cursor: default;
+}
+
+/* A compact queue and one editor keep batches manageable inside the dialog. */
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-list.has-queue {
+	display: grid;
+	grid-template-columns: minmax(180px, .8fr) minmax(0, 1.5fr);
+	gap: 16px;
+	align-items: start;
+}
+.uplink-mbe-upload-file-nav {
+	min-width: 0;
+	overflow-x: hidden;
+	display: grid;
+	gap: 6px;
+	max-height: 440px;
+	overflow-y: auto;
+}
+.uplink-mbe-upload-file-editor { min-width: 0; }
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-file[hidden] { display: none; }
+.uplink-mbe-upload-file-select {
+	box-sizing: border-box;
+	min-width: 0;
+	white-space: normal;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	width: 100%;
+	text-align: start;
+	border: 1px solid var(--mbe-modal-border);
+	border-radius: 6px;
+	background: var(--mbe-modal-control);
+	color: var(--mbe-modal-text);
+	cursor: pointer;
+}
+.uplink-mbe-upload-file-select[aria-pressed="true"] {
+	border-color: var(--mbe-modal-accent);
+	background: var(--mbe-modal-accent-soft);
+}
+.uplink-mbe-upload-file-select:focus-visible { outline: 2px solid var(--mbe-modal-accent); outline-offset: -2px; }
+.uplink-mbe-upload-file-select > img,
+.uplink-mbe-upload-file-select > span:first-child {
+	width: 44px;
+	height: 44px;
+	object-fit: contain;
+	flex: 0 0 44px;
+}
+.uplink-mbe-upload-file-select svg { width: 30px; height: 30px; }
+.uplink-mbe-upload-file-select > span:last-child { min-width: 0; }
+.uplink-mbe-upload-file-select strong { display: block; overflow-wrap: anywhere; font-size: 13px; }
+.uplink-mbe-upload-file-select small { display: block; margin-top: 4px; color: var(--mbe-modal-muted); }
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-files .uplink-mbe-upload-dropzone {
+	min-height: 0;
+	padding: 12px;
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-files .uplink-mbe-upload-drop-icon,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-files .uplink-mbe-upload-dropzone > strong,
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .has-files .uplink-mbe-upload-limits { display: none; }
+@media (max-width: 640px) {
+	:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-list.has-queue { grid-template-columns: minmax(0, 1fr); }
+	.uplink-mbe-upload-file-nav { max-height: 160px; }
+}
+
+/* Keep file selection controls beside the actions once a preview is available. */
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer-controls:not([hidden]) {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	min-width: 0;
+	flex: 1;
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer-controls .uplink-mbe-upload-dropzone {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	min-height: 0;
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer-controls .uplink-mbe-upload-queue-heading {
+	margin: 0;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+:is(.media-modal.uplink-mbe-frame, .uplink-mbe-replace-dialog) .uplink-mbe-upload-footer-controls .uplink-mbe-upload-choose { margin-top: 0; white-space: nowrap; }
+.uplink-mbe-replace-dialog .has-files .uplink-mbe-upload-body { padding-top: 12px; padding-bottom: 12px; }
+.uplink-mbe-replace-dialog .has-files .uplink-mbe-upload-list { margin-top: 0; }

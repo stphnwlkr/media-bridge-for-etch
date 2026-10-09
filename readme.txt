@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.3.0
+Stable tag: 2.4.0
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -33,6 +33,14 @@ Optional providers:
 * HappyFiles
 
 Native features include collection creation, rename, movement and deletion; Etch drag-and-drop collection ordering; media uploads and permanent deletion; a full-screen attachment editor and compact icon toolbar; title, alt text, decorative state, caption, and description editing; adjustable grid and masonry layouts plus a compact list view; detailed filtering by media and MIME type, uploader, attachment status, date, dimensions, file size, and missing alt text; Media Health scanning; optional EXIF display; Auto, Light, and Dark appearance modes; search; automatic scroll loading; optional numbered pagination; multi-collection assignments; Ctrl/Command-click and Shift-click range selection; drag-and-drop assignment; and bulk add, remove, uncategorize, or delete actions.
+
+== Uploads and file replacement ==
+
+Preview selected images and rename them before upload, including after supported pre-upload optimization. Select a file in the queue to edit its name; the extension follows the file format. Keep originals bypasses supported pre-upload optimization.
+
+File replacement is disabled by default. Enable it under Media > Uplink Media Bridge > Settings > File replacement. Leave it off if another plugin handles replacement. Open an attachment and choose Replace to select one replacement file.
+
+Keep the existing filename and URL requires the same file type and extension after optimization. The dialog shows the filename that will be retained. Existing thumbnail URLs are refreshed, but browser or CDN caches may need clearing. Use the replacement filename and type allows a different format or filename and creates a new file URL. Existing files are retained for links written directly into content; those links are not rewritten. Both options preserve the attachment ID, title, alt text, caption, description, collections, and custom collection order.
 
 == Etch loop generator ==
 
@@ -204,6 +212,10 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.4.0 =
+
+Adds upload previews and renaming, opt-in file replacement with optimization support, and clearer Settings and About pages. File replacement remains disabled until enabled in Settings.
+
 = 2.2.14 =
 
 Adds a collection-name image loop generator that saves reusable queries into the Etch loop library.
@@ -321,6 +333,15 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.4.0 =
+
+* Adds rename-before-upload with image previews and a selectable file queue, including optimized images.
+* Adds optional file replacement, disabled by default, using the shared upload and optimization workflow.
+* Offers a choice to keep the existing filename and URL or use the replacement filename and type. Attachment details, collection membership, and custom order are preserved.
+* Adds clear filename confirmation and persistent in-dialog replacement errors. Replacement dialogs follow the Media Library appearance.
+* Adds copyable relative and full file paths to attachment metadata, compact action buttons, and a Save button that enables only after changes.
+* Reorganizes Settings into clearer groups and moves setup, data cleanup, and optimization information to About.
 
 = 2.3.0 =
 

@@ -60,13 +60,14 @@ final class Native_Media_Library {
 		if ( ! current_user_can( 'upload_files' ) || ! $this->etch->is_available() || 'native' !== $settings['provider'] || empty( $settings['default_media_screen'] ) ) {
 			return;
 		}
+		Upload_Workspace::assets();
 		$manager_label = $this->manager_label();
 		$upload_destinations = $this->upload_destinations();
 		$taxonomy = get_taxonomy( $this->etch->taxonomy() );
 
 		wp_enqueue_style( 'uplink-mbe-media-modal', UPLINK_MBE_URL . 'assets/media-modal.css', array( 'media-views' ), UPLINK_MBE_ASSET_VERSION );
 		wp_add_inline_style( 'uplink-mbe-media-modal', $this->custom_color_css( true ) );
-		wp_enqueue_script( 'uplink-mbe-media-modal', UPLINK_MBE_URL . 'assets/media-modal.js', array( 'media-views', 'wp-util' ), UPLINK_MBE_ASSET_VERSION, true );
+		wp_enqueue_script( 'uplink-mbe-media-modal', UPLINK_MBE_URL . 'assets/media-modal.js', array( 'media-views', 'wp-util', 'uplink-mbe-upload-workspace' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script(
 			'uplink-mbe-media-modal',
 			'uplinkMbeMediaModal',
@@ -79,6 +80,10 @@ final class Native_Media_Library {
 				'maxCollectionDepth' => Plugin::etch_collection_depth(),
 				'canManageCollections' => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
 				'cimoAvailable' => defined( 'CIMO_FILE' ),
+				'actionIcons' => array(
+					'replace' => file_get_contents( UPLINK_MBE_PATH . 'assets/ai-swap-twotone-rounded.svg' ),
+					'save' => file_get_contents( UPLINK_MBE_PATH . 'assets/save-twotone-rounded.svg' ),
+				),
 				'altIconUrl' => UPLINK_MBE_URL . 'assets/universal-access-circle-stroke-sharp.svg',
 				'exifIconUrl' => UPLINK_MBE_URL . 'assets/camera-lens-stroke-sharp.svg',
 				'optimizationIconUrl' => UPLINK_MBE_URL . 'assets/circle-gauge-stroke-sharp.svg',
@@ -99,8 +104,11 @@ final class Native_Media_Library {
 					'fileInfo'       => __( 'Metadata', 'media-bridge-for-etch' ),
 					'exif'           => __( 'EXIF', 'media-bridge-for-etch' ),
 					'optimization'   => __( 'Optimization', 'media-bridge-for-etch' ),
+					'fullFilePath' => __( 'Full file path', 'media-bridge-for-etch' ),
+					'copyPath' => __( 'Copy', 'media-bridge-for-etch' ),
+					'pathCopied' => __( 'File path copied.', 'media-bridge-for-etch' ),
 					'fileName'       => __( 'File name', 'media-bridge-for-etch' ),
-					'filePath'       => __( 'File path', 'media-bridge-for-etch' ),
+					'filePath'       => __( 'Relative file path', 'media-bridge-for-etch' ),
 					'fileType'       => __( 'File type', 'media-bridge-for-etch' ),
 					'dimensions'     => __( 'Dimensions', 'media-bridge-for-etch' ),
 					'fileSize'       => __( 'File size', 'media-bridge-for-etch' ),
@@ -114,6 +122,9 @@ final class Native_Media_Library {
 					'decorative'     => __( 'Decorative', 'media-bridge-for-etch' ),
 					'caption'        => __( 'Caption', 'media-bridge-for-etch' ),
 					'description'    => __( 'Description', 'media-bridge-for-etch' ),
+					'editAction' => __( 'Edit', 'media-bridge-for-etch' ),
+					'replaceAction' => __( 'Replace', 'media-bridge-for-etch' ),
+					'saveAction' => __( 'Save', 'media-bridge-for-etch' ),
 					'editImage'      => __( 'Edit image', 'media-bridge-for-etch' ),
 					'saveChanges'    => __( 'Save changes', 'media-bridge-for-etch' ),
 					'insertMedia'    => __( 'Insert', 'media-bridge-for-etch' ),
@@ -192,6 +203,9 @@ final class Native_Media_Library {
 					'collectionCreated' => __( 'Collection created and selected.', 'media-bridge-for-etch' ),
 					/* translators: %s is the file name. */
 					'removeFile' => __( 'Remove %s', 'media-bridge-for-etch' ),
+					'uploadFileName' => __( 'File name', 'media-bridge-for-etch' ),
+					'renameUploadHelp' => __( 'You can rename optimized files too. The extension matches the file format.', 'media-bridge-for-etch' ),
+					'validFileName' => __( 'Enter a file name without slashes.', 'media-bridge-for-etch' ),
 					'fileReady' => __( 'Ready', 'media-bridge-for-etch' ),
 					'fileWillOptimize' => __( 'Will optimize', 'media-bridge-for-etch' ),
 					'fileKeptOriginal' => __( 'Original will be kept', 'media-bridge-for-etch' ),
@@ -1122,7 +1136,8 @@ final class Native_Media_Library {
 								<div id="uplink-mbe-attachment-file-panel" class="uplink-mbe-attachment-metadata-panel uplink-mbe-attachment-section uplink-mbe-attachment-fields" role="tabpanel" aria-labelledby="uplink-mbe-attachment-file-tab" hidden>
 									<dl class="uplink-mbe-attachment-data-list">
 										<div><dt><?php esc_html_e( 'File name', 'media-bridge-for-etch' ); ?></dt><dd id="uplink-mbe-attachment-filename"></dd></div>
-										<div><dt><?php esc_html_e( 'File path', 'media-bridge-for-etch' ); ?></dt><dd class="uplink-mbe-attachment-path-row"><code id="uplink-mbe-attachment-path"></code><button type="button" class="button-link dashicons dashicons-admin-page" id="uplink-mbe-attachment-copy" aria-label="<?php esc_attr_e( 'Copy file path', 'media-bridge-for-etch' ); ?>"></button></dd></div>
+										<div><dt><?php esc_html_e( 'Relative file path', 'media-bridge-for-etch' ); ?></dt><dd class="uplink-mbe-attachment-path-row"><code id="uplink-mbe-attachment-path"></code><button type="button" class="button-link dashicons dashicons-admin-page" id="uplink-mbe-attachment-copy" aria-label="<?php esc_attr_e( 'Copy relative file path', 'media-bridge-for-etch' ); ?>"></button></dd></div>
+										<div><dt><?php esc_html_e( 'Full file path', 'media-bridge-for-etch' ); ?></dt><dd class="uplink-mbe-attachment-path-row"><code id="uplink-mbe-attachment-full-path"></code><button type="button" class="button-link dashicons dashicons-admin-page" id="uplink-mbe-attachment-copy-full" aria-label="<?php esc_attr_e( 'Copy full file path', 'media-bridge-for-etch' ); ?>"></button></dd></div>
 										<div><dt><?php esc_html_e( 'File type', 'media-bridge-for-etch' ); ?></dt><dd id="uplink-mbe-attachment-type"></dd></div>
 										<div><dt><?php esc_html_e( 'Dimensions', 'media-bridge-for-etch' ); ?></dt><dd id="uplink-mbe-attachment-dimensions"></dd></div>
 										<div><dt><?php esc_html_e( 'File size', 'media-bridge-for-etch' ); ?></dt><dd id="uplink-mbe-attachment-size"></dd></div>
@@ -1135,9 +1150,10 @@ final class Native_Media_Library {
 								<div class="uplink-mbe-attachment-metadata-panel uplink-mbe-optimization-details" id="uplink-mbe-attachment-optimization" role="tabpanel" aria-labelledby="uplink-mbe-attachment-optimization-tab" hidden><div class="uplink-mbe-optimization-groups" id="uplink-mbe-attachment-optimization-list"></div></div>
 							</div>
 							<div class="uplink-mbe-attachment-actions">
-								<a href="#" class="button" id="uplink-mbe-attachment-edit" hidden><span class="dashicons dashicons-wordpress-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Edit image', 'media-bridge-for-etch' ); ?></span></a>
-								<button type="button" class="button button-primary" id="uplink-mbe-attachment-save-alt"><?php esc_html_e( 'Save changes', 'media-bridge-for-etch' ); ?></button>
-								<button type="button" class="button button-link-delete" id="uplink-mbe-attachment-delete"><?php esc_html_e( 'Delete permanently', 'media-bridge-for-etch' ); ?></button>
+								<a href="#" class="button" id="uplink-mbe-attachment-edit" title="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" hidden><span class="dashicons dashicons-wordpress-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Edit', 'media-bridge-for-etch' ); ?></span></a>
+								<button type="button" class="button" id="uplink-mbe-attachment-replace" title="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" hidden><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/ai-swap-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Replace', 'media-bridge-for-etch' ); ?></button>
+								<button type="button" class="button button-primary" id="uplink-mbe-attachment-save-alt" disabled title="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/save-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Save', 'media-bridge-for-etch' ); ?></button>
+								<button type="button" class="button button-link-delete" id="uplink-mbe-attachment-delete" title="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/delete-02-stroke-sharp.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Delete', 'media-bridge-for-etch' ); ?></button>
 							</div>
 						</div>
 					</div>
@@ -2316,6 +2332,7 @@ final class Native_Media_Library {
 			'author'      => $attachment instanceof \WP_Post ? (string) get_the_author_meta( 'display_name', (int) $attachment->post_author ) : '',
 			'mime'        => (string) get_post_mime_type( $attachment_id ),
 			'filePath'    => is_string( $url_path ) ? $url_path : '',
+			'fullFilePath' => (string) $url,
 			'fileType'    => $extension ? strtoupper( $extension ) : __( 'File', 'media-bridge-for-etch' ),
 			'fileSize'    => $file && is_file( $file ) ? size_format( (int) filesize( $file ), 1 ) : '—',
 			'dimensions'  => $width && $height ? $width . '×' . $height : '—',

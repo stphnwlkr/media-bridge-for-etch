@@ -1,0 +1,85 @@
+.uplink-mbe-replace-dialog {
+	box-sizing: border-box;
+	width: min(900px, calc(100vw - 40px));
+	max-height: calc(100vh - 60px);
+	padding: 28px;
+	border: 1px solid var(--mbe-modal-border);
+	border-radius: 12px;
+	background: var(--mbe-modal-surface);
+	color: var(--mbe-modal-text);
+	box-shadow: 0 24px 80px #0006;
+	font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.uplink-mbe-replace-dialog::backdrop { background: #0008; }
+.uplink-mbe-replace-dialog h2 { margin-top: 0; }
+.uplink-mbe-replace-dialog input[type="file"] { display: block; max-width: 100%; margin-top: 10px; }
+.uplink-mbe-replace-choice { display: flex; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid var(--mbe-modal-border); border-radius: 8px; cursor: pointer; }
+.uplink-mbe-replace-choice input { flex: 0 0 auto; margin-top: 4px; }
+.uplink-mbe-replace-choice strong, .uplink-mbe-replace-choice small { display: block; }
+.uplink-mbe-replace-choice small { margin-top: 6px; font-size: 13px; color: var(--mbe-modal-muted); }
+.uplink-mbe-replace-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+
+.uplink-mbe-replace-dialog .media-frame-content,
+.uplink-mbe-replace-dialog .uploader-inline {
+	position: static;
+	inset: auto;
+	margin: 0;
+	padding: 0;
+}
+dialog.uplink-mbe-replace-dialog .uploader-inline .uplink-mbe-upload-workspace {
+	margin: 24px 0 0;
+}
+
+dialog.uplink-mbe-replace-dialog .uploader-inline .uplink-mbe-upload-workspace {
+	position: relative;
+	inset: auto;
+	display: block;
+	overflow: visible;
+}
+.uplink-mbe-replace-dialog .uploader-inline:has(.uplink-mbe-upload-workspace) {
+	position: static;
+	height: auto;
+	overflow: visible;
+}
+
+.uplink-mbe-replace-error:not([hidden]) {
+	margin: 16px;
+	padding: 14px 16px;
+	border: 1px solid #b32d2e;
+	border-left-width: 4px;
+	border-radius: 4px;
+	background: #fcf0f1;
+	color: #8a2424;
+	font-weight: 600;
+	line-height: 1.5;
+}
+.uplink-mbe-replace-error:focus { outline: 2px solid #b32d2e; outline-offset: 2px; }
+
+.uplink-mbe-replace-dialog .uplink-mbe-upload-kept-name {
+	display: block;
+	margin-top: 12px;
+	padding: 12px;
+	border-left: 3px solid var(--mbe-modal-accent);
+	background: var(--mbe-modal-accent-soft);
+	color: var(--mbe-modal-text);
+	overflow-wrap: anywhere;
+}
+.uplink-mbe-replace-dialog .uplink-mbe-upload-kept-name strong { display: inline; }
+.uplink-mbe-replace-dialog .uplink-mbe-upload-kept-name small { display: block; margin-top: 6px; }
+/* Let the dialog scroll as one surface instead of squeezing the preview into a nested scroller. */
+dialog.uplink-mbe-replace-dialog { overflow-y: auto; }
+dialog.uplink-mbe-replace-dialog .media-frame-content { flex-shrink: 0; overflow: visible; }
+dialog.uplink-mbe-replace-dialog .uplink-mbe-upload-footer { position: sticky; bottom: -28px; z-index: 3; }
+@media (min-width: 700px) {
+	dialog.uplink-mbe-replace-dialog .uplink-mbe-upload-workspace .has-image-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; }
+	dialog.uplink-mbe-replace-dialog .uplink-mbe-upload-workspace .has-image-preview .uplink-mbe-upload-preview { grid-column: 1; grid-row: 1; }
+	dialog.uplink-mbe-replace-dialog .uplink-mbe-upload-workspace .has-image-preview .uplink-mbe-upload-file-details { grid-column: 2; }
+}
+
+.uplink-mbe-replace-dialog h2 { color: var(--mbe-modal-text); }
+.uplink-mbe-replace-dialog .media-frame-content { background: var(--mbe-modal-surface); border-color: var(--mbe-modal-border); }
+.uplink-mbe-replace-dialog .button,
+.uplink-mbe-replace-dialog input[type="text"] { background: var(--mbe-modal-control); border-color: var(--mbe-modal-border); color: var(--mbe-modal-text); }
+.uplink-mbe-replace-dialog .button-primary { background: var(--mbe-modal-accent); border-color: var(--mbe-modal-accent); color: var(--mbe-modal-accent-icon); }
+.uplink-mbe-replace-dialog.uplink-mbe-theme-dark { color-scheme: dark; }
+.uplink-mbe-replace-dialog.uplink-mbe-theme-dark .uplink-mbe-replace-error { background: #3c2024; color: #ffb4b8; border-color: var(--mbe-modal-danger); }

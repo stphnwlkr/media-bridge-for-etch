@@ -80,6 +80,7 @@ final class Admin {
 			'default_media_screen' => $default_media_screen,
 			'native_media_collections' => $flag( 'native_media_collections' ),
 			'etch_asset_manager_controls' => $flag( 'etch_asset_manager_controls' ),
+			'file_replacement' => $flag( 'file_replacement' ),
 			'collection_gallery' => $flag( 'collection_gallery' ),
 			'exif_dynamic_data' => $flag( 'exif_dynamic_data' ),
 			'exif_gps'         => $flag( 'exif_gps' ),
@@ -158,7 +159,11 @@ final class Admin {
 		$gallery_enabled = ! empty( $settings['collection_gallery'] );
 		$manager_experience = ! empty( $settings['default_media_screen'] ) ? 'manager_default' : 'wordpress';
 		$network_cleanup = is_multisite() ? Data_Cleanup::network_settings() : Data_Cleanup::network_defaults();
-		$allowed_tabs = array( 'settings', 'exif', 'optimization', 'gallery', 'loops' );
+		// Keep existing Optimization bookmarks useful after moving the information.
+		if ( 'optimization' === $active_tab ) {
+			$active_tab = 'about';
+		}
+		$allowed_tabs = array( 'settings', 'exif', 'gallery', 'loops', 'about' );
 		if ( ! in_array( $active_tab, $allowed_tabs, true ) ) {
 			$active_tab = 'settings';
 		}
@@ -183,16 +188,15 @@ final class Admin {
 			<nav class="nav-tab-wrapper uplink-mbe-tabs" aria-label="<?php esc_attr_e( 'Media Bridge sections', 'media-bridge-for-etch' ); ?>">
 				<a class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'settings', $this->page_url() ) ); ?>" <?php echo 'settings' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Settings', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'exif' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'exif', $this->page_url() ) ); ?>" <?php echo 'exif' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch EXIF', 'media-bridge-for-etch' ); ?></a>
-				<a class="nav-tab <?php echo 'optimization' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'optimization', $this->page_url() ) ); ?>" <?php echo 'optimization' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Optimization', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'gallery' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'gallery', $this->page_url() ) ); ?>" <?php echo 'gallery' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Gallery & shortcode', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'loops' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'loops', $this->page_url() ) ); ?>" <?php echo 'loops' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch loops', 'media-bridge-for-etch' ); ?></a>
+				<a class="nav-tab <?php echo 'about' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'about', $this->page_url() ) ); ?>" <?php echo 'about' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'About', 'media-bridge-for-etch' ); ?></a>
 			</nav>
 
 			<?php if ( 'settings' === $active_tab ) : ?>
 			<form action="options.php" method="post" id="uplink-mbe-main-settings" class="uplink-mbe-settings-form uplink-mbe-settings-form-main">
 				<?php settings_fields( 'uplink_mbe_settings_group' ); ?>
-			<div class="uplink-mbe-grid">
-				<div class="uplink-mbe-settings-stack">
+			<div class="uplink-mbe-grid uplink-mbe-settings-groups">
 					<section class="uplink-mbe-card">
 						<h2><?php esc_html_e( 'Collection source', 'media-bridge-for-etch' ); ?></h2>
 						<p><?php esc_html_e( 'Choose where media collections are stored. Etch Collections works without another folder plugin. Choose a supported plugin only when you want Media Bridge to synchronize its folders with Etch.', 'media-bridge-for-etch' ); ?></p>
@@ -224,11 +228,11 @@ final class Admin {
 						<?php endif; ?>
 					</section>
 
-					<?php if ( $native ) : ?>
 						<section class="uplink-mbe-card">
 							<div class="uplink-mbe-section-heading">
 								<h2><?php esc_html_e( 'Media Library experience', 'media-bridge-for-etch' ); ?></h2>
 							</div>
+							<?php if ( $native ) : ?>
 							<p><?php esc_html_e( 'Choose one media workflow. WordPress keeps its familiar screens, while the Enhanced Manager replaces them with the complete Media Bridge interface.', 'media-bridge-for-etch' ); ?></p>
 							<fieldset class="uplink-mbe-choice-group">
 								<legend><?php esc_html_e( 'Default experience', 'media-bridge-for-etch' ); ?></legend>
@@ -240,7 +244,7 @@ final class Admin {
 								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[native_media_collections]" value="1" <?php checked( $settings['native_media_collections'] ); ?>><span><?php esc_html_e( 'Show Etch Collections in the WordPress Media Library', 'media-bridge-for-etch' ); ?></span></label>
 								<p class="description"><?php esc_html_e( 'Adds the collection sidebar, filtering, upload destinations, attachment assignments, collection editing, and drag-and-drop while retaining native WordPress controls.', 'media-bridge-for-etch' ); ?></p>
 							</div>
-							<div data-uplink-mbe-manager-settings <?php echo 'manager_default' === $manager_experience ? '' : 'hidden'; ?>>
+							<div class="uplink-mbe-settings-subsection" data-uplink-mbe-manager-settings <?php echo 'manager_default' === $manager_experience ? '' : 'hidden'; ?>>
 								<p><?php esc_html_e( 'The Enhanced Manager includes Media Health, richer filters, bulk organization, expanded metadata editing, alternate layouts, and customizable colors.', 'media-bridge-for-etch' ); ?></p>
 								<label for="uplink-mbe-manager-label"><?php esc_html_e( 'Manager label', 'media-bridge-for-etch' ); ?></label>
 								<input type="text" class="regular-text" id="uplink-mbe-manager-label" name="uplink_mbe_settings[manager_label]" value="<?php echo esc_attr( $settings['manager_label'] ); ?>" maxlength="80">
@@ -251,10 +255,18 @@ final class Admin {
 								<p class="description"><?php esc_html_e( 'Use the palette button in the Enhanced Media Manager to preview and save its colors.', 'media-bridge-for-etch' ); ?></p>
 							</div>
 							<input type="hidden" name="uplink_mbe_settings[enabled]" value="1">
+							<?php endif; ?>
+					<div class="uplink-mbe-settings-subsection">
+						<h3><?php esc_html_e( 'Etch Asset Manager', 'media-bridge-for-etch' ); ?></h3>
+						<p><?php esc_html_e( 'Choose whether Media Bridge adds its layout and thumbnail controls to the Etch builder Asset Manager.', 'media-bridge-for-etch' ); ?></p>
+						<input type="hidden" name="uplink_mbe_settings[etch_asset_manager_controls]" value="0">
+						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[etch_asset_manager_controls]" value="1" <?php checked( $settings['etch_asset_manager_controls'] ); ?>><span><?php esc_html_e( 'Enable Uniform Grid with thumbnail resizing', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description"><?php esc_html_e( 'Enabled by default. Thumbnail resizing applies only to Uniform Grid. Turn this off to use only Etch’s built-in Asset Manager layouts and controls.', 'media-bridge-for-etch' ); ?></p>
+					</div>
 						</section>
-					<?php else : ?>
+					<?php if ( ! $native ) : ?>
 						<section class="uplink-mbe-card">
-							<h2><?php esc_html_e( 'Folder synchronization', 'media-bridge-for-etch' ); ?></h2>
+							<h2><?php esc_html_e( '3rd party folder sync', 'media-bridge-for-etch' ); ?></h2>
 							<p><?php esc_html_e( 'Keep Etch collection assignments synchronized with the selected folder plugin.', 'media-bridge-for-etch' ); ?></p>
 							<input type="hidden" name="uplink_mbe_settings[enabled]" value="0">
 							<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[enabled]" value="1" <?php checked( $settings['enabled'] ); ?>><span><?php esc_html_e( 'Enable automatic synchronization', 'media-bridge-for-etch' ); ?></span></label>
@@ -275,56 +287,18 @@ final class Admin {
 					<?php endif; ?>
 
 					<section class="uplink-mbe-card">
-						<h2><?php esc_html_e( 'Etch Asset Manager', 'media-bridge-for-etch' ); ?></h2>
-						<p><?php esc_html_e( 'Choose whether Media Bridge adds its layout and thumbnail controls to the Etch builder Asset Manager.', 'media-bridge-for-etch' ); ?></p>
-						<input type="hidden" name="uplink_mbe_settings[etch_asset_manager_controls]" value="0">
-						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[etch_asset_manager_controls]" value="1" <?php checked( $settings['etch_asset_manager_controls'] ); ?>><span><?php esc_html_e( 'Enable Uniform Grid with thumbnail resizing', 'media-bridge-for-etch' ); ?></span></label>
-						<p class="description"><?php esc_html_e( 'Enabled by default. Thumbnail resizing applies only to Uniform Grid. Turn this off to use only Etch’s built-in Asset Manager layouts and controls.', 'media-bridge-for-etch' ); ?></p>
-					</section>
-				</div>
-
-				<div class="uplink-mbe-sidebar">
-					<section class="uplink-mbe-card uplink-mbe-status-card">
-						<div>
-							<span class="uplink-mbe-eyebrow"><?php echo $native ? esc_html__( 'Current setup', 'media-bridge-for-etch' ) : esc_html__( 'Bridge status', 'media-bridge-for-etch' ); ?></span>
-							<h2><?php echo $connected ? ( $native ? esc_html__( 'Ready', 'media-bridge-for-etch' ) : esc_html__( 'Connected', 'media-bridge-for-etch' ) ) : esc_html__( 'Needs attention', 'media-bridge-for-etch' ); ?></h2>
-						</div>
-						<span class="uplink-mbe-status <?php echo $connected ? 'is-connected' : 'is-disconnected'; ?>" role="status" aria-live="polite"><?php echo $connected ? esc_html__( 'Active', 'media-bridge-for-etch' ) : esc_html__( 'Inactive', 'media-bridge-for-etch' ); ?></span>
-						<dl class="uplink-mbe-stats">
-							<div><dt><?php esc_html_e( 'Version', 'media-bridge-for-etch' ); ?></dt><dd><?php echo esc_html( UPLINK_MBE_VERSION ); ?></dd></div>
-							<div><dt><?php esc_html_e( 'Etch', 'media-bridge-for-etch' ); ?></dt><dd><?php echo $etch_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
-							<?php if ( $native ) : ?>
-								<div><dt><?php esc_html_e( 'Collection source', 'media-bridge-for-etch' ); ?></dt><dd><?php esc_html_e( 'Etch Collections', 'media-bridge-for-etch' ); ?></dd></div>
-								<div><dt><?php esc_html_e( 'WordPress library', 'media-bridge-for-etch' ); ?></dt><dd><?php echo ! empty( $settings['default_media_screen'] ) ? esc_html__( 'Replaced by manager', 'media-bridge-for-etch' ) : ( ! empty( $settings['native_media_collections'] ) ? esc_html__( 'Collections enabled', 'media-bridge-for-etch' ) : esc_html__( 'Native controls only', 'media-bridge-for-etch' ) ); ?></dd></div>
-								<div><dt><?php esc_html_e( 'Enhanced manager', 'media-bridge-for-etch' ); ?></dt><dd><?php echo 'manager_default' === $manager_experience ? esc_html__( 'Default', 'media-bridge-for-etch' ) : esc_html__( 'Not active', 'media-bridge-for-etch' ); ?></dd></div>
-								<div><dt><?php esc_html_e( 'Folder sync', 'media-bridge-for-etch' ); ?></dt><dd><?php esc_html_e( 'Not used', 'media-bridge-for-etch' ); ?></dd></div>
-							<?php else : ?>
-								<div><dt><?php echo esc_html( $external->label() ); ?></dt><dd><?php echo $ext_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
-								<div><dt><?php esc_html_e( 'Conflict policy', 'media-bridge-for-etch' ); ?></dt><dd><?php echo esc_html( $this->conflict_label( $settings['conflict_mode'], $external->label() ) ); ?></dd></div>
-							<?php endif; ?>
-						</dl>
+						<h2><?php esc_html_e( 'File replacement', 'media-bridge-for-etch' ); ?></h2>
+						<input type="hidden" name="uplink_mbe_settings[file_replacement]" value="0">
+						<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[file_replacement]" value="1" <?php checked( ! empty( $settings['file_replacement'] ) ); ?>><span><?php esc_html_e( 'Enable Media Bridge file replacement', 'media-bridge-for-etch' ); ?></span></label>
+						<p><?php esc_html_e( 'Off by default. Leave this off if another media replacement or management plugin handles file replacement. This setting only controls Media Bridge; it does not disable or change other plugins.', 'media-bridge-for-etch' ); ?></p>
+						<p><?php esc_html_e( 'When enabled, open an attachment and choose Replace file. Choose a replacement using the upload queue. Review the optimized file and its name, then select one of these options:', 'media-bridge-for-etch' ); ?></p>
+						<ul>
+							<li><?php esc_html_e( 'Keep the existing filename and URL: requires the same file type and extension after optimization. The replacement appears wherever the URL is used. Clear any site or CDN cache if the old image remains visible.', 'media-bridge-for-etch' ); ?></li>
+							<li><?php esc_html_e( 'Use the replacement filename and type: permits a different file type and creates a new URL. Links written directly into content are not rewritten. Old files are retained so those links keep working.', 'media-bridge-for-etch' ); ?></li>
+						</ul>
+						<p><?php esc_html_e( 'Both options preserve the attachment ID, title, alt text, caption, description, collections, and custom order. Image metadata and thumbnails are regenerated. Keep a backup before replacing files. Rename-on-upload works separately and does not require this setting.', 'media-bridge-for-etch' ); ?></p>
 					</section>
 
-					<section class="uplink-mbe-card uplink-mbe-cleanup-card" aria-labelledby="uplink-mbe-cleanup-title">
-						<h2 id="uplink-mbe-cleanup-title"><?php esc_html_e( 'Data cleanup', 'media-bridge-for-etch' ); ?></h2>
-						<?php if ( ! empty( $network_cleanup['delete_data_on_network_deactivation'] ) || ! empty( $network_cleanup['delete_data_on_network_uninstall'] ) ) : ?>
-							<div class="uplink-mbe-uninstall-impact" role="note" aria-labelledby="uplink-mbe-network-override-title">
-								<h3 id="uplink-mbe-network-override-title"><?php esc_html_e( 'Network cleanup override active', 'media-bridge-for-etch' ); ?></h3>
-								<p><?php esc_html_e( 'A network administrator has enabled cleanup for one or more network-wide actions. Those actions may clean this site regardless of the local choices below. Site-level deactivation still follows this site’s setting.', 'media-bridge-for-etch' ); ?></p>
-							</div>
-						<?php endif; ?>
-						<input type="hidden" name="uplink_mbe_settings[delete_data_on_deactivation]" value="0">
-						<label class="uplink-mbe-toggle"><input type="checkbox" id="uplink-mbe-delete-data-on-deactivation" name="uplink_mbe_settings[delete_data_on_deactivation]" value="1" aria-describedby="uplink-mbe-delete-data-on-deactivation-description" <?php checked( $settings['delete_data_on_deactivation'] ); ?>><span><?php esc_html_e( 'Delete Media Bridge data when the plugin is deactivated', 'media-bridge-for-etch' ); ?></span></label>
-						<p class="description uplink-mbe-warning" id="uplink-mbe-delete-data-on-deactivation-description"><?php esc_html_e( 'Disabled by default. When enabled, WordPress deactivation removes Media Bridge settings, synchronization history, and bridge mapping metadata. Collections, folder assignments, media records, and files are always preserved. Removing plugin files without first running the WordPress deactivation hook cannot trigger cleanup.', 'media-bridge-for-etch' ); ?></p>
-						<input type="hidden" name="uplink_mbe_settings[delete_data_on_uninstall]" value="0">
-						<label class="uplink-mbe-toggle"><input type="checkbox" id="uplink-mbe-delete-data-on-uninstall" name="uplink_mbe_settings[delete_data_on_uninstall]" value="1" aria-describedby="uplink-mbe-delete-data-on-uninstall-description" <?php checked( $settings['delete_data_on_uninstall'] ); ?>><span><?php esc_html_e( 'Delete Media Bridge data when the plugin is deleted', 'media-bridge-for-etch' ); ?></span></label>
-						<p class="description uplink-mbe-warning" id="uplink-mbe-delete-data-on-uninstall-description"><?php esc_html_e( 'Disabled by default. When enabled, deleting Media Bridge through WordPress removes its settings, synchronization history, and bridge mapping metadata. Collections, folder assignments, media records, and files are always preserved.', 'media-bridge-for-etch' ); ?></p>
-						<div class="uplink-mbe-uninstall-impact" role="note" aria-labelledby="uplink-mbe-uninstall-impact-title">
-							<h3 id="uplink-mbe-uninstall-impact-title"><?php esc_html_e( 'Before deactivating or deleting Media Bridge', 'media-bridge-for-etch' ); ?></h3>
-							<p><?php esc_html_e( 'Collection Gallery blocks, gallery shortcodes, and their Etch builder passthrough stop rendering while the plugin is inactive or deleted. Their saved block and shortcode content is preserved and will render again after Media Bridge is reactivated or reinstalled.', 'media-bridge-for-etch' ); ?></p>
-						</div>
-					</section>
-				</div>
 			</div>
 			</form>
 			<div class="uplink-mbe-floating-save" data-uplink-mbe-floating-save>
@@ -364,8 +338,55 @@ final class Admin {
 				<?php $this->loop_generator->render(); ?>
 			<?php elseif ( 'exif' === $active_tab ) : ?>
 				<?php $this->render_exif_docs(); ?>
-			<?php elseif ( 'optimization' === $active_tab ) : ?>
+			<?php elseif ( 'about' === $active_tab ) : ?>
+			<div class="uplink-mbe-about">
+					<section class="uplink-mbe-card uplink-mbe-status-card">
+						<div>
+							<span class="uplink-mbe-eyebrow"><?php echo $native ? esc_html__( 'Current setup', 'media-bridge-for-etch' ) : esc_html__( 'Bridge status', 'media-bridge-for-etch' ); ?></span>
+							<h2><?php echo $connected ? ( $native ? esc_html__( 'Ready', 'media-bridge-for-etch' ) : esc_html__( 'Connected', 'media-bridge-for-etch' ) ) : esc_html__( 'Needs attention', 'media-bridge-for-etch' ); ?></h2>
+						</div>
+						<span class="uplink-mbe-status <?php echo $connected ? 'is-connected' : 'is-disconnected'; ?>" role="status" aria-live="polite"><?php echo $connected ? esc_html__( 'Active', 'media-bridge-for-etch' ) : esc_html__( 'Inactive', 'media-bridge-for-etch' ); ?></span>
+						<dl class="uplink-mbe-stats">
+							<div><dt><?php esc_html_e( 'Version', 'media-bridge-for-etch' ); ?></dt><dd><?php echo esc_html( UPLINK_MBE_VERSION ); ?></dd></div>
+							<div><dt><?php esc_html_e( 'Etch', 'media-bridge-for-etch' ); ?></dt><dd><?php echo $etch_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
+							<?php if ( $native ) : ?>
+								<div><dt><?php esc_html_e( 'Collection source', 'media-bridge-for-etch' ); ?></dt><dd><?php esc_html_e( 'Etch Collections', 'media-bridge-for-etch' ); ?></dd></div>
+								<div><dt><?php esc_html_e( 'WordPress library', 'media-bridge-for-etch' ); ?></dt><dd><?php echo ! empty( $settings['default_media_screen'] ) ? esc_html__( 'Replaced by manager', 'media-bridge-for-etch' ) : ( ! empty( $settings['native_media_collections'] ) ? esc_html__( 'Collections enabled', 'media-bridge-for-etch' ) : esc_html__( 'Native controls only', 'media-bridge-for-etch' ) ); ?></dd></div>
+								<div><dt><?php esc_html_e( 'Enhanced manager', 'media-bridge-for-etch' ); ?></dt><dd><?php echo 'manager_default' === $manager_experience ? esc_html__( 'Default', 'media-bridge-for-etch' ) : esc_html__( 'Not active', 'media-bridge-for-etch' ); ?></dd></div>
+								<div><dt><?php esc_html_e( '3rd party folder sync', 'media-bridge-for-etch' ); ?></dt><dd><?php esc_html_e( 'Not used', 'media-bridge-for-etch' ); ?></dd></div>
+							<?php else : ?>
+								<div><dt><?php echo esc_html( $external->label() ); ?></dt><dd><?php echo $ext_ok ? esc_html__( 'Available', 'media-bridge-for-etch' ) : esc_html__( 'Not detected', 'media-bridge-for-etch' ); ?></dd></div>
+								<div><dt><?php esc_html_e( 'Conflict policy', 'media-bridge-for-etch' ); ?></dt><dd><?php echo esc_html( $this->conflict_label( $settings['conflict_mode'], $external->label() ) ); ?></dd></div>
+							<?php endif; ?>
+						</dl>
+					</section>
+				<form action="options.php" method="post" class="uplink-mbe-settings-form uplink-mbe-about-cleanup">
+					<?php settings_fields( 'uplink_mbe_settings_group' ); ?>
+
+
+					<section class="uplink-mbe-card uplink-mbe-cleanup-card" aria-labelledby="uplink-mbe-cleanup-title">
+						<h2 id="uplink-mbe-cleanup-title"><?php esc_html_e( 'Data cleanup', 'media-bridge-for-etch' ); ?></h2>
+						<?php if ( ! empty( $network_cleanup['delete_data_on_network_deactivation'] ) || ! empty( $network_cleanup['delete_data_on_network_uninstall'] ) ) : ?>
+							<div class="uplink-mbe-uninstall-impact" role="note" aria-labelledby="uplink-mbe-network-override-title">
+								<h3 id="uplink-mbe-network-override-title"><?php esc_html_e( 'Network cleanup override active', 'media-bridge-for-etch' ); ?></h3>
+								<p><?php esc_html_e( 'A network administrator has enabled cleanup for one or more network-wide actions. Those actions may clean this site regardless of the local choices below. Site-level deactivation still follows this site’s setting.', 'media-bridge-for-etch' ); ?></p>
+							</div>
+						<?php endif; ?>
+						<input type="hidden" name="uplink_mbe_settings[delete_data_on_deactivation]" value="0">
+						<label class="uplink-mbe-toggle"><input type="checkbox" id="uplink-mbe-delete-data-on-deactivation" name="uplink_mbe_settings[delete_data_on_deactivation]" value="1" aria-describedby="uplink-mbe-delete-data-on-deactivation-description" <?php checked( $settings['delete_data_on_deactivation'] ); ?>><span><?php esc_html_e( 'Delete Media Bridge data when the plugin is deactivated', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description uplink-mbe-warning" id="uplink-mbe-delete-data-on-deactivation-description"><?php esc_html_e( 'Disabled by default. When enabled, WordPress deactivation removes Media Bridge settings, synchronization history, and bridge mapping metadata. Collections, folder assignments, media records, and files are always preserved. Removing plugin files without first running the WordPress deactivation hook cannot trigger cleanup.', 'media-bridge-for-etch' ); ?></p>
+						<input type="hidden" name="uplink_mbe_settings[delete_data_on_uninstall]" value="0">
+						<label class="uplink-mbe-toggle"><input type="checkbox" id="uplink-mbe-delete-data-on-uninstall" name="uplink_mbe_settings[delete_data_on_uninstall]" value="1" aria-describedby="uplink-mbe-delete-data-on-uninstall-description" <?php checked( $settings['delete_data_on_uninstall'] ); ?>><span><?php esc_html_e( 'Delete Media Bridge data when the plugin is deleted', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description uplink-mbe-warning" id="uplink-mbe-delete-data-on-uninstall-description"><?php esc_html_e( 'Disabled by default. When enabled, deleting Media Bridge through WordPress removes its settings, synchronization history, and bridge mapping metadata. Collections, folder assignments, media records, and files are always preserved.', 'media-bridge-for-etch' ); ?></p>
+						<div class="uplink-mbe-uninstall-impact" role="note" aria-labelledby="uplink-mbe-uninstall-impact-title">
+							<h3 id="uplink-mbe-uninstall-impact-title"><?php esc_html_e( 'Before deactivating or deleting Media Bridge', 'media-bridge-for-etch' ); ?></h3>
+							<p><?php esc_html_e( 'Collection Gallery blocks, gallery shortcodes, and their Etch builder passthrough stop rendering while the plugin is inactive or deleted. Their saved block and shortcode content is preserved and will render again after Media Bridge is reactivated or reinstalled.', 'media-bridge-for-etch' ); ?></p>
+						</div>
+						<?php submit_button( __( 'Save cleanup settings', 'media-bridge-for-etch' ) ); ?>
+					</section>
+				</form>
 				<?php $this->render_optimization_docs(); ?>
+			</div>
 			<?php else : ?>
 				<?php $this->render_gallery_docs( $native && ! empty( $settings['default_media_screen'] ) ); ?>
 			<?php endif; ?>
