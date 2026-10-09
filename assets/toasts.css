@@ -1,0 +1,52 @@
+.uplink-mbe-toasts {
+	position: fixed;
+	inset: 48px 20px auto auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	width: min(400px, calc(100vw - 40px));
+	max-height: calc(100vh - 68px);
+	overflow: auto;
+	background: transparent;
+	color: #f8fafc;
+	z-index: 2147483647;
+	pointer-events: none;
+}
+.uplink-mbe-toasts:popover-open { display: grid; gap: 10px; }
+.uplink-mbe-toasts .uplink-mbe-toast {
+	display: flex;
+	align-items: start;
+	gap: 12px;
+	padding: 14px 12px 14px 16px;
+	border: 1px solid #475569;
+	border-left: 4px solid #4ade80;
+	border-radius: 8px;
+	background: #1e293b;
+	box-shadow: 0 6px 20px #0004;
+	font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	pointer-events: auto;
+}
+.uplink-mbe-toasts .uplink-mbe-toast.is-error { border-left-color: #f87171; }
+.uplink-mbe-toasts .uplink-mbe-toast.is-warning { border-left-color: #fbbf24; }
+.uplink-mbe-toast > span { flex: 1; overflow-wrap: anywhere; }
+.uplink-mbe-toasts .uplink-mbe-toast-dismiss {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 28px;
+	width: 28px;
+	height: 28px;
+	min-width: 28px;
+	min-height: 28px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: #fff;
+	font: 24px/1 sans-serif;
+	cursor: pointer;
+}
+.uplink-mbe-toasts .uplink-mbe-toast-dismiss:hover { background: #ffffff20; }
+.uplink-mbe-toasts .uplink-mbe-toast-dismiss:focus-visible { outline: 2px solid #93c5fd; outline-offset: -2px; }
+@media (max-width: 782px) { .uplink-mbe-toasts { top: 60px; } }

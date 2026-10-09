@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.2.12
+Stable tag: 2.3.0
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -33,6 +33,39 @@ Optional providers:
 * HappyFiles
 
 Native features include collection creation, rename, movement and deletion; Etch drag-and-drop collection ordering; media uploads and permanent deletion; a full-screen attachment editor and compact icon toolbar; title, alt text, decorative state, caption, and description editing; adjustable grid and masonry layouts plus a compact list view; detailed filtering by media and MIME type, uploader, attachment status, date, dimensions, file size, and missing alt text; Media Health scanning; optional EXIF display; Auto, Light, and Dark appearance modes; search; automatic scroll loading; optional numbered pagination; multi-collection assignments; Ctrl/Command-click and Shift-click range selection; drag-and-drop assignment; and bulk add, remove, uncategorize, or delete actions.
+
+== Etch loop generator ==
+
+Open Media > Uplink Media Bridge > Etch loops. Choose a collection by its name and folder path, give the loop a name, choose custom collection order, newest first, oldest first, image title, or random order, and select whether to include child collections. Include all images or set a maximum. The preview reports how many matching images the loop will return; the generated query is always visible in a code panel with a Copy query button. Copying does not require a loop name. Enter a name before adding the loop to Etch.
+
+Choose Add to Etch loop library, then open or reload the Etch builder and select the saved loop by name. The loop continues to read current taxonomy membership and collection order. It does not copy a fixed list of images. Existing loops are preserved. Repeating an unchanged save does not create duplicates; a name already used for different settings requires a different name. Creating loops requires administrator settings access and Etch must be active.
+
+== Collection image ordering ==
+
+In the Enhanced Media Manager, open a collection and choose Reorder. Drag an item or selected group before or after another item, then choose Done reordering. Changes save automatically with a toast confirmation. Collection editing and collection dragging are disabled until reorder mode ends. With an image focused, Alt plus an arrow key moves it one place among the visible items. Search and filters preserve the order of items outside the current view.
+
+Each collection stores its own ordered attachment IDs in `_uplink_mbe_media_order` term metadata. Shared images can have different positions in different collections. Taxonomy membership remains the source of collection contents; attachment `menu_order` is never changed. Parent views can order items from child collections without changing the child's saved order. Newly assigned images appear after the saved list, ordered by attachment ID.
+
+For an Etch WordPress query loop, filter attachments to one Etch collection and set `orderby` to `collection_order` and `order` to `ASC`. Example query arguments, replacing 123 with the collection ID:
+
+    {
+      "post_type": "attachment",
+      "post_status": "inherit",
+      "post_mime_type": "image",
+      "posts_per_page": -1,
+      "orderby": "collection_order",
+      "order": "ASC",
+      "tax_query": [{
+        "taxonomy": "etch_collection",
+        "field": "term_id",
+        "terms": [123],
+        "include_children": false
+      }]
+    }
+
+Term slugs are also supported with `field: slug`. Use one collection per query; queries combining several collections do not have one custom order. Keep WordPress query filters enabled. Sorting happens before pagination and image limits.
+
+In the Collection Gallery block, choose Gallery options > Image order > Custom order. The Etch gallery settings offer the same option. Existing galleries keep their previous newest-first or random behavior. Shortcodes can use `[etch_collection_gallery collection="123" sort="custom"]`; `sort` also accepts `date` or `random`.
 
 == Media Health and EXIF ==
 
@@ -171,6 +204,14 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.2.14 =
+
+Adds a collection-name image loop generator that saves reusable queries into the Etch loop library.
+
+= 2.2.13 =
+
+Adds collection-specific image reordering, Etch loop custom sorting, and a Custom order option for Collection Gallery blocks.
+
 = 2.2.12 =
 
 Adds 16:9, 4:3, and 1:1 aspect-ratio choices to uniform grids in the Enhanced Manager and Etch Asset Manager.
@@ -280,6 +321,40 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.3.0 =
+
+* Uses dismissible top-right toast notifications with an five-second timeout for action feedback.
+
+* Adds collection-specific image ordering and custom-order support for Etch loops and galleries.
+* Includes the named loop generator in settings and directly in the enhanced media view, with query preview and copying.
+* Refines drag feedback and the loop dialog controls.
+
+= 2.2.17 =
+
+* Open the Etch loop generator directly from the enhanced media view with the current collection selected.
+
+= 2.2.16 =
+
+* Smoother image reordering with an animated insertion line, endpoint markers, and group drag counts.
+
+= 2.2.15 =
+
+* Shows generated loop queries in a responsive code panel with syntax highlighting and a Copy query button.
+* Requires an explicitly entered name before adding a loop to Etch; manual query copying does not require a name.
+
+= 2.2.14 =
+
+* Adds an Etch loops settings tab with collection-name selection, image sorting, child collection inclusion, and image limits.
+* Previews matching image counts and saves named, reusable loops directly into the Etch loop library.
+* Preserves existing loops and prevents accidental duplicate or conflicting saves.
+
+= 2.2.13 =
+
+* Adds an explicit Reorder mode with drag-and-drop and keyboard image ordering in enhanced collection views.
+* Stores independent image sequences for each collection without changing attachment menu_order or taxonomy membership.
+* Adds collection_order sorting for Etch attachment queries and Custom order in the WordPress and Etch gallery controls.
+* Preserves unseen items when reordering filtered or partially loaded collections.
 
 = 2.2.12 =
 

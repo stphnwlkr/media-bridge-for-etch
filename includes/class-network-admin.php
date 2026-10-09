@@ -73,7 +73,7 @@ final class Network_Admin {
 		<div class="wrap uplink-mbe-wrap uplink-mbe-network-wrap">
 			<h1><?php esc_html_e( 'Media Bridge network settings', 'media-bridge-for-etch' ); ?></h1>
 			<?php if ( isset( $_GET['updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only success notice. ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Network cleanup settings saved.', 'media-bridge-for-etch' ); ?></p></div>
+				<div hidden data-uplink-mbe-toast="success"><p><?php esc_html_e( 'Network cleanup settings saved.', 'media-bridge-for-etch' ); ?></p></div>
 			<?php endif; ?>
 			<section class="uplink-mbe-card" aria-labelledby="uplink-mbe-network-cleanup-title">
 				<h2 id="uplink-mbe-network-cleanup-title"><?php esc_html_e( 'Network-wide cleanup overrides', 'media-bridge-for-etch' ); ?></h2>

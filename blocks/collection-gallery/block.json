@@ -17,6 +17,7 @@
 		"sizeSlug": { "type": "string", "default": "large" },
 		"imageCrop": { "type": "boolean", "default": true },
 		"aspectRatio": { "type": "string", "default": "1/1" },
+		"sortOrder": { "type": "string", "default": "" },
 		"randomOrder": { "type": "boolean", "default": false },
 		"showTitle": { "type": "boolean", "default": false },
 		"showCaptions": { "type": "boolean", "default": false },

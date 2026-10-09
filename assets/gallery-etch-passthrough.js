@@ -12,6 +12,7 @@
 		imageCrop: true,
 		aspectRatio: '1/1',
 		randomOrder: false,
+		sortOrder: '',
 		showTitle: false,
 		showCaptions: false,
 		lightboxMode: 'custom',
@@ -248,7 +249,7 @@
 	}
 
 	function setFormValues( form, attributes ) {
-		Object.entries( { ...defaults, ...attributes } ).forEach( ( [ key, value ] ) => {
+		Object.entries( { ...defaults, ...attributes, sortOrder: attributes.sortOrder || ( attributes.randomOrder ? 'random' : 'date' ) } ).forEach( ( [ key, value ] ) => {
 			const control = form.elements.namedItem( key );
 			if ( ! control ) {
 				return;
@@ -373,7 +374,11 @@
 			{ value: '16/9', label: 'Widescreen 16:9' },
 			{ value: '3/4', label: 'Portrait 3:4' },
 		] );
-		field( form, 'checkbox', 'randomOrder', 'Randomize order' );
+		field( form, 'select', 'sortOrder', 'Image order', [
+			{ value: 'date', label: 'Newest first' },
+			{ value: 'custom', label: 'Custom order' },
+			{ value: 'random', label: 'Random' },
+		] );
 		field( form, 'checkbox', 'showTitle', 'Show image titles' );
 		field( form, 'checkbox', 'showCaptions', 'Show image captions' );
 		field( form, 'select', 'lightboxMode', 'Image behavior', [
@@ -390,7 +395,7 @@
 		notice.textContent = strings.advancedNotice || 'Additional settings remain available in the WordPress block editor.';
 		dialog.setAttribute( 'aria-describedby', notice.id );
 		const status = document.createElement( 'p' );
-		status.className = 'uplink-mbe-etch-modal-status';
+		status.className = 'uplink-mbe-etch-modal-status screen-reader-text';
 		status.setAttribute( 'role', 'status' );
 		status.setAttribute( 'aria-live', 'polite' );
 		status.setAttribute( 'aria-atomic', 'true' );
@@ -419,12 +424,14 @@
 				if ( modal?.overlay === overlay ) {
 					modal.returnBlockId = newId || blockId;
 				}
-				status.textContent = strings.saved || 'Gallery saved.';
+				status.textContent = '';
+				window.uplinkMbeToast( strings.saved || 'Gallery saved.' );
 				window.setTimeout( closeEditor, 350 );
 			} catch ( error ) {
 				form.removeAttribute( 'aria-busy' );
 				status.classList.add( 'is-error' );
-				status.textContent = strings.saveError || 'The gallery changes could not be saved.';
+				status.textContent = '';
+				window.uplinkMbeToast( strings.saveError || 'The gallery changes could not be saved.', 'error' );
 				apply.disabled = false;
 				cancel.disabled = false;
 			}

@@ -471,14 +471,7 @@
 	}
 
 	function showPanelStatus( panel, message, type = 'success' ) {
-		const status = panel.querySelector( '.uplink-mbe-native-panel-status' );
-		status.textContent = message;
-		status.classList.toggle( 'is-error', 'error' === type );
-		status.hidden = false;
-		window.clearTimeout( status.uplinkMbeHideTimeout );
-		status.uplinkMbeHideTimeout = window.setTimeout( () => {
-			status.hidden = true;
-		}, 4000 );
+		window.uplinkMbeToast( message, type );
 	}
 
 	async function refreshCollectionState( view, panel ) {

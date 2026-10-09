@@ -21,6 +21,7 @@
 		healthStatus: document.getElementById( 'uplink-mbe-health-status' ),
 		healthRescan: document.getElementById( 'uplink-mbe-health-rescan' ),
 		grid: document.getElementById( 'uplink-mbe-media-grid' ),
+		reorder: document.getElementById( 'uplink-mbe-reorder-media' ),
 		gridSize: document.getElementById( 'uplink-mbe-grid-size' ),
 		gridSizeValue: document.getElementById( 'uplink-mbe-grid-size-value' ),
 		gridRatios: Array.from( document.querySelectorAll( '[data-grid-ratio]' ) ),
@@ -160,6 +161,13 @@
 	let galleryCollectionLoaded = 0;
 	let galleryLoadGeneration = 0;
 	let galleryLoading = false;
+	let draggedMedia = null;
+	let mediaDropMarker = null;
+	let mediaDragGhost = null;
+	let mediaDragFrame = 0;
+	let mediaDragPoint = null;
+	let mediaOrderSaving = false;
+	let mediaOrderRequest = null;
 	let draggedCollection = 0;
 	let collectionOrderSaving = false;
 	let collectionPointerDrag = null;
@@ -191,6 +199,7 @@
 		fileSizeMin: '',
 		fileSizeMax: '',
 		missingAlt: false,
+		reorderMode: false,
 		view: 'grid',
 		mode: 'library',
 		healthFilter: '',
@@ -592,40 +601,15 @@
 	}
 
 	function showNotice( message, type = 'success' ) {
-		const paragraph = elements.notice.querySelector( 'p' );
-		elements.notice.className = `notice inline notice-${ type }`;
-		paragraph.textContent = message;
-		elements.notice.hidden = false;
-		window.clearTimeout( showNotice.timeout );
-		showNotice.timeout = window.setTimeout( () => {
-			elements.notice.hidden = true;
-		}, 5000 );
+		window.uplinkMbeToast( message, type );
 	}
 
-	function showToast( message ) {
-		window.clearTimeout( showToast.timeout );
-		window.clearTimeout( showToast.hideTimeout );
-		elements.toast.textContent = message;
-		elements.toast.hidden = false;
-		window.requestAnimationFrame( () => elements.toast.classList.add( 'is-visible' ) );
-		showToast.timeout = window.setTimeout( () => {
-			elements.toast.classList.remove( 'is-visible' );
-			showToast.hideTimeout = window.setTimeout( () => {
-				elements.toast.hidden = true;
-			}, 180 );
-		}, 2200 );
+	function showToast( message, type = 'success' ) {
+		window.uplinkMbeToast( message, type );
 	}
 
 	function showAttachmentNotice( message, type = 'success' ) {
-		const paragraph = elements.attachmentNotice.querySelector( 'p' );
-		elements.attachmentNotice.className = `uplink-mbe-attachment-notice is-${ type }`;
-		elements.attachmentNotice.setAttribute( 'aria-live', 'error' === type ? 'assertive' : 'polite' );
-		paragraph.textContent = message;
-		elements.attachmentNotice.hidden = false;
-		window.clearTimeout( showAttachmentNotice.timeout );
-		showAttachmentNotice.timeout = window.setTimeout( () => {
-			elements.attachmentNotice.hidden = true;
-		}, 5000 );
+		window.uplinkMbeToast( message, type );
 	}
 
 	function clearAttachmentNotice() {
@@ -684,6 +668,9 @@
 		elements.grid.setAttribute( 'aria-busy', 'true' );
 		elements.grid.replaceChildren( createElement( 'p', 'uplink-mbe-loading', config.strings.loading ) );
 		try {
+			if ( mediaOrderRequest ) {
+				await mediaOrderRequest.catch( () => {} );
+			}
 			const data = await request( 'uplink_mbe_native_state', libraryRequestData() );
 			if ( generation !== loadGeneration ) {
 				return;
@@ -961,7 +948,7 @@
 			elements.galleryShortcode.select();
 			document.execCommand( 'copy' );
 		}
-		elements.galleryCopyStatus.textContent = config.strings.shortcodeCopied;
+		showToast( config.strings.shortcodeCopied );
 	}
 
 	function renderLibraryControls() {
@@ -1097,7 +1084,7 @@
 
 	function addDropTarget( element, collection, mode = 'add' ) {
 		element.addEventListener( 'dragover', ( event ) => {
-			if ( draggedCollection ) {
+			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
 				return;
 			}
 			event.preventDefault();
@@ -1108,7 +1095,7 @@
 		} );
 		element.addEventListener( 'dragleave', () => element.classList.remove( 'is-drop-target' ) );
 		element.addEventListener( 'drop', async ( event ) => {
-			if ( draggedCollection ) {
+			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
 				return;
 			}
 			event.preventDefault();
@@ -1209,7 +1196,7 @@
 	}
 
 	async function saveCollectionOrder( parent, orderedIds, focusId ) {
-		if ( collectionOrderSaving ) {
+		if ( collectionOrderSaving || state.reorderMode ) {
 			return;
 		}
 		collectionOrderSaving = true;
@@ -1245,7 +1232,7 @@
 
 	function enableCollectionPointerReorder( row, filter, collection ) {
 		filter.addEventListener( 'pointerdown', ( event ) => {
-			if ( 0 !== event.button || collectionOrderSaving ) {
+			if ( 0 !== event.button || collectionOrderSaving || state.reorderMode ) {
 				return;
 			}
 			collectionPointerDrag = {
@@ -1325,6 +1312,9 @@
 	}
 
 	function renderTree() {
+		if ( 'collection' !== state.filter || 'library' !== state.mode ) state.reorderMode = false;
+		if ( elements.newCollection ) elements.newCollection.disabled = state.reorderMode;
+		if ( elements.manageCollections ) elements.manageCollections.disabled = state.reorderMode;
 		elements.tree.replaceChildren();
 
 		const special = createElement( 'div', 'uplink-mbe-special-collections' );
@@ -1439,7 +1429,7 @@
 		row.dataset.collectionId = String( collection.id );
 		row.dataset.parent = String( collection.parent );
 		row.classList.toggle( 'has-children', hasChildren );
-		if ( config.canManage ) {
+		if ( config.canManage && ! state.reorderMode ) {
 			row.classList.add( 'can-reorder' );
 		}
 		if ( hasChildren ) {
@@ -1474,7 +1464,7 @@
 			collection.id,
 			'category'
 		);
-		if ( config.canManage ) {
+		if ( config.canManage && ! state.reorderMode ) {
 			filter.dataset.reorderId = String( collection.id );
 			filter.setAttribute( 'aria-keyshortcuts', 'Alt+ArrowUp Alt+ArrowDown' );
 			filter.setAttribute( 'aria-description', config.strings.reorderInstructions );
@@ -1490,7 +1480,7 @@
 		addDropTarget( filter, collection.id );
 		row.append( filter );
 
-		if ( config.canManage ) {
+		if ( config.canManage && ! state.reorderMode ) {
 			const actions = createElement( 'div', 'uplink-mbe-collection-actions' );
 			if ( collectionDepth( collection ) < Number( config.maxCollectionDepth || 2 ) - 1 ) {
 				const add = createElement( 'button', 'button-link', '+' );
@@ -1532,6 +1522,7 @@
 	}
 
 	function selectFilter( filter, collection ) {
+		state.reorderMode = false;
 		state.filter = filter;
 		state.collection = collection;
 		state.page = 1;
@@ -1576,11 +1567,191 @@
 		updateSelectionTools();
 	}
 
+	document.getElementById( 'uplink-mbe-open-loop-generator' )?.addEventListener( 'click', () => {
+		document.dispatchEvent( new CustomEvent( 'uplink-mbe-open-loop', { detail: {
+			collection: 'collection' === state.filter ? state.collection : 0,
+			collections: state.collections,
+		} } ) );
+	} );
+
+	function canReorderMedia() {
+		return state.reorderMode && 'library' === state.mode && 'collection' === state.filter && state.collection && ! mediaOrderSaving && ! infiniteLoading && 'true' !== elements.grid.getAttribute( 'aria-busy' );
+	}
+
+	function clearMediaDropMarkers() {
+		window.cancelAnimationFrame( mediaDragFrame );
+		mediaDragFrame = 0;
+		mediaDragPoint = null;
+		mediaDropMarker?.remove();
+		mediaDropMarker = null;
+	}
+
+	function finishMediaDrag() {
+		draggedMedia = null;
+		clearMediaDropMarkers();
+		mediaDragGhost?.remove();
+		mediaDragGhost = null;
+		elements.grid.querySelectorAll( '.is-dragging' ).forEach( ( card ) => card.classList.remove( 'is-dragging' ) );
+	}
+
+	function mediaDropAt( x, y ) {
+		if ( ! canReorderMedia() || ! draggedMedia || draggedMedia.collection !== state.collection ) return null;
+		let nearest = null;
+		let distance = Infinity;
+		// Include the gaps between cards, so the insertion line remains a usable drop target.
+		for ( const card of elements.grid.querySelectorAll( '.uplink-mbe-media-card' ) ) {
+			if ( draggedMedia.ids.includes( Number( card.dataset.mediaId ) ) ) continue;
+			const rect = card.getBoundingClientRect();
+			const dx = Math.max( rect.left - x, 0, x - rect.right );
+			const dy = Math.max( rect.top - y, 0, y - rect.bottom );
+			const nextDistance = dx * dx + dy * dy;
+			if ( nextDistance < distance ) {
+				distance = nextDistance;
+				nearest = { card, rect };
+			}
+		}
+		if ( ! nearest ) return null;
+		const vertical = 'grid' === state.view;
+		const after = vertical ? x > nearest.rect.left + nearest.rect.width / 2 : y > nearest.rect.top + nearest.rect.height / 2;
+		return { ...nearest, vertical, placement: after ? 'after' : 'before' };
+	}
+
+	function showMediaDropMarker( target ) {
+		if ( ! target ) {
+			clearMediaDropMarkers();
+			return;
+		}
+		if ( ! mediaDropMarker ) {
+			mediaDropMarker = createElement( 'div', 'uplink-mbe-media-drop-marker' );
+			mediaDropMarker.setAttribute( 'aria-hidden', 'true' );
+			const count = draggedMedia.ids.length;
+			const label = ( 1 === count ? config.strings.moveItemHere : config.strings.moveItemsHere ).replace( '%d', String( count ) );
+			mediaDropMarker.append( createElement( 'span', 'uplink-mbe-media-drop-label', label ) );
+			library.append( mediaDropMarker );
+		}
+		const { rect, vertical, placement } = target;
+		const gap = Number.parseFloat( window.getComputedStyle( elements.grid )[ vertical ? 'columnGap' : 'rowGap' ] ) || 16;
+		const after = 'after' === placement;
+		const x = vertical ? ( after ? rect.right + gap / 2 : rect.left - gap / 2 ) : rect.left;
+		const y = vertical ? rect.top : ( after ? rect.bottom + gap / 2 : rect.top - gap / 2 );
+		mediaDropMarker.classList.toggle( 'is-vertical', vertical );
+		mediaDropMarker.classList.toggle( 'is-label-left', vertical && x + 180 > window.innerWidth );
+		mediaDropMarker.style.transform = `translate3d(${ x }px, ${ y }px, 0)`;
+		mediaDropMarker.style.width = `${ vertical ? 3 : rect.width }px`;
+		mediaDropMarker.style.height = `${ vertical ? rect.height : 3 }px`;
+	}
+
+	elements.grid.addEventListener( 'dragover', ( event ) => {
+		if ( ! canReorderMedia() || ! draggedMedia ) return;
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'move';
+		mediaDragPoint = { x: event.clientX, y: event.clientY };
+		if ( mediaDragFrame ) return;
+		mediaDragFrame = window.requestAnimationFrame( () => {
+			mediaDragFrame = 0;
+			if ( mediaDragPoint ) showMediaDropMarker( mediaDropAt( mediaDragPoint.x, mediaDragPoint.y ) );
+		} );
+	} );
+	elements.grid.addEventListener( 'dragleave', ( event ) => {
+		if ( ! elements.grid.contains( event.relatedTarget ) ) clearMediaDropMarkers();
+	} );
+	elements.grid.addEventListener( 'drop', ( event ) => {
+		const target = mediaDropAt( event.clientX, event.clientY );
+		if ( ! target ) return;
+		event.preventDefault();
+		event.stopPropagation();
+		const ids = draggedMedia.ids;
+		finishMediaDrag();
+		reorderMedia( ids, Number( target.card.dataset.mediaId ), target.placement );
+	} );
+	window.addEventListener( 'scroll', clearMediaDropMarkers, true );
+	window.addEventListener( 'resize', clearMediaDropMarkers );
+
+	async function reorderMedia( ids, target, placement, focusId = 0 ) {
+		if ( ! canReorderMedia() || ! ids.length || ids.includes( target ) ) {
+			return;
+		}
+		const generation = loadGeneration;
+		mediaOrderSaving = true;
+		elements.reorder.disabled = true;
+		elements.grid.setAttribute( 'aria-busy', 'true' );
+		try {
+			mediaOrderRequest = request( 'uplink_mbe_reorder_media', {
+				collection: state.collection,
+				media_ids: JSON.stringify( ids ),
+				target,
+				placement,
+			} );
+			const data = await mediaOrderRequest;
+			if ( generation !== loadGeneration ) {
+				return;
+			}
+			const previousRects = new Map( Array.from( elements.grid.querySelectorAll( '.uplink-mbe-media-card' ), ( card ) => [ card.dataset.mediaId, card.getBoundingClientRect() ] ) );
+			const ranks = new Map( data.ordered_ids.map( ( id, index ) => [ Number( id ), index ] ) );
+			state.media.sort( ( a, b ) => ranks.get( a.id ) - ranks.get( b.id ) );
+			selectionAnchor = -1;
+			renderGrid();
+			if ( ! window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
+				elements.grid.querySelectorAll( '.uplink-mbe-media-card' ).forEach( ( card ) => {
+					const before = previousRects.get( card.dataset.mediaId );
+					if ( ! before ) return;
+					const after = card.getBoundingClientRect();
+					card.animate( [ { transform: `translate(${ before.left - after.left }px, ${ before.top - after.top }px)` }, { transform: 'translate(0, 0)' } ], { duration: 180, easing: 'ease-out' } );
+				} );
+			}
+			if ( focusId ) {
+				elements.grid.querySelector( `[data-media-id="${ focusId }"] .uplink-mbe-media-preview` )?.focus();
+			}
+			showToast( config.strings.mediaOrderSaved );
+		} catch ( error ) {
+			showToast( error.message, 'error' );
+		} finally {
+			mediaOrderRequest = null;
+			mediaOrderSaving = false;
+			elements.reorder.disabled = false;
+			if ( generation === loadGeneration ) {
+				elements.grid.setAttribute( 'aria-busy', 'false' );
+				renderPagination();
+			}
+		}
+	}
+
+	function bindMediaReordering( card, media ) {
+		card.addEventListener( 'keydown', ( event ) => {
+			if ( ! event.altKey || ! [ 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight' ].includes( event.key ) || ! canReorderMedia() || ! media.canEdit ) {
+				return;
+			}
+			event.preventDefault();
+			const before = [ 'ArrowUp', 'ArrowLeft' ].includes( event.key );
+			const index = state.media.findIndex( ( item ) => item.id === media.id );
+			const target = state.media[ index + ( before ? -1 : 1 ) ];
+			if ( target ) {
+				reorderMedia( [ media.id ], target.id, before ? 'before' : 'after', media.id );
+			}
+		} );
+	}
+
 	function renderGrid() {
+		finishMediaDrag();
+		const inCollection = 'collection' === state.filter && 'library' === state.mode;
+		if ( ! inCollection ) state.reorderMode = false;
+		elements.reorder.hidden = ! inCollection;
+		elements.reorder.disabled = mediaOrderSaving;
+		const reorderLabel = state.reorderMode ? config.strings.doneReordering : config.strings.reorderMedia;
+		elements.reorder.setAttribute( 'aria-label', reorderLabel );
+		elements.reorder.title = reorderLabel;
+		elements.reorder.setAttribute( 'aria-pressed', String( state.reorderMode ) );
+		elements.grid.classList.toggle( 'is-reorder-mode', state.reorderMode );
 		elements.grid.replaceChildren();
 		if ( ! state.media.length ) {
 			elements.grid.append( createElement( 'p', 'uplink-mbe-empty', config.strings.empty ) );
 			return;
+		}
+
+		if ( state.reorderMode ) {
+			const help = createElement( 'p', 'uplink-mbe-media-order-help', config.strings.mediaOrderHelp );
+			help.id = 'uplink-mbe-media-order-help';
+			elements.grid.append( help );
 		}
 
 		state.media.forEach( ( media, mediaIndex ) => {
@@ -1628,6 +1799,9 @@
 
 			const preview = createElement( 'button', 'uplink-mbe-media-preview' );
 			preview.type = 'button';
+			if ( state.reorderMode ) {
+				preview.setAttribute( 'aria-describedby', 'uplink-mbe-media-order-help' );
+			}
 			preview.draggable = true;
 			preview.classList.toggle( 'is-image', Boolean( media.isImage || media.hasPreview ) );
 			preview.setAttribute( 'aria-label', `${ config.strings.attachmentDetails }: ${ media.title }` );
@@ -1740,7 +1914,12 @@
 			footer.append( footerStatus );
 			card.append( footer );
 
+			bindMediaReordering( card, media );
 			card.addEventListener( 'dragstart', ( event ) => {
+				if ( mediaOrderSaving ) {
+					event.preventDefault();
+					return;
+				}
 				if ( ! state.selected.has( media.id ) ) {
 					state.selected.clear();
 					state.selected.add( media.id );
@@ -1750,17 +1929,31 @@
 					} );
 					updateSelectionTools();
 				}
+				draggedMedia = { collection: state.collection, ids: state.media.filter( ( item ) => state.selected.has( item.id ) ).map( ( item ) => item.id ) };
 				event.dataTransfer.effectAllowed = 'move';
 				event.dataTransfer.setData( 'text/plain', Array.from( state.selected ).join( ',' ) );
-				card.classList.add( 'is-dragging' );
+				if ( state.reorderMode ) {
+					const count = draggedMedia.ids.length;
+					mediaDragGhost = createElement( 'div', 'uplink-mbe-media-drag-ghost', count > 1 ? config.strings.movingItems.replace( '%d', String( count ) ) : media.title );
+					library.append( mediaDragGhost );
+					event.dataTransfer.setDragImage( mediaDragGhost, 18, 18 );
+					elements.grid.querySelectorAll( '.uplink-mbe-media-card' ).forEach( ( item ) => item.classList.toggle( 'is-dragging', draggedMedia.ids.includes( Number( item.dataset.mediaId ) ) ) );
+				} else {
+					card.classList.add( 'is-dragging' );
+				}
 			} );
-			card.addEventListener( 'dragend', () => card.classList.remove( 'is-dragging' ) );
+			card.addEventListener( 'dragend', finishMediaDrag );
 
 			elements.grid.append( card );
 		} );
 	}
 
 	function activateMedia( event, media, index, trigger ) {
+		if ( state.reorderMode ) {
+			event.preventDefault();
+			selectMedia( event, media, index );
+			return;
+		}
 		if ( ! event.ctrlKey && ! event.metaKey && ! event.shiftKey ) {
 			openAttachmentModal( media, trigger );
 			return;
@@ -1772,7 +1965,7 @@
 
 	function updateSelectionTools() {
 		const count = state.selected.size;
-		elements.selectionTools.hidden = 0 === count;
+		elements.selectionTools.hidden = state.reorderMode || 0 === count;
 		elements.selectionCount.textContent = `${ count } ${ config.strings.selected }`;
 		previousSelectionCount = count;
 		updateDrawerSummary();
@@ -1839,7 +2032,7 @@
 	}
 
 	async function loadNextPage() {
-		if ( config.pagination || infiniteLoading || state.pagination.page >= state.pagination.pages ) {
+		if ( config.pagination || infiniteLoading || mediaOrderSaving || draggedMedia || state.pagination.page >= state.pagination.pages ) {
 			return;
 		}
 
@@ -1882,6 +2075,7 @@
 	}
 
 	function openCollectionModal( collection = null, parent = 0 ) {
+		if ( state.reorderMode ) return;
 		if ( ! config.canManage ) {
 			return;
 		}
@@ -1944,9 +2138,7 @@
 	}
 
 	function showManagerNotice( message, type = 'success' ) {
-		elements.collectionManagerNotice.className = `uplink-mbe-manager-notice is-${ type }`;
-		elements.collectionManagerNotice.textContent = message;
-		elements.collectionManagerNotice.hidden = false;
+		window.uplinkMbeToast( message, type );
 	}
 
 	function renderCollectionManager() {
@@ -1987,6 +2179,7 @@
 	}
 
 	function openCollectionManager() {
+		if ( state.reorderMode ) return;
 		elements.collectionManagerNotice.hidden = true;
 		renderCollectionManager();
 		elements.collectionManagerModal.hidden = false;
@@ -2941,6 +3134,15 @@
 		if ( 'auto' === savedAppearance && ( ! elements.appearancePanel || elements.appearancePanel.hidden ) ) {
 			applySavedAppearance();
 		}
+	} );
+	elements.reorder.addEventListener( 'click', () => {
+		if ( mediaOrderSaving || collectionOrderSaving || 'collection' !== state.filter || 'library' !== state.mode ) return;
+		state.reorderMode = ! state.reorderMode;
+		renderTree();
+		state.selected.clear();
+		selectionAnchor = -1;
+		renderGrid();
+		updateSelectionTools();
 	} );
 	async function initializeLibrary() {
 		await loadState();

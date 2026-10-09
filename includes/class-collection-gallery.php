@@ -213,6 +213,7 @@ final class Collection_Gallery {
 				'crop'             => 'true',
 				'aspect_ratio'     => '1/1',
 				'random'           => 'false',
+				'sort'             => '',
 				'show_title'       => 'false',
 				'captions'         => 'false',
 				'lightbox'         => 'custom',
@@ -269,6 +270,7 @@ final class Collection_Gallery {
 				'imageCrop'       => $this->to_bool( $attributes['crop'] ),
 				'aspectRatio'     => (string) $attributes['aspect_ratio'],
 				'randomOrder'     => $this->to_bool( $attributes['random'] ),
+				'sortOrder'       => (string) $attributes['sort'],
 				'showTitle'       => $this->to_bool( $attributes['show_title'] ),
 				'showCaptions'    => $this->to_bool( $attributes['captions'] ),
 				'lightboxMode'    => $lightbox_mode,
@@ -317,8 +319,8 @@ final class Collection_Gallery {
 				'post_status'    => 'inherit',
 				'post_mime_type' => 'image',
 				'posts_per_page' => $attributes['limit'],
-				'orderby'        => $attributes['randomOrder'] ? 'rand' : 'date',
-				'order'          => 'DESC',
+				'orderby'        => array( 'date' => 'date', 'random' => 'rand', 'custom' => 'collection_order' )[ $attributes['sortOrder'] ],
+				'order'          => 'custom' === $attributes['sortOrder'] ? 'ASC' : 'DESC',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- The selected Etch collection is the gallery's dynamic data source.
 				'tax_query'      => array(
 					array(
@@ -511,6 +513,8 @@ final class Collection_Gallery {
 	}
 
 	private function sanitize_attributes( array $attributes ): array {
+		$sort = sanitize_key( (string) ( $attributes['sortOrder'] ?? '' ) );
+		$sort = in_array( $sort, array( 'date', 'random', 'custom' ), true ) ? $sort : ( ! empty( $attributes['randomOrder'] ) ? 'random' : 'date' );
 		$layouts = array( 'grid', 'tiled', 'circles', 'square', 'columns' );
 		$layout  = sanitize_key( (string) ( $attributes['layout'] ?? 'grid' ) );
 		$size    = sanitize_key( (string) ( $attributes['sizeSlug'] ?? 'large' ) );
@@ -547,7 +551,8 @@ final class Collection_Gallery {
 			'sizeSlug'        => in_array( $size, $sizes, true ) ? $size : 'large',
 			'imageCrop'       => ! empty( $attributes['imageCrop'] ),
 			'aspectRatio'     => in_array( $ratio, $ratios, true ) ? $ratio : '1/1',
-			'randomOrder'     => ! empty( $attributes['randomOrder'] ),
+			'randomOrder'     => 'random' === $sort,
+			'sortOrder'       => $sort,
 			'showTitle'       => ! empty( $attributes['showTitle'] ),
 			'showCaptions'    => ! empty( $attributes['showCaptions'] ),
 			'useLightbox'     => ! array_key_exists( 'useLightbox', $attributes ) || ! empty( $attributes['useLightbox'] ),

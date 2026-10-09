@@ -8,12 +8,14 @@ final class Native_Media_Library {
 	private const PAGE_SLUG = 'etch-collections';
 	private const NONCE     = 'uplink_mbe_native_media';
 	private const PAGE_SIZE = 40;
+	private const MEDIA_ORDER_META = '_uplink_mbe_media_order';
 	private const HEALTH_TRANSIENT = 'uplink_mbe_media_health_v3';
 	private Provider_Interface $etch;
 	private array $etch_optimization_before = array();
 
 	public function __construct( Provider_Interface $etch, bool $register_admin_ui = true ) {
 		$this->etch = $etch;
+		add_filter( 'posts_orderby', array( $this, 'collection_media_orderby' ), 10, 2 );
 		add_filter( 'uplink_mbe_execute_media_command', array( $this, 'execute_media_command' ), 10, 2 );
 		add_filter( 'rest_pre_dispatch', array( $this, 'capture_etch_optimization' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'record_etch_optimization' ), 10, 3 );
@@ -38,6 +40,7 @@ final class Native_Media_Library {
 		add_action( 'wp_ajax_uplink_mbe_native_collections_state', array( $this, 'ajax_native_collections_state' ) );
 		add_action( 'wp_ajax_uplink_mbe_save_collection', array( $this, 'ajax_save_collection' ) );
 		add_action( 'wp_ajax_uplink_mbe_reorder_collections', array( $this, 'ajax_reorder_collections' ) );
+		add_action( 'wp_ajax_uplink_mbe_reorder_media', array( $this, 'ajax_reorder_media' ) );
 		add_action( 'wp_ajax_uplink_mbe_delete_collection', array( $this, 'ajax_delete_collection' ) );
 		add_action( 'wp_ajax_uplink_mbe_bulk_collections', array( $this, 'ajax_bulk_collections' ) );
 		add_action( 'wp_ajax_uplink_mbe_assign_media', array( $this, 'ajax_assign_media' ) );
@@ -787,6 +790,15 @@ final class Native_Media_Library {
 					'finishUpload'         => __( 'Add media', 'media-bridge-for-etch' ),
 					'remove'               => __( 'Remove from collection', 'media-bridge-for-etch' ),
 					'reorderInstructions'  => __( 'Drag to reorder, or press Alt plus the Up or Down arrow key.', 'media-bridge-for-etch' ),
+					'moveItemHere' => __( 'Move item here', 'media-bridge-for-etch' ),
+					/* translators: %d is the number of selected media items. */
+					'moveItemsHere' => __( 'Move %d items here', 'media-bridge-for-etch' ),
+					/* translators: %d is the number of selected media items. */
+					'movingItems' => __( 'Moving %d items', 'media-bridge-for-etch' ),
+					'reorderMedia'         => __( 'Reorder', 'media-bridge-for-etch' ),
+					'doneReordering'       => __( 'Done reordering', 'media-bridge-for-etch' ),
+					'mediaOrderSaved'      => __( 'Media order saved.', 'media-bridge-for-etch' ),
+					'mediaOrderHelp'       => __( 'Drag items before or after another item to reorder. Or focus an image and press Alt + an arrow key. Changes save automatically for this collection only.', 'media-bridge-for-etch' ),
 					'orderSaved'           => __( 'Collection order saved.', 'media-bridge-for-etch' ),
 					'saveCollection'       => __( 'Collection saved.', 'media-bridge-for-etch' ),
 					'saveAltText'          => __( 'Save changes', 'media-bridge-for-etch' ),
@@ -879,6 +891,7 @@ final class Native_Media_Library {
 		$info_description = sprintf( __( 'Organize WordPress media directly with %s. An item can belong to more than one collection.', 'media-bridge-for-etch' ), $manager_label );
 		?>
 		<div class="wrap uplink-mbe-native-wrap uplink-mbe-theme-<?php echo esc_attr( $appearance ); ?>">
+			<?php do_action( 'uplink_mbe_loop_dialog' ); ?>
 			<div class="uplink-mbe-native-heading">
 				<div class="uplink-mbe-native-title-group">
 					<div class="uplink-mbe-native-title-row">
@@ -899,6 +912,12 @@ final class Native_Media_Library {
 					</div>
 				</div>
 				<div class="uplink-mbe-native-heading-actions">
+					<?php if ( current_user_can( 'manage_options' ) && current_user_can( 'edit_posts' ) ) : ?>
+					<button type="button" class="uplink-mbe-icon-button" id="uplink-mbe-open-loop-generator" aria-haspopup="dialog" aria-controls="uplink-mbe-loop-dialog" aria-label="<?php esc_attr_e( 'Generate Etch loop', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Generate Etch loop', 'media-bridge-for-etch' ); ?>"><svg aria-hidden="true" style="stroke:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
+    <defs></defs>
+    <path fill="currentColor" d="M11.951,13.977 C11.619,14.378 11.211,14.805 10.752,15.138 C10.301,15.465 9.731,15.75 9.092,15.75 C6.913,15.75 5.631,13.962 5.631,12 C5.631,10.038 6.913,8.25 9.092,8.25 C9.731,8.25 10.301,8.535 10.752,8.862 C11.211,9.195 11.619,9.622 11.951,10.023 C12.117,10.224 12.268,10.424 12.402,10.611 C12.536,10.424 12.687,10.224 12.853,10.023 C13.185,9.622 13.592,9.195 14.051,8.862 C14.503,8.535 15.073,8.25 15.712,8.25 C17.89,8.25 19.173,10.038 19.173,12 C19.173,13.962 17.89,15.75 15.712,15.75 C15.073,15.75 14.503,15.465 14.051,15.138 C13.592,14.805 13.185,14.378 12.853,13.977 C12.687,13.776 12.536,13.576 12.402,13.389 C12.268,13.576 12.117,13.776 11.951,13.977 Z M23.185,21.75 L18.42,21.75 L18.42,20.25 L21.68,20.25 L21.68,3.75 L18.42,3.75 L18.42,2.25 L23.185,2.25 Z M6.384,2.25 L6.384,3.75 L3.124,3.75 L3.124,20.25 L6.384,20.25 L6.384,21.75 L1.619,21.75 L1.619,2.25 Z M7.136,12 C7.136,13.351 7.946,14.25 9.092,14.25 C9.283,14.25 9.543,14.16 9.868,13.925 C10.185,13.695 10.501,13.372 10.79,13.023 C11.075,12.678 11.315,12.329 11.485,12.065 L11.526,12 L11.485,11.935 C11.315,11.671 11.075,11.322 10.79,10.977 C10.501,10.628 10.185,10.305 9.868,10.075 C9.543,9.84 9.283,9.75 9.092,9.75 C7.946,9.75 7.136,10.649 7.136,12 Z M13.319,12.065 C13.489,12.329 13.729,12.678 14.014,13.023 C14.302,13.372 14.618,13.695 14.936,13.925 C15.261,14.16 15.52,14.25 15.712,14.25 C16.857,14.25 17.668,13.351 17.668,12 C17.668,10.649 16.857,9.75 15.712,9.75 C15.52,9.75 15.261,9.84 14.936,10.075 C14.618,10.305 14.302,10.628 14.014,10.977 C13.729,11.322 13.489,11.671 13.319,11.935 L13.278,12 Z"></path>
+</svg></button>
+					<?php endif; ?>
 					<?php if ( current_user_can( 'upload_files' ) ) : ?>
 						<button type="button" class="uplink-mbe-icon-button is-primary" id="uplink-mbe-upload-media" aria-label="<?php esc_attr_e( 'Upload media', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Upload media', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg></button>
 					<?php endif; ?>
@@ -973,6 +992,7 @@ final class Native_Media_Library {
 									<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8z"></path></svg>
 									<span class="uplink-mbe-library-drawer-summary" id="uplink-mbe-library-drawer-summary" aria-live="polite"></span>
 								</button>
+								<button type="button" class="uplink-mbe-toolbar-button" id="uplink-mbe-reorder-media" aria-pressed="false" aria-label="<?php esc_attr_e( 'Reorder', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Reorder', 'media-bridge-for-etch' ); ?>" hidden><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none"><path d="M22.75 20.75H13.25V13.25H22.75V20.75ZM10.75 7.75H7C4.65279 7.75 2.75 9.65279 2.75 12C2.75 14.3472 4.65279 16.25 7 16.25H8.18945L6.4375 14.498L7.49805 13.4375L11.0586 16.998L7.49805 20.5586L6.4375 19.498L8.18555 17.75H7C3.82436 17.75 1.25 15.1756 1.25 12C1.25 8.82436 3.82436 6.25 7 6.25H10.75V7.75ZM14.75 19.25H21.25V14.75H14.75V19.25ZM22.75 10.75H13.25V3.25H22.75V10.75ZM14.75 9.25H21.25V4.75H14.75V9.25Z" fill="currentColor"></path></svg></button>
 								<div class="uplink-mbe-view-switch" role="group" aria-label="<?php esc_attr_e( 'View mode', 'media-bridge-for-etch' ); ?>">
 									<button type="button" class="uplink-mbe-view-button" id="uplink-mbe-list-view" aria-label="<?php esc_attr_e( 'List view', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'List view', 'media-bridge-for-etch' ); ?>" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"></path><circle cx="4" cy="6" r="1"></circle><circle cx="4" cy="12" r="1"></circle><circle cx="4" cy="18" r="1"></circle></svg></button>
 									<button type="button" class="uplink-mbe-view-button" id="uplink-mbe-grid-view" aria-label="<?php esc_attr_e( 'Grid view', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Grid view', 'media-bridge-for-etch' ); ?>" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg></button>
@@ -1424,6 +1444,8 @@ final class Native_Media_Library {
 		}
 
 		if ( 'collection' === $filter && $collection ) {
+			$args['orderby'] = 'collection_order';
+			$args['order'] = 'ASC';
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- The selected taxonomy term defines this media-library view.
 			$args['tax_query'] = array(
 				array(
@@ -1628,6 +1650,130 @@ final class Native_Media_Library {
 		}
 
 		wp_send_json_success( array( 'ordered_ids' => $ordered_ids ) );
+	}
+
+	/** Apply collection-specific order only when explicitly requested by a media query. */
+	public function collection_media_orderby( string $orderby, WP_Query $query ): string {
+		if ( 'collection_order' !== $query->get( 'orderby' ) || 'attachment' !== $query->get( 'post_type' ) ) {
+			return $orderby;
+		}
+		$clauses = $query->get( 'tax_query' );
+		$clauses = is_array( $clauses ) ? $clauses : array();
+		if ( ! $clauses && $query->get( $this->etch->taxonomy() ) ) {
+			$clauses = array( array( 'taxonomy' => $this->etch->taxonomy(), 'field' => 'slug', 'terms' => array( $query->get( $this->etch->taxonomy() ) ) ) );
+		}
+		$collection = $this->order_collection_from_clauses( $clauses );
+		if ( ! $collection ) {
+			return $orderby;
+		}
+		global $wpdb;
+		$ids = get_term_meta( $collection, self::MEDIA_ORDER_META, true );
+		$ids = is_array( $ids ) ? array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) ) : array();
+		$direction = 'DESC' === strtoupper( (string) $query->get( 'order' ) ) ? 'DESC' : 'ASC';
+		if ( ! $ids ) {
+			return "{$wpdb->posts}.ID {$direction}";
+		}
+		// Integer-only IDs; missing or newly assigned items follow the curated list.
+		$cases = array();
+		foreach ( $ids as $position => $id ) {
+			$cases[] = "WHEN {$id} THEN {$position}";
+		}
+		return "CASE {$wpdb->posts}.ID " . implode( ' ', $cases ) . ' ELSE ' . count( $ids ) . " END {$direction}, {$wpdb->posts}.ID {$direction}";
+	}
+
+	/** Require one unambiguous collection clause; never guess an order for several collections. */
+	private function order_collection_from_clauses( array $clauses ): int {
+		if ( isset( $clauses['relation'] ) && 'OR' === strtoupper( $clauses['relation'] ) ) {
+			return 0;
+		}
+		$collections = array();
+		foreach ( $clauses as $clause ) {
+			if ( ! is_array( $clause ) ) {
+				continue;
+			}
+			if ( ! isset( $clause['taxonomy'] ) ) {
+				// Nested expressions can represent several collection scopes. Leave them alone.
+				return 0;
+			}
+			if ( $this->etch->taxonomy() !== $clause['taxonomy'] ) {
+				continue;
+			}
+			$terms = (array) ( $clause['terms'] ?? array() );
+			if ( 1 !== count( $terms ) || 'IN' !== strtoupper( $clause['operator'] ?? 'IN' ) ) {
+				return 0;
+			}
+			$field = $clause['field'] ?? 'term_id';
+			$field = 'term_id' === $field ? 'id' : $field;
+			if ( ! in_array( $field, array( 'id', 'slug', 'name', 'term_taxonomy_id' ), true ) ) {
+				return 0;
+			}
+			$term = get_term_by( $field, reset( $terms ), $this->etch->taxonomy() );
+			if ( ! $term ) {
+				return 0;
+			}
+			$collections[] = (int) $term->term_id;
+		}
+		return 1 === count( $collections ) ? $collections[0] : 0;
+	}
+
+	/** Move items relative to an anchor in the complete collection, including unloaded items. */
+	public function ajax_reorder_media(): void {
+		$this->verify_request();
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Verified above.
+		$collection = absint( $_POST['collection'] ?? 0 );
+		$target = absint( $_POST['target'] ?? 0 );
+		$placement = sanitize_key( wp_unslash( $_POST['placement'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validate the decoded IDs below.
+		$raw_ids = wp_unslash( $_POST['media_ids'] ?? '[]' );
+		$ids = is_string( $raw_ids ) ? json_decode( $raw_ids, true ) : null;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		if ( ! $collection || ! $this->etch->get_term( $collection ) || ! is_array( $ids ) || ! $ids || ! in_array( $placement, array( 'before', 'after' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Choose a collection and valid media to reorder.', 'media-bridge-for-etch' ) ), 400 );
+		}
+		foreach ( $ids as $id ) {
+			if ( ! is_int( $id ) || $id <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid media IDs.', 'media-bridge-for-etch' ) ), 400 );
+			}
+		}
+		$ids = array_values( array_unique( $ids ) );
+		$query = new WP_Query(
+			array(
+				'post_type' => 'attachment',
+				'post_status' => 'inherit',
+				'posts_per_page' => -1,
+				'no_found_rows' => true,
+				'orderby' => 'collection_order',
+				'order' => 'ASC',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Match the enhanced collection view, including its descendants.
+				'tax_query' => array( array(
+					'taxonomy' => $this->etch->taxonomy(),
+					'field' => 'term_id',
+					'terms' => array( $collection ),
+					'include_children' => true,
+				) ),
+			)
+		);
+		$current = array_map( 'intval', wp_list_pluck( $query->posts, 'ID' ) );
+		if ( array_diff( $ids, $current ) || ! in_array( $target, $current, true ) || in_array( $target, $ids, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'The collection changed. Reload and try reordering again.', 'media-bridge-for-etch' ) ), 409 );
+		}
+		// Preserve the current relative order of a multi-selection, not its click order.
+		$moved = array_values( array_intersect( $current, $ids ) );
+		$ordered = array_values( array_diff( $current, $ids ) );
+		$index = array_search( $target, $ordered, true ) + ( 'after' === $placement ? 1 : 0 );
+		array_splice( $ordered, $index, 0, $moved );
+		// Validate permissions before persisting the collection-specific order.
+		foreach ( $query->posts as $attachment ) {
+			if ( ! current_user_can( 'edit_post', $attachment->ID ) ) {
+				wp_send_json_error( array( 'message' => __( 'You must be allowed to edit every item in this collection to reorder it.', 'media-bridge-for-etch' ) ), 403 );
+			}
+		}
+		$result = update_term_meta( $collection, self::MEDIA_ORDER_META, $ordered );
+		if ( is_wp_error( $result ) || ( false === $result && get_term_meta( $collection, self::MEDIA_ORDER_META, true ) !== $ordered ) ) {
+			wp_send_json_error( array( 'message' => __( 'Could not save media order. Please try again.', 'media-bridge-for-etch' ) ), 500 );
+		}
+		wp_send_json_success( array( 'ordered_ids' => $ordered ) );
 	}
 
 	public function ajax_delete_collection(): void {
@@ -2182,6 +2328,7 @@ final class Native_Media_Library {
 			'collections' => is_wp_error( $terms ) ? array() : array_map( 'intval', $terms ),
 			'editUrl'     => $edit_url,
 			'imageEditUrl' => $image_edit_url,
+			'canEdit'     => current_user_can( 'edit_post', $attachment_id ),
 			'canDelete'   => current_user_can( 'delete_post', $attachment_id ),
 		);
 

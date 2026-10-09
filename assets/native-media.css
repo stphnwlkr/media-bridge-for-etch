@@ -4047,3 +4047,90 @@ body.uplink-mbe-modal-open {
 		grid-template-columns: 1fr;
 	}
 }
+
+/* Collection item order: horizontal insertion in grids, vertical insertion in lists. */
+.uplink-mbe-media-order-help {
+	grid-column: 1 / -1;
+	column-span: all;
+	margin: 0 0 12px;
+	color: var(--mbe-muted);
+}
+
+.uplink-mbe-media-grid.is-reorder-mode .uplink-mbe-media-preview,
+.uplink-mbe-media-grid.is-reorder-mode .uplink-mbe-media-title {
+	cursor: grab;
+}
+#uplink-mbe-reorder-media[aria-pressed="true"] {
+	background: var(--mbe-accent);
+	border-color: var(--mbe-accent);
+	color: var(--mbe-accent-icon);
+}
+
+#uplink-mbe-reorder-media[hidden] {
+	display: none !important;
+}
+
+#uplink-mbe-reorder-media svg {
+	stroke: none;
+}
+
+.uplink-mbe-media-drop-marker {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 100100;
+	pointer-events: none;
+	background: var(--mbe-accent);
+	border-radius: 3px;
+	box-shadow: 0 0 0 1px var(--mbe-surface);
+	transition: transform 90ms ease-out, width 90ms ease-out, height 90ms ease-out;
+}
+.uplink-mbe-media-drop-marker::before,
+.uplink-mbe-media-drop-marker::after {
+	content: "";
+	position: absolute;
+	width: 9px;
+	height: 9px;
+	border: 2px solid var(--mbe-accent);
+	border-radius: 50%;
+	background: var(--mbe-surface);
+	box-sizing: border-box;
+	top: -3px;
+}
+.uplink-mbe-media-drop-marker::before { left: -4px; }
+.uplink-mbe-media-drop-marker::after { right: -4px; }
+.uplink-mbe-media-drop-marker.is-vertical::before { left: -3px; top: -4px; }
+.uplink-mbe-media-drop-marker.is-vertical::after { left: -3px; top: auto; bottom: -4px; }
+.uplink-mbe-media-drop-label {
+	position: absolute;
+	right: 0;
+	top: 10px;
+	white-space: nowrap;
+	padding: 5px 9px;
+	border-radius: 5px;
+	background: var(--mbe-accent);
+	color: var(--mbe-accent-icon);
+	font-size: 12px;
+	font-weight: 600;
+	box-shadow: 0 2px 8px #0003;
+}
+.uplink-mbe-media-drop-marker.is-vertical .uplink-mbe-media-drop-label { left: 12px; right: auto; top: 0; }
+.uplink-mbe-media-drag-ghost {
+	position: fixed;
+	left: -1000px;
+	top: 0;
+	max-width: 240px;
+	padding: 12px 18px;
+	border: 2px solid var(--mbe-accent);
+	border-radius: 8px;
+	background: var(--mbe-surface);
+	color: var(--mbe-text);
+	font-weight: 600;
+	pointer-events: none;
+}
+.uplink-mbe-media-grid.is-reorder-mode .uplink-mbe-media-card.is-dragging { opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) {
+	.uplink-mbe-media-drop-marker { transition: none; }
+}
+
+.uplink-mbe-media-drop-marker.is-vertical.is-label-left .uplink-mbe-media-drop-label { left: auto; right: 12px; }

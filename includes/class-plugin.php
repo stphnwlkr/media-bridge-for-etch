@@ -21,6 +21,8 @@ final class Plugin {
 	}
 
 	public static function bootstrap(): void {
+		add_action( 'admin_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
+		add_action( 'wp_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
 		if ( ! self::etch_is_active() ) {
 			if ( is_admin() ) {
 				add_action( 'admin_notices', array( self::class, 'dependency_notice' ) );
@@ -28,6 +30,14 @@ final class Plugin {
 			return;
 		}
 		self::instance();
+	}
+
+	public static function toast_assets(): void {
+		// Frontend controls only load in the authenticated Etch builder.
+		if ( ! is_admin() && ( ! current_user_can( 'upload_files' ) || 'magic' !== ( $_GET['etch'] ?? '' ) ) ) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		wp_enqueue_style( 'uplink-mbe-toasts', UPLINK_MBE_URL . 'assets/toasts.css', array(), UPLINK_MBE_ASSET_VERSION );
+		wp_enqueue_script( 'uplink-mbe-toasts', UPLINK_MBE_URL . 'assets/toasts.js', array(), UPLINK_MBE_ASSET_VERSION, false );
+		wp_localize_script( 'uplink-mbe-toasts', 'uplinkMbeToastStrings', array( 'dismiss' => __( 'Dismiss notification', 'media-bridge-for-etch' ) ) );
 	}
 
 	public static function activate(): void {
@@ -46,7 +56,7 @@ final class Plugin {
 			return;
 		}
 		?>
-		<div class="notice notice-error"><p><?php esc_html_e( 'Uplink Media Bridge for Etch is inactive because the required Etch plugin is not active.', 'media-bridge-for-etch' ); ?></p></div>
+		<div hidden data-uplink-mbe-toast="error"><p><?php esc_html_e( 'Uplink Media Bridge for Etch is inactive because the required Etch plugin is not active.', 'media-bridge-for-etch' ); ?></p></div>
 		<?php
 	}
 

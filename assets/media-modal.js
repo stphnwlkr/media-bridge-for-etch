@@ -398,13 +398,13 @@
 					$collectionParent.append( $( '<option />' ).val( created.id ).text( optionText ) );
 				}
 				$collectionName.val( '' );
-				$collectionStatus.text( config.strings.collectionCreated );
+				window.uplinkMbeToast( config.strings.collectionCreated );
 				window.setTimeout( () => {
 					$collectionForm.prop( 'hidden', true );
 					$newCollection.attr( 'aria-expanded', 'false' ).trigger( 'focus' );
 				}, 700 );
 			} catch ( error ) {
-				$collectionStatus.text( error.message );
+				window.uplinkMbeToast( error.message, 'error' );
 			} finally {
 				$submit.prop( 'disabled', false );
 			}
@@ -888,7 +888,7 @@
 			this.$inspectorDecorative = $( '<input type="checkbox" class="uplink-mbe-modal-inspector-decorative" />' );
 			this.$inspectorCaption = $( '<textarea rows="3" class="uplink-mbe-modal-inspector-caption" />' );
 			this.$inspectorDescription = $( '<textarea rows="4" class="uplink-mbe-modal-inspector-description" />' );
-			this.$inspectorNotice = $( '<p class="uplink-mbe-modal-inspector-notice" aria-live="polite" />' );
+			this.$inspectorNotice = $( '<p class="uplink-mbe-modal-inspector-notice screen-reader-text" aria-live="polite" />' );
 			this.$inspectorEditImage = $( '<button type="button" class="button uplink-mbe-modal-inspector-edit-image" hidden />' ).append(
 				$( '<span class="dashicons dashicons-wordpress-alt" aria-hidden="true" />' ),
 				$( '<span />' ).text( config.strings.editImage )
@@ -1123,7 +1123,7 @@
 				this.renderFilters();
 				this.renderMedia();
 				if ( this.controller.uplinkMbeUploadError ) {
-					this.$grid.prepend( $( '<p class="uplink-mbe-modal-message is-error" />' ).text( this.controller.uplinkMbeUploadError ) );
+					window.uplinkMbeToast( this.controller.uplinkMbeUploadError, 'error' );
 					this.controller.uplinkMbeUploadError = '';
 				}
 			} catch ( error ) {
@@ -1511,13 +1511,15 @@
 					} catch ( error ) {
 						if ( this.inspectedId === attachmentId ) {
 							this.inspectorDirty = true;
-							this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( error.message );
+							this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
+							window.uplinkMbeToast( error.message, 'error' );
 						}
 						return false;
 					} finally {
 						this.inspectorSavesPending = Math.max( 0, this.inspectorSavesPending - 1 );
 						if ( saved && this.inspectedId === attachmentId && 0 === this.inspectorSavesPending ) {
-							this.$inspectorNotice.removeClass( 'is-error is-saving' ).addClass( 'is-saved' ).text( config.strings.saved );
+							this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
+							window.uplinkMbeToast( config.strings.saved );
 						}
 					}
 				} );
@@ -1530,7 +1532,8 @@
 			if ( ! await this.persistInspectorChanges( true ) || this.inspectedId !== attachmentId ) return;
 			this.renderMedia();
 			this.showInspector( attachmentId );
-			this.$inspectorNotice.addClass( 'is-saved' ).text( config.strings.saved );
+			this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
+			window.uplinkMbeToast( config.strings.saved );
 		},
 
 		editInspectedImage( event ) {
@@ -1551,7 +1554,8 @@
 					openEditor();
 				} else {
 					attachment.fetch().done( openEditor ).fail( () => {
-						this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( config.strings.error );
+						this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
+						window.uplinkMbeToast( config.strings.error, 'error' );
 					} );
 				}
 				return;
@@ -1597,7 +1601,8 @@
 				this.controller.state().trigger( 'select' );
 				this.controller.reset();
 			} catch ( error ) {
-				this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( config.strings.error );
+				this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
+				window.uplinkMbeToast( config.strings.error, 'error' );
 				this.$inspectorInsert.prop( 'disabled', false ).removeAttr( 'aria-busy' ).removeClass( 'is-busy' ).text( actionLabel );
 			}
 		},
@@ -1720,7 +1725,7 @@
 				}
 				this.updateSelected();
 			} catch ( error ) {
-				this.$grid.prepend( $( '<p class="uplink-mbe-modal-message is-error" />' ).text( config.strings.error ) );
+				window.uplinkMbeToast( config.strings.error, 'error' );
 			}
 		},
 
@@ -1783,7 +1788,7 @@
 					this.media.unshift( media );
 					this.renderMedia();
 				} catch ( error ) {
-					this.$grid.prepend( $( '<p class="uplink-mbe-modal-message is-error" />' ).text( error.message ) );
+					window.uplinkMbeToast( error.message, 'error' );
 					return;
 				}
 			}

@@ -130,10 +130,16 @@
 						} )
 					),
 					el( PanelBody, { title: __( 'Gallery options', 'media-bridge-for-etch' ), initialOpen: false },
-						el( ToggleControl, {
-							label: __( 'Randomize order', 'media-bridge-for-etch' ),
-							checked: attributes.randomOrder,
-							onChange: ( value ) => setAttributes( { randomOrder: value } ),
+						el( SelectControl, {
+							label: __( 'Image order', 'media-bridge-for-etch' ),
+							value: attributes.sortOrder || ( attributes.randomOrder ? 'random' : 'date' ),
+							options: [
+								{ label: __( 'Newest first', 'media-bridge-for-etch' ), value: 'date' },
+								{ label: __( 'Custom order', 'media-bridge-for-etch' ), value: 'custom' },
+								{ label: __( 'Random', 'media-bridge-for-etch' ), value: 'random' },
+							],
+							help: __( 'Set custom order by dragging images within this collection in the Enhanced Media Manager.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { sortOrder: value, randomOrder: 'random' === value } ),
 						} )
 					),
 					el( PanelBody, { title: __( 'Lightbox', 'media-bridge-for-etch' ), initialOpen: true },

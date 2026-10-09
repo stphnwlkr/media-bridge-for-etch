@@ -3,9 +3,11 @@ namespace UplinkPress\MediaBridgeForEtch;
 
 final class Admin {
 	private Plugin $plugin;
+	private Loop_Generator $loop_generator;
 
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+		$this->loop_generator = new Loop_Generator( $plugin->providers()['etch'] );
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_uplink_mbe_reconcile', array( $this, 'reconcile' ) );
@@ -156,7 +158,7 @@ final class Admin {
 		$gallery_enabled = ! empty( $settings['collection_gallery'] );
 		$manager_experience = ! empty( $settings['default_media_screen'] ) ? 'manager_default' : 'wordpress';
 		$network_cleanup = is_multisite() ? Data_Cleanup::network_settings() : Data_Cleanup::network_defaults();
-		$allowed_tabs = array( 'settings', 'exif', 'optimization', 'gallery' );
+		$allowed_tabs = array( 'settings', 'exif', 'optimization', 'gallery', 'loops' );
 		if ( ! in_array( $active_tab, $allowed_tabs, true ) ) {
 			$active_tab = 'settings';
 		}
@@ -183,6 +185,7 @@ final class Admin {
 				<a class="nav-tab <?php echo 'exif' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'exif', $this->page_url() ) ); ?>" <?php echo 'exif' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch EXIF', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'optimization' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'optimization', $this->page_url() ) ); ?>" <?php echo 'optimization' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Optimization', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'gallery' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'gallery', $this->page_url() ) ); ?>" <?php echo 'gallery' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Gallery & shortcode', 'media-bridge-for-etch' ); ?></a>
+				<a class="nav-tab <?php echo 'loops' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'loops', $this->page_url() ) ); ?>" <?php echo 'loops' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch loops', 'media-bridge-for-etch' ); ?></a>
 			</nav>
 
 			<?php if ( 'settings' === $active_tab ) : ?>
@@ -357,6 +360,8 @@ final class Admin {
 				</tbody></table><?php endif; ?>
 			</section>
 			<?php endif; ?>
+			<?php elseif ( 'loops' === $active_tab ) : ?>
+				<?php $this->loop_generator->render(); ?>
 			<?php elseif ( 'exif' === $active_tab ) : ?>
 				<?php $this->render_exif_docs(); ?>
 			<?php elseif ( 'optimization' === $active_tab ) : ?>
@@ -544,6 +549,14 @@ final class Admin {
 	}
 
 	private function notices(): void {
+		if ( filter_input( INPUT_GET, 'settings-updated', FILTER_VALIDATE_BOOLEAN ) ) {
+			$messages = get_settings_errors();
+			if ( ! $messages ) $messages = array( array( 'type' => 'success', 'message' => __( 'Media Bridge settings saved.', 'media-bridge-for-etch' ) ) );
+			foreach ( $messages as $message ) {
+				$type = 'error' === $message['type'] ? 'error' : 'success';
+				printf( '<div hidden data-uplink-mbe-toast="%s">%s</div>', esc_attr( $type ), esc_html( wp_strip_all_tags( $message['message'] ) ) );
+			}
+		}
 		if ( filter_input( INPUT_GET, 'uplink_mbe_reconciled', FILTER_VALIDATE_BOOLEAN ) ) {
 			$created     = absint( filter_input( INPUT_GET, 'created', FILTER_SANITIZE_NUMBER_INT ) );
 			$mapped      = absint( filter_input( INPUT_GET, 'mapped', FILTER_SANITIZE_NUMBER_INT ) );
@@ -552,16 +565,16 @@ final class Admin {
 
 			/* translators: 1: folders created, 2: folders mapped, 3: attachments processed, 4: errors. */
 			$message = sprintf( __( 'Reconciliation complete: %1$d created, %2$d mapped, %3$d attachments processed, %4$d errors.', 'media-bridge-for-etch' ), $created, $mapped, $attachments, $errors );
-			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $message ) );
+			printf( '<div hidden data-uplink-mbe-toast="success"><p>%s</p></div>', esc_html( $message ) );
 		}
 		if ( filter_input( INPUT_GET, 'uplink_mbe_error', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
-			echo '<div class="notice notice-error"><p>' . esc_html__( 'The selected providers are not both available.', 'media-bridge-for-etch' ) . '</p></div>';
+			echo '<div hidden data-uplink-mbe-toast="error"><p>' . esc_html__( 'The selected providers are not both available.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
 		if ( filter_input( INPUT_GET, 'uplink_mbe_log_cleared', FILTER_VALIDATE_BOOLEAN ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Synchronization history cleared.', 'media-bridge-for-etch' ) . '</p></div>';
+			echo '<div hidden data-uplink-mbe-toast="success"><p>' . esc_html__( 'Synchronization history cleared.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
 		if ( filter_input( INPUT_GET, 'uplink_mbe_settings_reset', FILTER_VALIDATE_BOOLEAN ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Media Bridge settings were reset to their defaults.', 'media-bridge-for-etch' ) . '</p></div>';
+			echo '<div hidden data-uplink-mbe-toast="success"><p>' . esc_html__( 'Media Bridge settings were reset to their defaults.', 'media-bridge-for-etch' ) . '</p></div>';
 		}
 	}
 
