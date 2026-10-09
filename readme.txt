@@ -11,176 +11,69 @@ Manage Etch Collections directly in WordPress, with optional Wicked Folders or H
 
 == Description ==
 
-Uplink Media Bridge for Etch adds a native Media > Etch Collections workspace for organizing the WordPress media library with Etch itself. Create and edit collections, upload or select media, assign items to multiple collections, drag selected items into a collection, and use bulk assignment tools without installing another folder plugin. The Experimental collection-depth setting extends Media Bridge management from Etch's standard two levels to as many as five.
+Uplink Media Bridge for Etch lets you organize Etch Collections directly in the WordPress media library. Manage images, curate collection order, build galleries, and create reusable Etch image loops without opening the builder.
 
-[Read the Uplink Media Bridge for Etch 2.0 overview](https://uplinkplugins.com/articles/uplink-media-bridge-for-etch-version-2/).
+Etch must be installed and active. Wicked Folders and HappyFiles are optional integrations, not requirements.
 
-Wicked Folders and HappyFiles remain supported as optional bridge providers. Choose one under Media > Uplink Media Bridge when you want bidirectional synchronization instead of the native-only mode.
+= Choose your media workflow =
 
-To update the plugin settings, open Media > Uplink Media Bridge in the WordPress admin. The settings are located under the Media tab, not the Settings menu.
+Use the WordPress Media Library with Etch Collection tools, or choose the Enhanced Media Manager with a customizable name, collection navigation, and grid, masonry, and list views. Settings are under Media > Uplink Media Bridge.
 
-WordPress 7.0 and newer also exposes the manager and Media Bridge settings through the Command Palette. The manager entry uses the administrator-defined label and is available only in native Etch Collections mode; it is hidden from both the Media menu and Command Palette while Wicked Folders or HappyFiles is selected. WordPress capability checks determine which entries each user can see.
+The Enhanced Manager includes search, filters, adjustable thumbnail sizes, bulk collection assignments, attachment editing, and light, dark, or automatic appearance. Media Health helps identify issues such as missing alt text, missing image sizes, and oversized files. Optional EXIF information shows available camera metadata.
 
-Administrators who choose the Enhanced Media Manager can change its label. The default remains Etch Collections. The custom name is used in the Media menu, manager title, information popup, WordPress media-selection tab, and Command Palette. Searching the Command Palette for Etch continues to find the manager and Media Bridge settings, even when the manager uses a custom name.
+= Collections and custom image order =
 
-The Media Library experience setting offers two exclusive choices in Etch-only mode. WordPress Media Library keeps the native screens and can add Etch Collection tools to them. Enhanced Media Manager replaces the Media screen and WordPress media-selection dialogs with the custom-labeled manager and its inserter.
+Create, rename, move, and delete collections. Assign an image to multiple collections and drag selected images into a collection. An experimental depth setting extends collection management to as many as five levels.
 
-In the Etch builder Asset Manager, Media Bridge adds a uniform square-grid view alongside Etch's list and masonry views. Uniform Grid includes a remembered thumbnail-width control using the same range as the Enhanced Manager.
+Open a collection and choose Reorder to arrange images by dragging individual images or a selected group. Each collection keeps its own order, so a shared image can appear in different positions in different collections. Changes save automatically. Keyboard users can move a focused image with Alt plus an arrow key.
 
-Optional providers:
+= Etch image loop generator =
 
-* Wicked Folders
-* HappyFiles
+Choose a collection by name, select an image order and limit, and preview the generated query. Copy the query for manual use, or give the loop a name and add it to the Etch loop library. The generator is available in settings and the Enhanced Manager.
 
-Native features include collection creation, rename, movement and deletion; Etch drag-and-drop collection ordering; media uploads and permanent deletion; a full-screen attachment editor and compact icon toolbar; title, alt text, decorative state, caption, and description editing; adjustable grid and masonry layouts plus a compact list view; detailed filtering by media and MIME type, uploader, attachment status, date, dimensions, file size, and missing alt text; Media Health scanning; optional EXIF display; Auto, Light, and Dark appearance modes; search; automatic scroll loading; optional numbered pagination; multi-collection assignments; Ctrl/Command-click and Shift-click range selection; drag-and-drop assignment; and bulk add, remove, uncategorize, or delete actions.
+Generated loops read current collection membership and order as images are added, removed, or reordered. Existing loops are preserved. Saving to the Etch loop library requires administrator settings access.
 
-== Uploads and file replacement ==
+= Upload previews, renaming, and replacement =
 
-Preview selected images and rename them before upload, including after supported pre-upload optimization. Select a file in the queue to edit its name; the extension follows the file format. Keep originals bypasses supported pre-upload optimization.
+Preview selected images and edit filenames before uploading, including after supported pre-upload optimization. A selectable queue lets you review one image at a time. File extensions follow the resulting format. Keep originals bypasses supported pre-upload optimization.
 
-File replacement is disabled by default. Enable it under Media > Uplink Media Bridge > Settings > File replacement. Leave it off if another plugin handles replacement. Open an attachment and choose Replace to select one replacement file.
+File replacement is optional and disabled by default. Enable it in Settings > File replacement, or leave it off if another plugin handles replacement. Select one file and choose between:
 
-Keep the existing filename and URL requires the same file type and extension after optimization. The dialog shows the filename that will be retained. Existing thumbnail URLs are refreshed, but browser or CDN caches may need clearing. Use the replacement filename and type allows a different format or filename and creates a new file URL. Existing files are retained for links written directly into content; those links are not rewritten. Both options preserve the attachment ID, title, alt text, caption, description, collections, and custom collection order.
+* Keep the existing filename and URL. The replacement must have the same file type and extension after optimization. Existing thumbnail URLs are refreshed. Browser or CDN caches may need clearing.
+* Use the replacement filename and type. This creates a new file URL and permits a different format. Old files are retained for links written directly into content; those links are not rewritten.
 
-== Etch loop generator ==
+Both options preserve the attachment ID, title, alt text, caption, description, collections, and custom collection order. The dialog shows the retained filename when applicable and displays replacement errors directly in the dialog.
 
-Open Media > Uplink Media Bridge > Etch loops. Choose a collection by its name and folder path, give the loop a name, choose custom collection order, newest first, oldest first, image title, or random order, and select whether to include child collections. Include all images or set a maximum. The preview reports how many matching images the loop will return; the generated query is always visible in a code panel with a Copy query button. Copying does not require a loop name. Enter a name before adding the loop to Etch.
+= Collection galleries =
 
-Choose Add to Etch loop library, then open or reload the Etch builder and select the saved loop by name. The loop continues to read current taxonomy membership and collection order. It does not copy a fixed list of images. Existing loops are preserved. Repeating an unchanged save does not create duplicates; a name already used for different settings requires a different name. Creating loops requires administrator settings access and Etch must be active.
+Display collection images with the Collection Gallery block or the `[etch_collection_gallery]` shortcode. Choose a layout, image size, captions, custom collection order, and lightbox settings. A shortcode generator provides a preview and copyable code.
 
-== Collection image ordering ==
+Example: `[etch_collection_gallery collection="portfolio" layout="grid" columns="3" limit="24"]`
 
-In the Enhanced Media Manager, open a collection and choose Reorder. Drag an item or selected group before or after another item, then choose Done reordering. Changes save automatically with a toast confirmation. Collection editing and collection dragging are disabled until reorder mode ends. With an image focused, Alt plus an arrow key moves it one place among the visible items. Search and filters preserve the order of items outside the current view.
+= Optional integrations =
 
-Each collection stores its own ordered attachment IDs in `_uplink_mbe_media_order` term metadata. Shared images can have different positions in different collections. Taxonomy membership remains the source of collection contents; attachment `menu_order` is never changed. Parent views can order items from child collections without changing the child's saved order. Newly assigned images appear after the saved list, ordered by attachment ID.
+Wicked Folders and HappyFiles can synchronize folder hierarchies and media assignments with Etch Collections. Settings label this feature 3rd party folder sync. Review migration and cleanup guidance before removing an existing folder provider.
 
-For an Etch WordPress query loop, filter attachments to one Etch collection and set `orderby` to `collection_order` and `order` to `ASC`. Example query arguments, replacing 123 with the collection ID:
+Media Bridge also adds an optional uniform square-grid view with adjustable thumbnail widths to the Etch Asset Manager. This does not add collection-specific sorting to that manager.
 
-    {
-      "post_type": "attachment",
-      "post_status": "inherit",
-      "post_mime_type": "image",
-      "posts_per_page": -1,
-      "orderby": "collection_order",
-      "order": "ASC",
-      "tax_query": [{
-        "taxonomy": "etch_collection",
-        "field": "term_id",
-        "terms": [123],
-        "include_children": false
-      }]
-    }
+Supported Cimo pre-upload optimization runs through the shared upload workflow. Media Bridge does not provide its own image compression engine. Instant Images and Ops Center integrations are available when those plugins are installed.
 
-Term slugs are also supported with `field: slug`. Use one collection per query; queries combining several collections do not have one custom order. Keep WordPress query filters enabled. Sorting happens before pagination and image limits.
+= Permissions and data =
 
-In the Collection Gallery block, choose Gallery options > Image order > Custom order. The Etch gallery settings offer the same option. Existing galleries keep their previous newest-first or random behavior. Shortcodes can use `[etch_collection_gallery collection="123" sort="custom"]`; `sort` also accepts `date` or `random`.
+Media Bridge respects WordPress attachment permissions and Etch taxonomy capabilities. Collection management and media editing remain limited to users with the required access.
 
-== Media Health and EXIF ==
+Deactivation and uninstall cleanup options are available in About. Review them before enabling cleanup, especially when using a third-party folder provider. Back up the site before migration or cleanup. Deactivating Media Bridge stops its gallery blocks and shortcodes from rendering; saved content remains available when the plugin is reactivated.
 
-The Health workspace scans attachments for broken or empty files, missing image alt text, missing generated image sizes, oversized files, suspected duplicates, and obsolete BMP or TIFF formats. It also provides dedicated Decorative and Healthy views. Suspected duplicates have byte-for-byte matching file contents, but distinct attachment records may be intentional. Rescan after changing files outside WordPress; normal Media Bridge edits and attachment changes invalidate the cached scan automatically.
+= Documentation =
 
-The display popover can reveal camera, lens, aperture, focal length, ISO, exposure, capture date, credit, and copyright metadata in the attachment editor when WordPress extracted those values from the file.
-
-The Image metadata for Etch setting exposes normalized EXIF under each current Etch image object. Use the active object prefix followed by fields such as `image.exif.camera_model`, `image.exif.aperture_display`, `image.exif.focal_display`, `image.exif.exposure_display`, or `image.exif.date_taken`. In a repeated item context, for example, this can be `item.image.exif.camera_model`. When WordPress creates a `-scaled` image without EXIF, the bridge reads metadata from WordPress's retained original image. The provider does not register the old `featured_image_exif` alias.
-
-Embedded GPS coordinates are a separate setting and are disabled by default. When enabled, latitude, longitude, and altitude appear in the attachment editor and are available below `image.exif.gps`.
-
-== Ops Center integration ==
-
-Uplink Ops Center and other trusted server-side plugins can send commands through the `uplink_mbe_execute_media_command` filter. Pass `null` as the first value and a command array as the second value. The filter returns a result array or `WP_Error`.
-
-Update attachment fields:
-
-`$result = apply_filters( 'uplink_mbe_execute_media_command', null, array( 'operation' => 'update', 'attachment_id' => 123, 'fields' => array( 'title' => 'Team photo', 'alt' => 'The support team outside the office', 'decorative' => false, 'caption' => '', 'description' => '' ) ) );`
-
-Add attachments to a collection:
-
-`$result = apply_filters( 'uplink_mbe_execute_media_command', null, array( 'operation' => 'add', 'attachment_ids' => array( 123, 124 ), 'collection_id' => 45 ) );`
-
-The `remove` operation uses the same IDs. The `clear` operation removes all Media Bridge collection assignments and does not need `collection_id`. Commands honor the current user's WordPress media permissions. A trusted non-interactive integration can opt in with `uplink_mbe_media_command_allowed`. Media Bridge fires `uplink_mbe_attachment_updated` after metadata edits and `uplink_mbe_media_collections_changed` after assignment changes.
-
-Open the active media experience from an integration with `uplink_mbe_get_library_url()`. Pass an attachment ID to open that attachment, or pass `upload` as the second argument to open the active uploader:
-
-`$attachment_url = uplink_mbe_get_library_url( 123 );`
-
-`$upload_url = uplink_mbe_get_library_url( 0, 'upload' );`
-
-The helper returns native WordPress URLs when WordPress Media Library is selected and Enhanced Manager URLs when it is the default. The `uplink_mbe_media_library_url` filter can change generated URLs. The Enhanced Manager dispatches `uplink-mbe:library-ready` on `document` after the library and any requested interface action have initialized. Navigation stays separate from the `uplink_mbe_execute_media_command` mutation filter.
-
-Etch Collections loads additional media automatically as you scroll. Administrators who prefer page controls can enable numbered pagination under Media > Media Bridge.
-
-Bridge features include folder creation, rename and movement synchronization; attachment assignment synchronization; provider-specific ordering; optional deletion synchronization; fixed or most-recent conflict authority; reconciliation; and a 200-entry sync history.
-
-Etch's Asset Manager supports two folder levels. The Experimental collection-depth setting lets Media Bridge create and manage as many as five levels through its WordPress interfaces. Etch 1.6.8 displays those deeper collections, but its Asset Manager cannot create or move them beyond two levels. Folders deeper than the configured limit in HappyFiles or Wicked Folders remain untouched, and their media is represented in Etch by the nearest supported ancestor.
+[Read the complete documentation](https://github.com/stphnwlkr/media-bridge-for-etch/blob/main/README.md) for migration, permissions, EXIF, shortcode attributes, integrations, and data retention details.
 
 == Installation ==
 
 1. Install and activate Etch.
 2. Install and activate Uplink Media Bridge for Etch.
-3. Open Media > Etch Collections to organize media without another folder plugin.
-4. Optional: install Wicked Folders or HappyFiles, then select it under Media > Media Bridge.
-5. If using a bridge provider, run reconciliation once before relying on automatic synchronization.
-
-== Migrating from Wicked Folders or HappyFiles ==
-
-Media Bridge stores synchronized copies as Etch Collections. After those collections and attachment assignments have been reconciled, they remain available in native mode even if Wicked Folders or HappyFiles is deactivated or removed.
-
-Before migrating, make a current site backup. Do not deactivate or remove the folder plugin until the Etch copy has been verified.
-
-Recommended migration procedure:
-
-1. Keep Wicked Folders or HappyFiles active.
-2. Open Media > Media Bridge and select the installed folder provider.
-3. Disable Synchronize folder deletions during the migration unless copied deletions are specifically required.
-4. Save the settings, then run reconciliation.
-5. Open Media > Etch Collections and verify the collection names, hierarchy, item counts, and several individual media assignments.
-6. Return to Media > Media Bridge, select Etch Collections — no third-party plugin, and save.
-7. Deactivate the folder plugin, then verify Media > Etch Collections again.
-8. Remove the folder plugin only after verification is complete.
-
-Switching to native mode stops the bridge hooks. It does not delete Etch Collections, attachment assignments, or media files. The original provider data is separate and may remain in the database after deactivation; uninstall behavior depends on that provider.
-
-Etch's Asset Manager supports two collection levels. Media Bridge can experimentally preserve and manage as many as five levels when that limit is selected under Media > Media Bridge. Etch 1.6.8 displays those deeper collections, but its Asset Manager cannot create or move them beyond two levels. Provider folders deeper than the configured limit remain untouched while the bridge is active, and Etch represents their media using the nearest supported ancestor.
-
-For rollback, restore the site backup for a complete restoration of provider-specific data. Alternatively, reinstall or reactivate the provider, select it under Media > Media Bridge, and reconcile from Etch. This can rebuild the Etch hierarchy up to the configured limit, but it cannot reconstruct provider-only deeper hierarchy or settings that the provider removed during uninstall.
-
-== Collection galleries ==
-
-Collection Gallery is enabled by default. Administrators can turn it off under Media > Media Bridge; doing so unregisters the block and shortcode and hides the gallery generator and documentation.
-
-The Collection Gallery block displays a live gallery fed by an Etch collection. Adding or removing an image from the selected collection updates the rendered gallery without editing the page. Block controls include standard grid, tiled mosaic, circular grid, square tiles, and tiled columns; one to eight columns; image resolution; cropping and aspect ratio; spacing; random order; child collections; and an image limit.
-
-Image behavior can use the custom gallery lightbox, the native WordPress lightbox, or no interaction. The custom lightbox includes optional titles and captions, a horizontal or vertical thumbnail strip, separate lightbox image resolution, fullscreen and zoom controls, customizable colors and font sizes, and information above or below the image. It supports Escape, arrow, Home, End, Tab, Shift+Tab, plus/minus, and zero keyboard controls, traps focus while open, announces slide changes, and restores focus to the originating thumbnail when closed. Images are never linked directly to a media file or attachment page.
-
-= Image optimizer compatibility =
-
-Media Bridge organizes standard WordPress attachments, so image optimizers that create separate WebP or AVIF files do not interfere with collections or folder synchronization. Front-end delivery needs more care when an optimizer wraps the same gallery image through both `wp_get_attachment_image` and `wp_content_img_tag`, because that can create nested `<picture>` elements.
-
-Thumbnail titles and captions are separate options and are disabled by default. When enabled, their colors, background color and opacity, font sizes, alignment, and top, center, or bottom position are customizable.
-
-The same gallery renderer is available through the `[etch_collection_gallery]` shortcode. The `collection` value can be a collection ID or slug:
-
-`[etch_collection_gallery collection="airplanes" layout="tiled" columns="4" size="large" lightbox="custom" lightbox_thumbnails="true" lightbox_thumbnail_position="horizontal" limit="24"]`
-
-The `lightbox` value accepts `custom`, `native`, or `none`. Custom-lightbox options include `lightbox_title`, `lightbox_caption`, `lightbox_thumbnails`, `lightbox_fullscreen`, `lightbox_zoom`, `lightbox_size`, `lightbox_thumbnail_position`, `lightbox_info_position`, `lightbox_background`, `lightbox_panel`, `lightbox_title_color`, `lightbox_caption_color`, `lightbox_font`, `lightbox_title_size`, `lightbox_caption_size`, `lightbox_title_weight`, and `lightbox_caption_weight`. Font values are `inherit`, `system`, `serif`, or `mono`. Thumbnail text uses `show_title`, `captions`, `title_color`, `caption_color`, `text_background`, `background_opacity`, `title_size`, `caption_size`, `text_align`, and `text_position`.
-
-Available shortcode attributes are `collection`, `include_children`, `layout`, `columns`, `size`, `crop`, `aspect_ratio`, `random`, `show_title`, `captions`, `lightbox`, `title_color`, `caption_color`, `title_size`, `caption_size`, `text_align`, `limit`, and `gap`. Layout values are `grid`, `tiled`, `circles`, `square`, or `columns`. Images can use the native WordPress lightbox or remain non-clickable; direct image and attachment links are not supported.
-
-== Access and permissions ==
-
-Media Bridge uses WordPress capabilities rather than maintaining a separate role system. Access to Media > Etch Collections and its media-selection tab requires the upload_files capability. Creating, renaming, moving, or deleting collections requires the Etch taxonomy's manage_terms capability, while assigning media requires its assign_terms capability. Editing attachment details requires edit access to that attachment, and permanent deletion requires delete access to that attachment. WordPress administrators and editors normally have all required capabilities; authors retain the limits configured by WordPress and any role-management plugin.
-
-The WordPress Command Palette follows the same rules. Users with upload_files can open the manager command while native mode is active. Only users with manage_options can see and open the Media Bridge settings command.
-
-== Data retention and removal ==
-
-Deactivating or deleting Media Bridge preserves its settings and bridge metadata by default. Administrators can independently opt into cleanup on deactivation or deletion under Media > Media Bridge. Cleanup removes Media Bridge settings, synchronization history, legacy options, and bridge-specific mapping metadata. Etch Collections, third-party folders, attachment assignments, media records, and files are always preserved.
-
-The deactivation option supports managed environments where plugins are removed through a deployment workflow rather than the WordPress Plugins screen. The deployment must run WordPress's deactivation hook before removing the plugin files; once those files are gone, Media Bridge cannot execute cleanup code.
-
-On multisite, network administrators can configure off-by-default network-wide cleanup overrides under Network Admin > Settings > Media Bridge. A network override can clean Media Bridge-owned records across every site during network deactivation or plugin deletion, regardless of individual site choices. Site-level deactivation continues to follow that site’s local setting.
-
-Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery shortcodes, and their Etch builder passthrough from rendering. Saved block and shortcode content remains in WordPress and renders again after the plugin is reactivated or reinstalled.
+3. Open Media > Uplink Media Bridge to choose the media workflow and optional integrations.
+4. Open the media manager to organize collections and images.
 
 == Screenshots ==
 
