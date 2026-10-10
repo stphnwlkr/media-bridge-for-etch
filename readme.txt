@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.2
+Stable tag: 2.5.3
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -106,6 +106,9 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.5.3 =
+Adds an option to hide the in-page slider Play/Pause button. Existing sliders retain their current controls.
 
 = 2.5.2 =
 Adds progress styles and visibility, split status/control layouts, and configurable button text and icon sizes.
@@ -244,6 +247,12 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.5.3 =
+
+* Add a Show Play/Pause button toggle in Slider Controls and the Etch gallery settings.
+* Keep autoplay independent of button visibility. Hiding Play/Pause also hides its attached line or circular progress indicator.
+* Preserve visible Play/Pause controls for existing sliders.
 
 = 2.5.2 =
 

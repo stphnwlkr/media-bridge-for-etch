@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Uplink Media Bridge for Etch
  * Description: Manage Etch media collections in WordPress, with optional Wicked Folders or HappyFiles synchronization.
- * Version: 2.5.2
+ * Version: 2.5.3
  * Plugin URI: https://uplinkplugins.com/articles/uplink-media-bridge-for-etch-version-2/
  * Author: Stephen Walker
  * License: GPL-2.0-or-later
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'UPLINK_MBE_VERSION', '2.5.2' );
-define( 'UPLINK_MBE_ASSET_VERSION', '2.5.2' );
+define( 'UPLINK_MBE_VERSION', '2.5.3' );
+define( 'UPLINK_MBE_ASSET_VERSION', '2.5.3' );
 define( 'UPLINK_MBE_FILE', __FILE__ );
 define( 'UPLINK_MBE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'UPLINK_MBE_URL', plugin_dir_url( __FILE__ ) );

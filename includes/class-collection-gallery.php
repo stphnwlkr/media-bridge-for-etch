@@ -251,6 +251,7 @@ final class Collection_Gallery {
 				'interval' => 5000,
 				'show_status' => 'true',
 				'show_slideshow' => 'false',
+				'show_play' => 'true',
 				'status_position' => 'auto',
 				'progress_color' => '',
 				'progress_style' => 'bar',
@@ -331,6 +332,7 @@ final class Collection_Gallery {
 				'sliderShowProgress' => $this->to_bool( $attributes['show_progress'] ),
 				'navTextSize' => $attributes['nav_text_size'],
 				'navIconSize' => $attributes['nav_icon_size'],
+				'sliderShowPlay' => $this->to_bool( $attributes['show_play'] ),
 				'sliderShowSlideshow' => $this->to_bool( $attributes['show_slideshow'] ),
 				'sliderStatusPosition' => $attributes['status_position'],
 				'sliderProgressColor' => $attributes['progress_color'],
@@ -436,6 +438,7 @@ final class Collection_Gallery {
 		}
 		if ( 'slider' === $attributes['layout'] ) {
 			$classes[] = 'has-progress-' . $attributes['sliderProgressStyle'];
+			if ( ! $attributes['sliderShowPlay'] ) $classes[] = 'has-hidden-slider-play';
 			if ( ! $attributes['sliderShowProgress'] ) $classes[] = 'has-hidden-slider-progress';
 			if ( ! $attributes['sliderShowStatus'] ) $classes[] = 'has-hidden-slider-status';
 			$classes[] = 'has-slider-status-' . $attributes['sliderStatusPosition'];
@@ -710,6 +713,7 @@ final class Collection_Gallery {
 			'sliderShowProgress' => ! array_key_exists( 'sliderShowProgress', $attributes ) || ! empty( $attributes['sliderShowProgress'] ),
 			'navTextSize' => empty( $attributes['navTextSize'] ) ? 0 : max( 10, min( 40, absint( $attributes['navTextSize'] ) ) ),
 			'navIconSize' => max( 12, min( 64, absint( $attributes['navIconSize'] ?? 20 ) ) ),
+			'sliderShowPlay' => ! array_key_exists( 'sliderShowPlay', $attributes ) || ! empty( $attributes['sliderShowPlay'] ),
 			'sliderShowSlideshow' => ! empty( $attributes['sliderShowSlideshow'] ),
 			'sliderShowStatus' => ! array_key_exists( 'sliderShowStatus', $attributes ) || ! empty( $attributes['sliderShowStatus'] ),
 			'sliderStatusPosition' => in_array( $attributes['sliderStatusPosition'] ?? '', array( 'auto', 'before', 'between', 'after', 'above', 'below', 'left', 'right' ), true ) ? $attributes['sliderStatusPosition'] : 'auto',

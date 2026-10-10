@@ -959,3 +959,5 @@ html.uplink-mbe-lightbox-open body {
 .uplink-mbe-slider-progress .uplink-mbe-progress-fill { stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: round; }
 .wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-progress { display: none !important; }
 .wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-controls { padding-bottom: 12px; }
+
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-play .uplink-mbe-slider-controls [data-slider-play] { display: none; }

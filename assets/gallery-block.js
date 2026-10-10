@@ -184,6 +184,7 @@
 						} ),
 						el( RangeControl, { label: __( 'Button text size', 'media-bridge-for-etch' ), value: attributes.navTextSize || 0, min: 0, max: 40, help: __( 'Pixels. Set to 0 to inherit the site font size.', 'media-bridge-for-etch' ), onChange: ( value ) => setAttributes( { navTextSize: value === 0 ? 0 : Math.max( 10, value ) } ) } ),
 						el( RangeControl, { label: __( 'Button icon size', 'media-bridge-for-etch' ), value: attributes.navIconSize, min: 12, max: 64, help: __( 'Pixels.', 'media-bridge-for-etch' ), onChange: ( value ) => setAttributes( { navIconSize: value } ) } ),
+						el( ToggleControl, { label: __( 'Show Play/Pause button', 'media-bridge-for-etch' ), checked: attributes.sliderShowPlay, help: __( 'Also hides progress indicators attached to this button. Autoplay is controlled separately in Playback.', 'media-bridge-for-etch' ), onChange: ( value ) => setAttributes( { sliderShowPlay: value } ) } ),
 						el( ToggleControl, { label: __( 'Show fullscreen slideshow button', 'media-bridge-for-etch' ), checked: attributes.sliderShowSlideshow, disabled: attributes.lightboxMode !== 'custom' || ! attributes.lightboxSlideshow, help: __( 'Launches from the current image. Requires the custom lightbox and fullscreen slideshow to be enabled.', 'media-bridge-for-etch' ), onChange: ( value ) => setAttributes( { sliderShowSlideshow: value } ) } ),
 						el( ToggleControl, { label: __( 'Show image count', 'media-bridge-for-etch' ), checked: attributes.sliderShowStatus,
 							onChange: ( value ) => setAttributes( { sliderShowStatus: value } ) } ),

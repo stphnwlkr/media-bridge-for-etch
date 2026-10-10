@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.2
+Stable tag: 2.5.3
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.5.3 =
+Adds an option to hide the in-page slider Play/Pause button. Existing sliders retain their current controls.
+
 = 2.5.2 =
 Adds progress styles and visibility, split status/control layouts, and configurable button text and icon sizes.
 
@@ -355,6 +358,12 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.3 =
+
+* Add a Show Play/Pause button toggle in Slider Controls and the Etch gallery settings.
+* Keep autoplay independent of button visibility. Hiding Play/Pause also hides its attached line or circular progress indicator.
+* Preserve visible Play/Pause controls for existing sliders.
 
 = 2.5.2 =
 
@@ -762,3 +771,5 @@ During fullscreen playback, controls fade after three seconds without pointer ac
 Slider controls: **Playback → Show progress bar** controls timer-strip visibility. **Slider Controls → Status position** offers status left/buttons right or status right/buttons left. **Button text size** uses pixels, with 0 inheriting the site font size; **Button icon size** sets icon dimensions. Shortcodes: `show_progress`, `nav_text_size`, `nav_icon_size`, and `status_position="left"` or `"right"`.
 
 In **Playback**, use **Progress style** to choose a full-width bar, segmented pills, dots with an active pill, a line beneath Play/Pause, or a circular timer. All styles use the progress color and visibility settings. Pills and dots represent slider positions and fill the active position during playback. Shortcode: `progress_style="bar|segments|dots|line|ring"`.
+
+Use **Slider Controls → Show Play/Pause button** to hide the in-page playback button. Autoplay is configured separately in Playback. Attached line and circular indicators are hidden with the button. Shortcode: `show_play="false"`.

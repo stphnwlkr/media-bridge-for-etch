@@ -21,6 +21,7 @@
 		sliderProgressColor: '',
 		sliderShowStatus: true,
 		sliderShowSlideshow: false,
+		sliderShowPlay: true,
 		sliderStatusPosition: 'auto',
 		lightboxShowExif: true,
 		lightboxExifFields: ['camera_model', 'lens', 'aperture_display', 'exposure_display', 'iso', 'focal_display'],
@@ -397,6 +398,7 @@
 		field( form, 'number', 'navIconSize', 'Button icon size (px)', [ { min: 12, max: 64, step: 1 } ] );
 		field( form, 'select', 'sliderProgressStyle', 'Progress style', [ { value: 'bar', label: 'Full-width bar' }, { value: 'segments', label: 'Segmented pills' }, { value: 'dots', label: 'Dots with active pill' }, { value: 'line', label: 'Line beneath Play/Pause' }, { value: 'ring', label: 'Circular timer' } ] );
 		field( form, 'text', 'sliderProgressColor', 'Progress bar color (hex, blank to inherit)' );
+		field( form, 'checkbox', 'sliderShowPlay', 'Show Play/Pause button' );
 		field( form, 'checkbox', 'sliderShowSlideshow', 'Show fullscreen slideshow button' );
 		field( form, 'checkbox', 'sliderShowStatus', 'Show slider image count' );
 		field( form, 'select', 'sliderStatusPosition', 'Status position', [ { value: 'left', label: 'Status left, buttons right' }, { value: 'right', label: 'Status right, buttons left' }, { value: 'auto', label: 'Automatic' }, { value: 'before', label: 'Before buttons' }, { value: 'between', label: 'Between buttons' }, { value: 'after', label: 'After buttons' }, { value: 'above', label: 'Above buttons' }, { value: 'below', label: 'Below buttons' } ] );
@@ -443,7 +445,7 @@
 		setFormValues( form, block.gutenbergBlock.attrs || {} );
 		const updateLayoutFields = () => {
 			const slider = form.elements.namedItem( 'layout' ).value === 'slider';
-			for ( const name of [ 'sliderProgressStyle', 'sliderShowProgress', 'navTextSize', 'navIconSize', 'sliderProgressColor', 'sliderShowSlideshow', 'sliderShowStatus', 'sliderStatusPosition', 'sliderAutoplay', 'sliderInterval', 'slidesPerView', 'carouselTablet', 'carouselMobile', 'navPosition', 'navAlignment', 'navShape', 'navContent' ] ) {
+			for ( const name of [ 'sliderShowPlay', 'sliderProgressStyle', 'sliderShowProgress', 'navTextSize', 'navIconSize', 'sliderProgressColor', 'sliderShowSlideshow', 'sliderShowStatus', 'sliderStatusPosition', 'sliderAutoplay', 'sliderInterval', 'slidesPerView', 'carouselTablet', 'carouselMobile', 'navPosition', 'navAlignment', 'navShape', 'navContent' ] ) {
 				form.elements.namedItem( name ).closest( 'label' ).hidden = ! slider;
 			}
 			form.elements.namedItem( 'sliderStatusPosition' ).closest( 'label' ).hidden = ! slider || ! form.elements.namedItem( 'sliderShowStatus' ).checked;
