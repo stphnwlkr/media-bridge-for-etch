@@ -28,7 +28,40 @@
 			let onscreen = false;
 			let playbackTimer;
 			let progressAnimation;
-			const progress = controls.querySelector( '.uplink-mbe-slider-progress > span' );
+			const progressRoot = controls.querySelector( '.uplink-mbe-slider-progress' );
+			const progressStyle = [ 'segments', 'dots', 'line', 'ring' ].find( ( style ) => gallery.classList.contains( `has-progress-${ style }` ) ) || 'bar';
+			let progress = progressRoot?.firstElementChild;
+			let progressSteps = [];
+			if ( progressRoot && play && [ 'line', 'ring' ].includes( progressStyle ) ) play.appendChild( progressRoot );
+			if ( progressRoot && progressStyle === 'ring' ) {
+				const svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
+				svg.setAttribute( 'viewBox', '0 0 36 36' );
+				svg.setAttribute( 'focusable', 'false' );
+				for ( const name of [ 'track', 'fill' ] ) {
+					const circle = document.createElementNS( svg.namespaceURI, 'circle' );
+					for ( const [ key, value ] of Object.entries( { cx: 18, cy: 18, r: 15, pathLength: 100, class: `uplink-mbe-progress-${ name }` } ) ) circle.setAttribute( key, value );
+					svg.appendChild( circle );
+				}
+				progressRoot.replaceChildren( svg );
+				progress = svg.lastElementChild;
+			}
+			function syncProgressSteps() {
+				if ( ! progressRoot || ! [ 'segments', 'dots' ].includes( progressStyle ) ) return;
+				const count = Math.max( 1, slides.length - visible + 1 );
+				progressRoot.style.setProperty( '--uplink-mbe-progress-count', count );
+				if ( progressSteps.length !== count ) {
+					progressRoot.replaceChildren();
+					progressSteps = Array.from( { length: count }, () => {
+						const step = document.createElement( 'span' );
+						step.className = 'uplink-mbe-progress-step';
+						step.appendChild( document.createElement( 'span' ) );
+						progressRoot.appendChild( step );
+						return step;
+					} );
+				}
+				progressSteps.forEach( ( step, index ) => step.classList.toggle( 'is-current', index === current ) );
+				progress = progressSteps[ current ]?.firstElementChild;
+			}
 
 			let current = 0;
 			let visible = 1;
@@ -39,6 +72,7 @@
 			function syncPlayback() {
 				view.clearTimeout( playbackTimer );
 				progressAnimation?.cancel();
+				syncProgressSteps();
 				if ( play ) {
 					play.setAttribute( 'aria-pressed', String( playing ) );
 					play.setAttribute( 'aria-label', playing ? play.dataset.pauseLabel : play.dataset.playLabel );
@@ -48,7 +82,10 @@
 				}
 				status.setAttribute( 'aria-live', playing ? 'off' : 'polite' );
 				if ( ! playing || hovered || ! onscreen || gallery.ownerDocument.hidden || slides.length <= visible ) return;
-				progressAnimation = progress?.animate( [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ], { duration: interval, fill: 'forwards', easing: 'linear' } );
+				if ( ! gallery.classList.contains( 'has-hidden-slider-progress' ) ) {
+					const frames = progressStyle === 'ring' ? [ { strokeDashoffset: '100' }, { strokeDashoffset: '0' } ] : [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ];
+					progressAnimation = progress?.animate( frames, { duration: interval, fill: 'forwards', easing: 'linear' } );
+				}
 				playbackTimer = view.setTimeout( () => {
 					const wrap = current >= slides.length - visible;
 					move( wrap ? 0 : current + 1, wrap );

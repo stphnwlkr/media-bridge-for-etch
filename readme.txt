@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.1
+Stable tag: 2.5.2
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -106,6 +106,9 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.5.2 =
+Adds progress styles and visibility, split status/control layouts, and configurable button text and icon sizes.
 
 = 2.5.1 =
 Adds fullscreen lightbox slideshows with independent playback settings, an optional launch button, and fading controls.
@@ -241,6 +244,13 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.5.2 =
+
+* Add progress indicator styles: full-width bar, segmented pills, dots with an active pill, line beneath Play/Pause, and circular timer.
+* Add a progress visibility toggle while retaining independent playback and progress color settings.
+* Add status-left/buttons-right and status-right/buttons-left layouts with grouped controls.
+* Add separate button text and icon sizing, with a 30px minimum button size that grows with its content.
 
 = 2.5.1 =
 

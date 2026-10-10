@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "uplinkpress/collection-gallery",
-	"version": "2.5.1",
+	"version": "2.5.2",
 	"title": "Collection Gallery",
 	"category": "media",
 	"icon": "format-gallery",
@@ -260,6 +260,22 @@
 		"sliderShowSlideshow": {
 			"type": "boolean",
 			"default": false
+		},
+		"sliderShowProgress": {
+			"type": "boolean",
+			"default": true
+		},
+		"navTextSize": {
+			"type": "number",
+			"default": 0
+		},
+		"navIconSize": {
+			"type": "number",
+			"default": 20
+		},
+		"sliderProgressStyle": {
+			"type": "string",
+			"default": "bar"
 		}
 	},
 	"supports": {

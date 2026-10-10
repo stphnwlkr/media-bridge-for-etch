@@ -253,6 +253,10 @@ final class Collection_Gallery {
 				'show_slideshow' => 'false',
 				'status_position' => 'auto',
 				'progress_color' => '',
+				'progress_style' => 'bar',
+				'show_progress' => 'true',
+				'nav_text_size' => 0,
+				'nav_icon_size' => 20,
 				'nav_content' => 'text',
 				'nav_shape' => 'rounded',
 				'nav_alignment' => 'spread',
@@ -324,9 +328,13 @@ final class Collection_Gallery {
 				'sliderAutoplay' => $this->to_bool( $attributes['autoplay'] ),
 				'sliderInterval' => absint( $attributes['interval'] ),
 				'sliderShowStatus' => $this->to_bool( $attributes['show_status'] ),
+				'sliderShowProgress' => $this->to_bool( $attributes['show_progress'] ),
+				'navTextSize' => $attributes['nav_text_size'],
+				'navIconSize' => $attributes['nav_icon_size'],
 				'sliderShowSlideshow' => $this->to_bool( $attributes['show_slideshow'] ),
 				'sliderStatusPosition' => $attributes['status_position'],
 				'sliderProgressColor' => $attributes['progress_color'],
+				'sliderProgressStyle' => $attributes['progress_style'],
 				'navContent' => $attributes['nav_content'],
 				'navShape' => $attributes['nav_shape'],
 				'navAlignment' => $attributes['nav_alignment'],
@@ -427,6 +435,8 @@ final class Collection_Gallery {
 			$classes[] = 'is-cropped';
 		}
 		if ( 'slider' === $attributes['layout'] ) {
+			$classes[] = 'has-progress-' . $attributes['sliderProgressStyle'];
+			if ( ! $attributes['sliderShowProgress'] ) $classes[] = 'has-hidden-slider-progress';
 			if ( ! $attributes['sliderShowStatus'] ) $classes[] = 'has-hidden-slider-status';
 			$classes[] = 'has-slider-status-' . $attributes['sliderStatusPosition'];
 			foreach ( array( 'navPosition', 'navAlignment', 'navShape', 'navContent' ) as $setting ) {
@@ -468,6 +478,8 @@ final class Collection_Gallery {
 			$attributes['lightboxCaptionFontWeight']
 		);
 		if ( $attributes['sliderProgressColor'] ) $style .= '--uplink-mbe-slider-progress-color:' . $attributes['sliderProgressColor'] . ';';
+		$style .= '--uplink-mbe-slider-icon-size:' . $attributes['navIconSize'] . 'px;';
+		if ( $attributes['navTextSize'] ) $style .= '--uplink-mbe-slider-text-size:' . $attributes['navTextSize'] . 'px;';
 		$style .= sprintf( '--uplink-mbe-carousel-desktop:%1$d;--uplink-mbe-carousel-tablet:%2$d;--uplink-mbe-carousel-mobile:%3$d;', $attributes['slidesPerView'], min( $attributes['slidesPerView'], $attributes['carouselTablet'] ), min( $attributes['slidesPerView'], $attributes['carouselMobile'] ) );
 		$data_attributes = array();
 		if ( 'custom' === $attributes['lightboxMode'] ) {
@@ -626,8 +638,12 @@ final class Collection_Gallery {
 				'<button type="button" data-slider-slideshow aria-label="%1$s" aria-haspopup="dialog"><svg class="uplink-mbe-slider-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 7l8 5-8 5z" fill="currentColor"/></svg><span class="uplink-mbe-slider-label">%2$s</span></button>',
 				esc_attr__( 'Start fullscreen slideshow', 'media-bridge-for-etch' ), esc_html__( 'Slideshow', 'media-bridge-for-etch' )
 			) : '';
+			$controls_markup = '<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%6$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>';
+			if ( in_array( $attributes['sliderStatusPosition'], array( 'left', 'right' ), true ) ) {
+				$controls_markup = '<div class="uplink-mbe-slider-controls" hidden><span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span><div class="uplink-mbe-slider-button-group">%1$s%5$s%6$s%2$s</div><span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>';
+			}
 			$rendered_gallery .= sprintf(
-				'<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%6$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>',
+				$controls_markup,
 				$buttons['prev'], $buttons['next'],
 				/* translators: 1: Current image number, 2: Total images. */
 				esc_attr__( 'Image %1$d of %2$d', 'media-bridge-for-etch' ),
@@ -689,10 +705,14 @@ final class Collection_Gallery {
 			'navShape' => in_array( $attributes['navShape'] ?? '', array( 'square', 'rounded', 'pill' ), true ) ? $attributes['navShape'] : 'rounded',
 			'navContent' => in_array( $attributes['navContent'] ?? '', array( 'text', 'icon', 'both' ), true ) ? $attributes['navContent'] : 'text',
 			'sliderAutoplay' => ! empty( $attributes['sliderAutoplay'] ),
+			'sliderProgressStyle' => in_array( $attributes['sliderProgressStyle'] ?? '', array( 'bar', 'segments', 'dots', 'line', 'ring' ), true ) ? $attributes['sliderProgressStyle'] : 'bar',
 			'sliderProgressColor' => $this->sanitize_progress_color( (string) ( $attributes['sliderProgressColor'] ?? '' ) ),
+			'sliderShowProgress' => ! array_key_exists( 'sliderShowProgress', $attributes ) || ! empty( $attributes['sliderShowProgress'] ),
+			'navTextSize' => empty( $attributes['navTextSize'] ) ? 0 : max( 10, min( 40, absint( $attributes['navTextSize'] ) ) ),
+			'navIconSize' => max( 12, min( 64, absint( $attributes['navIconSize'] ?? 20 ) ) ),
 			'sliderShowSlideshow' => ! empty( $attributes['sliderShowSlideshow'] ),
 			'sliderShowStatus' => ! array_key_exists( 'sliderShowStatus', $attributes ) || ! empty( $attributes['sliderShowStatus'] ),
-			'sliderStatusPosition' => in_array( $attributes['sliderStatusPosition'] ?? '', array( 'auto', 'before', 'between', 'after', 'above', 'below' ), true ) ? $attributes['sliderStatusPosition'] : 'auto',
+			'sliderStatusPosition' => in_array( $attributes['sliderStatusPosition'] ?? '', array( 'auto', 'before', 'between', 'after', 'above', 'below', 'left', 'right' ), true ) ? $attributes['sliderStatusPosition'] : 'auto',
 			'sliderInterval' => max( 2000, min( 20000, absint( $attributes['sliderInterval'] ?? 5000 ) ) ),
 			'slidesPerView' => max( 1, min( 8, absint( $attributes['slidesPerView'] ?? 1 ) ) ),
 			'collectionId'   => absint( $attributes['collectionId'] ?? 0 ),

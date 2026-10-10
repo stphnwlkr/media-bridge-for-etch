@@ -747,9 +747,12 @@ html.uplink-mbe-lightbox-open body {
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
-	min-height: 44px;
-	min-width: 44px;
-	padding: 8px 14px;
+	box-sizing: border-box;
+	min-height: 30px;
+	min-width: 30px;
+	width: auto;
+	height: auto;
+	padding: 4px 10px;
 	border: 1px solid currentColor;
 	border-radius: 4px;
 	background: var(--uplink-mbe-slider-button-background, transparent);
@@ -762,7 +765,7 @@ html.uplink-mbe-lightbox-open body {
 .wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-icon { display: none; width: 20px; height: 20px; flex: none; }
 .wp-block-uplinkpress-collection-gallery:is(.has-navcontent-icon, .has-navcontent-both) .uplink-mbe-slider-icon { display: block; }
 .wp-block-uplinkpress-collection-gallery.has-navcontent-icon .uplink-mbe-slider-label { display: none; }
-.wp-block-uplinkpress-collection-gallery.has-navcontent-icon .uplink-mbe-slider-controls button { padding: 8px; }
+.wp-block-uplinkpress-collection-gallery.has-navcontent-icon .uplink-mbe-slider-controls button { padding: 4px; }
 .wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-controls [data-slider-next] .uplink-mbe-slider-icon { order: 1; }
 .wp-block-uplinkpress-collection-gallery:dir(rtl) .uplink-mbe-slider-icon { transform: rotate(180deg); }
 .wp-block-uplinkpress-collection-gallery.has-navshape-square .uplink-mbe-slider-controls button { border-radius: 0; }
@@ -924,3 +927,35 @@ html.uplink-mbe-lightbox-open body {
  .uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-lightbox-slideshow-controls,
  .uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-toolbar { transition: none; }
 }
+
+/* Optional split status/button layout and control sizing. */
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-progress { display: none; }
+.wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-controls button { font-size: var(--uplink-mbe-slider-text-size, inherit); }
+.wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-controls .uplink-mbe-slider-icon { width: var(--uplink-mbe-slider-icon-size, 20px); height: var(--uplink-mbe-slider-icon-size, 20px); }
+.wp-block-uplinkpress-collection-gallery:is(.has-slider-status-left, .has-slider-status-right) .uplink-mbe-slider-controls { justify-content: space-between; flex-wrap: nowrap; direction: ltr; }
+.wp-block-uplinkpress-collection-gallery.has-slider-status-right .uplink-mbe-slider-controls { flex-direction: row-reverse; }
+.wp-block-uplinkpress-collection-gallery:is(.has-slider-status-left, .has-slider-status-right) .uplink-mbe-slider-controls [data-slider-status] { order: 0; flex: 0 0 auto; }
+.uplink-mbe-slider-button-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; justify-content: flex-end; }
+.has-slider-status-right .uplink-mbe-slider-button-group { justify-content: flex-start; }
+.uplink-mbe-slider-button-group:dir(rtl) { direction: rtl; }
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-status.has-slider-status-left .uplink-mbe-slider-button-group { margin-left: auto; }
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-status.has-slider-status-right .uplink-mbe-slider-button-group { margin-right: auto; }
+
+/* Progress variants share the slider's playback timer and chosen color. */
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls { padding-bottom: 28px; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-progress { display: flex; align-items: center; justify-content: center; gap: clamp(1px, calc(100% / var(--uplink-mbe-progress-count, 1) / 4), 8px); height: 10px; bottom: 4px; background: none; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-progress-step { flex: 0 1 40px; height: 8px; min-width: 2px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, currentColor 20%, transparent); transform: none; }
+.wp-block-uplinkpress-collection-gallery.has-progress-dots .uplink-mbe-progress-step { flex-basis: 8px; }
+.wp-block-uplinkpress-collection-gallery.has-progress-dots .uplink-mbe-progress-step.is-current { flex-basis: 32px; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-progress-step.is-current { background: color-mix(in srgb, currentColor 50%, transparent); }
+.uplink-mbe-progress-step > span { display: block; height: 100%; background: currentColor; transform: scaleX(0); transform-origin: left; }
+[dir="rtl"] .uplink-mbe-progress-step > span { transform-origin: right; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-line, .has-progress-ring) [data-slider-play] { position: relative; }
+.wp-block-uplinkpress-collection-gallery.has-progress-line [data-slider-play] .uplink-mbe-slider-progress { inset-inline: 0; bottom: -7px; height: 3px; border-radius: 99px; overflow: hidden; }
+.wp-block-uplinkpress-collection-gallery.has-progress-ring [data-slider-play] .uplink-mbe-slider-progress { position: static; display: inline-flex; flex: none; width: var(--uplink-mbe-slider-icon-size, 20px); height: var(--uplink-mbe-slider-icon-size, 20px); background: none; order: -1; }
+.uplink-mbe-slider-progress > svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.uplink-mbe-slider-progress circle { fill: none; stroke: currentColor; stroke-width: 4; }
+.uplink-mbe-slider-progress .uplink-mbe-progress-track { opacity: .2; }
+.uplink-mbe-slider-progress .uplink-mbe-progress-fill { stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: round; }
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-progress { display: none !important; }
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-controls { padding-bottom: 12px; }
