@@ -961,3 +961,38 @@ html.uplink-mbe-lightbox-open body {
 .wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-controls { padding-bottom: 12px; }
 
 .wp-block-uplinkpress-collection-gallery.has-hidden-slider-play .uplink-mbe-slider-controls [data-slider-play] { display: none; }
+
+/* Clickable position indicators retain a 30px target around the visual pill. */
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls { padding-bottom: 44px; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-progress { height: 30px; pointer-events: auto; overflow-x: auto; overflow-y: hidden; justify-content: safe center; gap: 4px; scrollbar-width: thin; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls .uplink-mbe-progress-step { position: relative; flex: 0 0 40px; width: 40px; min-width: 30px; height: 30px; min-height: 30px; margin: 0; padding: 0; border: 0; border-radius: 4px; background: transparent; color: inherit; overflow: hidden; }
+.wp-block-uplinkpress-collection-gallery.has-progress-dots .uplink-mbe-slider-controls .uplink-mbe-progress-step { flex-basis: 30px; width: 30px; }
+.wp-block-uplinkpress-collection-gallery.has-progress-dots .uplink-mbe-slider-controls .uplink-mbe-progress-step.is-current { flex-basis: 40px; width: 40px; }
+.uplink-mbe-slider-controls .uplink-mbe-progress-step::before,
+.uplink-mbe-slider-controls .uplink-mbe-progress-step > span { content: ''; position: absolute; inset: 11px 2px; height: 8px; border-radius: 99px; background: currentColor; }
+.uplink-mbe-slider-controls .uplink-mbe-progress-step::before { opacity: .2; }
+.uplink-mbe-slider-controls .uplink-mbe-progress-step.is-current::before { opacity: .6; }
+.has-progress-dots .uplink-mbe-slider-controls .uplink-mbe-progress-step:not(.is-current)::before { inset-inline: 11px; }
+@media (min-width: 768px) {
+ .wp-block-uplinkpress-collection-gallery.has-progress-placement-inline:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls { padding-bottom: 12px; }
+ .wp-block-uplinkpress-collection-gallery.has-progress-placement-inline:is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-progress { position: static; flex: 0 1 auto; width: max-content; max-width: 45%; min-width: 30px; order: 0; }
+}
+.wp-block-uplinkpress-collection-gallery.has-hidden-slider-progress .uplink-mbe-slider-controls { padding-bottom: 12px; }
+
+/* Opposite indicator/control groups with an independent slide count position. */
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls { flex-direction: row; justify-content: space-between; direction: ltr; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls [data-slider-status] { order: 0; flex: 0 0 auto; }
+@media (min-width: 768px) {
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; padding-bottom: 12px; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-controls [data-slider-status] { grid-row: 1; grid-column: var(--count-column, 2); justify-self: var(--count-align, center); }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-button-group { grid-row: 1; grid-column: var(--buttons-column, 3); justify-self: var(--buttons-align, end); justify-content: var(--buttons-align, end); margin: 0; max-width: 100%; }
+.wp-block-uplinkpress-collection-gallery:is(.has-progress-placement-opposite-left, .has-progress-placement-opposite-right):is(.has-progress-segments, .has-progress-dots) .uplink-mbe-slider-progress { position: static; grid-row: 1; grid-column: var(--indicator-column, 1); justify-self: var(--indicator-align, start); width: max-content; max-width: 100%; min-width: 0; order: 0; }
+.has-progress-placement-opposite-left.has-count-alignment-left { --count-column:1; --count-align:start; --indicator-column:2; --indicator-align:center; --buttons-column:3; --buttons-align:end; }
+.has-progress-placement-opposite-left.has-count-alignment-center { --count-column:2; --count-align:center; --indicator-column:1; --indicator-align:start; --buttons-column:3; --buttons-align:end; }
+.has-progress-placement-opposite-left.has-count-alignment-right { --count-column:3; --count-align:end; --indicator-column:1; --indicator-align:start; --buttons-column:2; --buttons-align:center; }
+.has-progress-placement-opposite-right.has-count-alignment-left { --count-column:1; --count-align:start; --indicator-column:3; --indicator-align:end; --buttons-column:2; --buttons-align:center; }
+.has-progress-placement-opposite-right.has-count-alignment-center { --count-column:2; --count-align:center; --indicator-column:3; --indicator-align:end; --buttons-column:1; --buttons-align:start; }
+.has-progress-placement-opposite-right.has-count-alignment-right { --count-column:3; --count-align:end; --indicator-column:2; --indicator-align:center; --buttons-column:1; --buttons-align:start; }
+.has-progress-placement-opposite-left.has-hidden-slider-status { --indicator-column:1; --indicator-align:start; --buttons-column:3; --buttons-align:end; }
+.has-progress-placement-opposite-right.has-hidden-slider-status { --indicator-column:3; --indicator-align:end; --buttons-column:1; --buttons-align:start; }
+}

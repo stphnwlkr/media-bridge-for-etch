@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.3
+Stable tag: 2.5.4
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -106,6 +106,9 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.5.4 =
+Adds clickable pills and dots, responsive indicator layouts, and independent slide-count positioning in opposite layouts.
 
 = 2.5.3 =
 Adds an option to hide the in-page slider Play/Pause button. Existing sliders retain their current controls.
@@ -247,6 +250,13 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.5.4 =
+
+* Make segmented pills and dots clickable and keyboard-accessible, with an active-position indicator. Selecting a position pauses autoplay and jumps to that image position.
+* Add an inline indicator layout for larger screens, with indicators below the buttons on mobile.
+* Add indicators-left/buttons-right and indicators-right/buttons-left layouts.
+* Add left, center, or right slide-count placement for opposite layouts.
 
 = 2.5.3 =
 

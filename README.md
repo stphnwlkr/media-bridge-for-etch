@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.3
+Stable tag: 2.5.4
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.5.4 =
+Adds clickable pills and dots, responsive indicator layouts, and independent slide-count positioning in opposite layouts.
+
 = 2.5.3 =
 Adds an option to hide the in-page slider Play/Pause button. Existing sliders retain their current controls.
 
@@ -358,6 +361,13 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.4 =
+
+* Make segmented pills and dots clickable and keyboard-accessible, with an active-position indicator. Selecting a position pauses autoplay and jumps to that image position.
+* Add an inline indicator layout for larger screens, with indicators below the buttons on mobile.
+* Add indicators-left/buttons-right and indicators-right/buttons-left layouts.
+* Add left, center, or right slide-count placement for opposite layouts.
 
 = 2.5.3 =
 
@@ -773,3 +783,7 @@ Slider controls: **Playback → Show progress bar** controls timer-strip visibil
 In **Playback**, use **Progress style** to choose a full-width bar, segmented pills, dots with an active pill, a line beneath Play/Pause, or a circular timer. All styles use the progress color and visibility settings. Pills and dots represent slider positions and fill the active position during playback. Shortcode: `progress_style="bar|segments|dots|line|ring"`.
 
 Use **Slider Controls → Show Play/Pause button** to hide the in-page playback button. Autoplay is configured separately in Playback. Attached line and circular indicators are hidden with the button. Shortcode: `show_play="false"`.
+
+Pills and dots can be clicked or activated with the keyboard to jump to their image position, pausing automatic playback. In **Playback → Indicator layout**, choose **Same row on larger screens** to show them alongside the buttons at widths of 768px and up; smaller screens place them below. Shortcode: `progress_placement="inline"`.
+
+**Indicator layout** also offers **Indicators left, buttons right** and **Indicators right, buttons left**. When the image count is enabled, choose **Slider Controls → Slide count position → Left, Center, or Right**. The three groups occupy separate positions on larger screens; indicators move below on mobile. Shortcodes: `progress_placement="opposite-left|opposite-right"` and `count_alignment="left|center|right"`.

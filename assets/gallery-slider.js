@@ -47,19 +47,27 @@
 			}
 			function syncProgressSteps() {
 				if ( ! progressRoot || ! [ 'segments', 'dots' ].includes( progressStyle ) ) return;
+				progressRoot.removeAttribute( 'aria-hidden' );
 				const count = Math.max( 1, slides.length - visible + 1 );
 				progressRoot.style.setProperty( '--uplink-mbe-progress-count', count );
 				if ( progressSteps.length !== count ) {
 					progressRoot.replaceChildren();
-					progressSteps = Array.from( { length: count }, () => {
-						const step = document.createElement( 'span' );
+					progressSteps = Array.from( { length: count }, ( _, index ) => {
+						const step = document.createElement( 'button' );
+						step.type = 'button';
+						step.setAttribute( 'aria-label', status.dataset.format.replace( '%1$d', index + 1 ).replace( '%2$d', slides.length ) );
+						step.addEventListener( 'click', () => { stopPlayback(); move( index ); } );
 						step.className = 'uplink-mbe-progress-step';
 						step.appendChild( document.createElement( 'span' ) );
 						progressRoot.appendChild( step );
 						return step;
 					} );
 				}
-				progressSteps.forEach( ( step, index ) => step.classList.toggle( 'is-current', index === current ) );
+				progressSteps.forEach( ( step, index ) => {
+					step.classList.toggle( 'is-current', index === current );
+					if ( index === current ) step.setAttribute( 'aria-current', 'true' );
+					else step.removeAttribute( 'aria-current' );
+				} );
 				progress = progressSteps[ current ]?.firstElementChild;
 			}
 

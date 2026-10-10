@@ -255,6 +255,8 @@ final class Collection_Gallery {
 				'status_position' => 'auto',
 				'progress_color' => '',
 				'progress_style' => 'bar',
+				'progress_placement' => 'below',
+				'count_alignment' => 'center',
 				'show_progress' => 'true',
 				'nav_text_size' => 0,
 				'nav_icon_size' => 20,
@@ -337,6 +339,8 @@ final class Collection_Gallery {
 				'sliderStatusPosition' => $attributes['status_position'],
 				'sliderProgressColor' => $attributes['progress_color'],
 				'sliderProgressStyle' => $attributes['progress_style'],
+				'sliderProgressPlacement' => $attributes['progress_placement'],
+				'sliderCountAlignment' => $attributes['count_alignment'],
 				'navContent' => $attributes['nav_content'],
 				'navShape' => $attributes['nav_shape'],
 				'navAlignment' => $attributes['nav_alignment'],
@@ -438,6 +442,8 @@ final class Collection_Gallery {
 		}
 		if ( 'slider' === $attributes['layout'] ) {
 			$classes[] = 'has-progress-' . $attributes['sliderProgressStyle'];
+			$classes[] = 'has-progress-placement-' . $attributes['sliderProgressPlacement'];
+			$classes[] = 'has-count-alignment-' . $attributes['sliderCountAlignment'];
 			if ( ! $attributes['sliderShowPlay'] ) $classes[] = 'has-hidden-slider-play';
 			if ( ! $attributes['sliderShowProgress'] ) $classes[] = 'has-hidden-slider-progress';
 			if ( ! $attributes['sliderShowStatus'] ) $classes[] = 'has-hidden-slider-status';
@@ -642,7 +648,7 @@ final class Collection_Gallery {
 				esc_attr__( 'Start fullscreen slideshow', 'media-bridge-for-etch' ), esc_html__( 'Slideshow', 'media-bridge-for-etch' )
 			) : '';
 			$controls_markup = '<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%6$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>';
-			if ( in_array( $attributes['sliderStatusPosition'], array( 'left', 'right' ), true ) ) {
+			if ( in_array( $attributes['sliderStatusPosition'], array( 'left', 'right' ), true ) || in_array( $attributes['sliderProgressPlacement'], array( 'opposite-left', 'opposite-right' ), true ) ) {
 				$controls_markup = '<div class="uplink-mbe-slider-controls" hidden><span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span><div class="uplink-mbe-slider-button-group">%1$s%5$s%6$s%2$s</div><span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>';
 			}
 			$rendered_gallery .= sprintf(
@@ -708,6 +714,8 @@ final class Collection_Gallery {
 			'navShape' => in_array( $attributes['navShape'] ?? '', array( 'square', 'rounded', 'pill' ), true ) ? $attributes['navShape'] : 'rounded',
 			'navContent' => in_array( $attributes['navContent'] ?? '', array( 'text', 'icon', 'both' ), true ) ? $attributes['navContent'] : 'text',
 			'sliderAutoplay' => ! empty( $attributes['sliderAutoplay'] ),
+			'sliderProgressPlacement' => in_array( $attributes['sliderProgressPlacement'] ?? '', array( 'inline', 'opposite-left', 'opposite-right' ), true ) ? $attributes['sliderProgressPlacement'] : 'below',
+			'sliderCountAlignment' => in_array( $attributes['sliderCountAlignment'] ?? '', array( 'left', 'center', 'right' ), true ) ? $attributes['sliderCountAlignment'] : 'center',
 			'sliderProgressStyle' => in_array( $attributes['sliderProgressStyle'] ?? '', array( 'bar', 'segments', 'dots', 'line', 'ring' ), true ) ? $attributes['sliderProgressStyle'] : 'bar',
 			'sliderProgressColor' => $this->sanitize_progress_color( (string) ( $attributes['sliderProgressColor'] ?? '' ) ),
 			'sliderShowProgress' => ! array_key_exists( 'sliderShowProgress', $attributes ) || ! empty( $attributes['sliderShowProgress'] ),
