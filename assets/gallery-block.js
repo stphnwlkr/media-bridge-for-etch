@@ -180,6 +180,7 @@
 							options: [{ label: __( 'Text', 'media-bridge-for-etch' ), value: 'text' }, { label: __( 'Icons', 'media-bridge-for-etch' ), value: 'icon' }, { label: __( 'Text and icons', 'media-bridge-for-etch' ), value: 'both' }],
 							onChange: ( value ) => setAttributes( { navContent: value } ),
 						} ),
+						el( ToggleControl, { label: __( 'Show fullscreen slideshow button', 'media-bridge-for-etch' ), checked: attributes.sliderShowSlideshow, disabled: attributes.lightboxMode !== 'custom' || ! attributes.lightboxSlideshow, help: __( 'Launches from the current image. Requires the custom lightbox and fullscreen slideshow to be enabled.', 'media-bridge-for-etch' ), onChange: ( value ) => setAttributes( { sliderShowSlideshow: value } ) } ),
 						el( ToggleControl, { label: __( 'Show image count', 'media-bridge-for-etch' ), checked: attributes.sliderShowStatus,
 							onChange: ( value ) => setAttributes( { sliderShowStatus: value } ) } ),
 						attributes.sliderShowStatus && el( SelectControl, { label: __( 'Status position', 'media-bridge-for-etch' ), value: attributes.sliderStatusPosition,
@@ -266,6 +267,10 @@
 							checked: attributes.lightboxZoom,
 							onChange: ( value ) => setAttributes( { lightboxZoom: value } ),
 						} ),
+						attributes.lightboxMode === 'custom' && el( ToggleControl, { label: __( 'Enable fullscreen slideshow', 'media-bridge-for-etch' ), checked: attributes.lightboxSlideshow, onChange: ( value ) => setAttributes( { lightboxSlideshow: value } ) } ),
+						attributes.lightboxMode === 'custom' && attributes.lightboxSlideshow && el( ToggleControl, { label: __( 'Autoplay when lightbox opens', 'media-bridge-for-etch' ), checked: attributes.lightboxAutoplay, onChange: ( value ) => setAttributes( { lightboxAutoplay: value } ), help: __( 'Opens the minimal slideshow view. Reduced-motion preferences start it paused.', 'media-bridge-for-etch' ) } ),
+						attributes.lightboxMode === 'custom' && attributes.lightboxSlideshow && el( RangeControl, { label: __( 'Lightbox seconds between images', 'media-bridge-for-etch' ), value: attributes.lightboxInterval / 1000, min: 2, max: 30, step: 1, onChange: ( value ) => setAttributes( { lightboxInterval: value * 1000 } ), help: __( 'Independent of the in-page slider timer.', 'media-bridge-for-etch' ) } ),
+						attributes.lightboxMode === 'custom' && attributes.lightboxSlideshow && el( ToggleControl, { label: __( 'Loop slideshow', 'media-bridge-for-etch' ), checked: attributes.lightboxLoop, onChange: ( value ) => setAttributes( { lightboxLoop: value } ) } ),
 						attributes.lightboxMode !== 'none' && attributes.collectionId > 0 && el( Button, {
 							variant: 'secondary',
 							onClick: openLightboxPreview,

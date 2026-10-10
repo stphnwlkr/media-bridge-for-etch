@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.0
+Stable tag: 2.5.1
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.5.1 =
+Adds fullscreen lightbox slideshows with independent playback settings, an optional launch button, and fading controls.
+
 = 2.5.0 =
 
 Adds configurable collection sliders, autoplay controls, and selectable lightbox EXIF details. Existing galleries retain their layouts.
@@ -349,6 +352,13 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.1 =
+
+* Add a fullscreen lightbox slideshow with Play/Pause, Previous/Next, autoplay, independent timing, and optional looping.
+* Add an optional Slider Controls button that launches the fullscreen slideshow from the current image.
+* Fade slideshow controls after three seconds of inactivity and restore them on pointer, touch, or keyboard activity. Keep controls visible while paused.
+* Pause in-page playback when the lightbox opens and respect reduced-motion preferences for automatic playback.
 
 = 2.5.0 =
 
@@ -728,3 +738,13 @@ Adds a responsive, pinnable media-library drawer and clearer attachment informat
 
 
 Slider status can be hidden or positioned automatically, before, between, after, above, or below the buttons. Gutenberg: **Slider Controls** panel. Shortcodes: `show_status="false"` and `status_position="below"`.
+
+### Lightbox slideshow
+
+The Custom gallery lightbox offers a fullscreen slideshow with Play/Pause and Previous/Next controls, plus a close button. Enable or disable it in the **Lightbox** settings panel. Its **Autoplay when lightbox opens**, **Lightbox seconds between images** (2–30 seconds), and **Loop slideshow** controls are independent of in-page slider playback. Without looping, playback pauses at the last image; pressing Play there restarts from the first image. Opening the lightbox pauses the in-page slider.
+
+Automatic playback starts paused for reduced-motion preferences. The timer waits for each image to finish loading and suspends while the browser tab is hidden. Slideshow mode uses the full viewport if native fullscreen is unavailable. Shortcodes accept `lightbox_slideshow`, `lightbox_autoplay`, `lightbox_interval` (milliseconds), and `lightbox_loop`.
+
+Enable **Show fullscreen slideshow button** in **Slider Controls** to launch from the current image. It uses the button appearance settings and requires the custom lightbox with fullscreen slideshow enabled. Shortcode: `show_slideshow="true"`.
+
+During fullscreen playback, controls fade after three seconds without pointer activity. Mouse movement, touch, or keyboard use reveals them. Paused playback keeps controls visible.

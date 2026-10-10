@@ -757,6 +757,7 @@ html.uplink-mbe-lightbox-open body {
 	font: inherit;
 	cursor: pointer;
 }
+.wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-controls button[hidden] { display: none; }
 .uplink-mbe-slider-controls button[aria-disabled="true"] { opacity: 0.45; cursor: default; }
 .wp-block-uplinkpress-collection-gallery .uplink-mbe-slider-icon { display: none; width: 20px; height: 20px; flex: none; }
 .wp-block-uplinkpress-collection-gallery:is(.has-navcontent-icon, .has-navcontent-both) .uplink-mbe-slider-icon { display: block; }
@@ -896,3 +897,30 @@ html.uplink-mbe-lightbox-open body {
 .wp-block-uplinkpress-collection-gallery.has-slider-status-below .uplink-mbe-slider-controls { flex-wrap: wrap; }
 .wp-block-uplinkpress-collection-gallery.has-slider-status-above.has-slider-status-above .uplink-mbe-slider-controls [data-slider-status] { order: -1; flex-basis: 100%; }
 .wp-block-uplinkpress-collection-gallery.has-slider-status-below.has-slider-status-below .uplink-mbe-slider-controls [data-slider-status] { order: 1; flex-basis: 100%; }
+
+/* Minimal fullscreen slideshow: image, transport controls, and a reachable exit. */
+.uplink-mbe-lightbox-slideshow-controls { display: none; }
+.uplink-mbe-custom-lightbox.is-slideshow { padding: 0; background: #000; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-dialog { width: 100%; height: 100%; max-width: none; display: block; background: #000; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-stage { position: absolute; inset: 0; display: block; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-content { display: block; width: 100%; height: 100%; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-media { width: 100%; height: 100%; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-image { width: 100%; height: 100%; object-fit: contain; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-thumbnails,
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-info,
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-navigation,
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-toolbar > :not(.uplink-mbe-custom-lightbox-close) { display: none; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-toolbar { position: absolute; z-index: 2; top: max(12px, env(safe-area-inset-top)); inset-inline-end: max(12px, env(safe-area-inset-right)); padding: 0; background: transparent; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-lightbox-slideshow-controls { display: flex; position: absolute; z-index: 2; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); gap: 8px; padding: 8px; border: 1px solid #ffffff30; border-radius: 999px; background: #111c; box-shadow: 0 6px 24px #0005; }
+.uplink-mbe-lightbox-slideshow-controls .uplink-mbe-custom-lightbox-control { width: 48px; height: 48px; border: 0; border-radius: 50%; font-size: 22px; }
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-close { background: #111c; border-radius: 50%; width: 44px; height: 44px; }
+
+/* Keep keyboard controls available; pointer activity restores the fading controls. */
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-lightbox-slideshow-controls,
+.uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-toolbar { opacity: 1; transition: opacity 250ms ease; }
+.uplink-mbe-custom-lightbox.is-slideshow.has-idle-controls .uplink-mbe-lightbox-slideshow-controls,
+.uplink-mbe-custom-lightbox.is-slideshow.has-idle-controls .uplink-mbe-custom-lightbox-toolbar { opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+ .uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-lightbox-slideshow-controls,
+ .uplink-mbe-custom-lightbox.is-slideshow .uplink-mbe-custom-lightbox-toolbar { transition: none; }
+}

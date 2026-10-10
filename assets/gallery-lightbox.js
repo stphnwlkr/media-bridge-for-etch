@@ -4,6 +4,7 @@
 	let active = null;
 	let previousFocus = null;
 	let zoom = 1;
+	const reducedMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' );
 	const strings = window.uplinkMbeGalleryLightbox || {};
 
 	const selector = '.wp-block-uplinkpress-collection-gallery[data-uplink-mbe-lightbox="custom"]';
@@ -58,6 +59,73 @@
 		const scale = Math.min( bounds.width / active.image.naturalWidth, bounds.height / active.image.naturalHeight );
 		active.info.style.width = `${ Math.max( 0, Math.round( active.image.naturalWidth * scale ) ) }px`;
 		active.info.style.marginInline = 'auto';
+	}
+
+	function revealSlideshowControls() {
+		if ( ! active ) return;
+		const box = active;
+		clearTimeout( box.controlsTimer );
+		box.controlsTimer = null;
+		box.overlay.classList.remove( 'has-idle-controls' );
+		if ( ! box.slideshow || ! box.playing || document.hidden || box.keyboardControls ) return;
+		box.controlsTimer = setTimeout( () => {
+			box.controlsTimer = null;
+			if ( active === box && box.slideshow && box.playing && ! box.keyboardControls ) box.overlay.classList.add( 'has-idle-controls' );
+		}, 3000 );
+	}
+
+	function syncSlideshow() {
+		if ( ! active ) return;
+		clearTimeout( active.playbackTimer );
+		const box = active;
+		const controlsPlaying = box.slideshow && box.playing && ! document.hidden;
+		if ( box.controlsPlaying !== controlsPlaying ) {
+			box.controlsPlaying = controlsPlaying;
+			revealSlideshowControls();
+		}
+		box.play.setAttribute( 'aria-label', box.playing ? ( strings.slideshowPause || 'Pause slideshow' ) : ( strings.slideshowPlay || 'Play slideshow' ) );
+		box.play.setAttribute( 'aria-pressed', String( box.playing ) );
+		box.play.textContent = box.playing ? 'Ⅱ' : '▶';
+		box.live.setAttribute( 'aria-live', box.playing ? 'off' : 'polite' );
+		if ( ! box.slideshow || ! box.playing || document.hidden || box.items.length < 2 || ! box.image.complete ) return;
+		box.playbackTimer = setTimeout( () => {
+			if ( active !== box ) return;
+			if ( ! box.loop && box.index === box.items.length - 1 ) {
+				box.playing = false;
+				syncSlideshow();
+			} else showItem( box.index + 1 );
+		}, box.interval );
+	}
+
+	function startSlideshow( playing = true ) {
+		if ( ! active || ! active.startSlideshow ) return;
+		const box = active;
+		box.slideshow = true;
+		box.slideshowFullscreen = document.fullscreenElement === box.dialog;
+		box.playing = playing && box.items.length > 1;
+		box.overlay.classList.add( 'is-slideshow' );
+		box.exifPanel.hidden = true;
+		box.exifButton.setAttribute( 'aria-expanded', 'false' );
+		setZoom( 1 );
+		showItem( box.index );
+		( box.play.disabled ? box.close : box.play ).focus();
+		// Full-viewport mode still works when the browser declines native fullscreen.
+		if ( document.fullscreenEnabled && ! document.fullscreenElement ) {
+			box.dialog.requestFullscreen().then( () => {
+				if ( active === box ) box.slideshowFullscreen = true;
+				else if ( document.fullscreenElement === box.dialog ) document.exitFullscreen().catch( () => {} );
+			} ).catch( () => {} );
+		}
+	}
+
+	function leaveSlideshow() {
+		if ( ! active ) return;
+		active.slideshow = false;
+		active.playing = false;
+		active.slideshowFullscreen = false;
+		active.overlay.classList.remove( 'is-slideshow' );
+		showItem( active.index );
+		active.startSlideshow?.focus();
 	}
 
 	function createLightbox( gallery, items, index ) {
@@ -119,6 +187,12 @@
 			exifPanel.hidden = ! exifPanel.hidden;
 			exifButton.setAttribute( 'aria-expanded', String( ! exifPanel.hidden ) );
 		} );
+		let startSlideshowButton = null;
+		if ( gallery.dataset.uplinkMbeLightboxSlideshow === 'true' ) {
+			startSlideshowButton = button( 'uplink-mbe-custom-lightbox-control', strings.slideshowStart || 'Start fullscreen slideshow', '▶' );
+			toolbar.appendChild( startSlideshowButton );
+			startSlideshowButton.addEventListener( 'click', () => startSlideshow() );
+		}
 		const close = button( 'uplink-mbe-custom-lightbox-close', strings.closeLabel || 'Close gallery lightbox', '×' );
 		toolbar.appendChild( close );
 
@@ -140,7 +214,8 @@
 		caption.className = 'uplink-mbe-custom-lightbox-caption';
 		info.append( title, caption );
 		media.appendChild( image );
-		image.addEventListener( 'load', syncInfoWidth );
+		image.addEventListener( 'load', () => { if ( active?.image === image ) { syncInfoWidth(); syncSlideshow(); } } );
+		image.addEventListener( 'error', () => { if ( active?.image === image ) syncSlideshow(); } );
 		if ( gallery.dataset.uplinkMbeLightboxInfo === 'top' ) {
 			content.append( info, media );
 		} else {
@@ -167,11 +242,31 @@
 			thumbnails.appendChild( thumbnail );
 		} );
 
-		dialog.append( live, toolbar, stage, thumbnails );
+		const slideshowControls = document.createElement( 'div' );
+		slideshowControls.className = 'uplink-mbe-lightbox-slideshow-controls';
+		const slidePrevious = button( 'uplink-mbe-custom-lightbox-control', strings.previousLabel || 'Previous image', '‹' );
+		const play = button( 'uplink-mbe-custom-lightbox-control', strings.slideshowPlay || 'Play slideshow', '▶' );
+		const slideNext = button( 'uplink-mbe-custom-lightbox-control', strings.nextLabel || 'Next image', '›' );
+		slidePrevious.addEventListener( 'click', () => showItem( active.index - 1 ) );
+		slideNext.addEventListener( 'click', () => showItem( active.index + 1 ) );
+		play.addEventListener( 'click', () => {
+			active.playing = ! active.playing;
+			if ( active.playing && ! active.loop && active.index === active.items.length - 1 ) showItem( 0 );
+			else syncSlideshow();
+		} );
+		slideshowControls.append( slidePrevious, play, slideNext );
+		dialog.append( live, toolbar, stage, thumbnails, slideshowControls );
 		overlay.appendChild( dialog );
 		document.body.appendChild( overlay );
 
-		active = { exifWrap, exifButton, exifPanel, gallery, items, index, overlay, dialog, media, image, title, caption, info, counter, live, thumbnails, previous, next, close, fullscreenButton, zoomOut, zoomIn, zoomReset, resizeObserver: null };
+		active = { controlsTimer: null, controlsPlaying: false, keyboardControls: false, slideshow: false, playing: false, playbackTimer: null, slideshowFullscreen: false, interval: Math.max( 2000, Math.min( 30000, Number( gallery.dataset.uplinkMbeLightboxInterval ) || 5000 ) ), loop: gallery.dataset.uplinkMbeLightboxLoop !== 'false', startSlideshow: startSlideshowButton, play, slidePrevious, slideNext, exifWrap, exifButton, exifPanel, gallery, items, index, overlay, dialog, media, image, title, caption, info, counter, live, thumbnails, previous, next, close, fullscreenButton, zoomOut, zoomIn, zoomReset, resizeObserver: null };
+		// Activity reveals controls without restarting the independent image timer.
+		for ( const type of [ 'pointermove', 'pointerdown' ] ) dialog.addEventListener( type, () => {
+			if ( active?.dialog !== dialog ) return;
+			active.keyboardControls = false;
+			revealSlideshowControls();
+		}, { passive: true } );
+		dialog.addEventListener( 'focusin', revealSlideshowControls );
 		if ( 'ResizeObserver' in window ) {
 			active.resizeObserver = new ResizeObserver( syncInfoWidth );
 			active.resizeObserver.observe( media );
@@ -201,7 +296,8 @@
 		if ( ! active ) {
 			return;
 		}
-		active.index = ( index + active.items.length ) % active.items.length;
+		active.index = active.slideshow && ! active.loop ? Math.max( 0, Math.min( active.items.length - 1, index ) ) : ( index + active.items.length ) % active.items.length;
+		if ( active.slideshow && ! active.loop && active.index === active.items.length - 1 ) active.playing = false;
 		const item = active.items[ active.index ];
 		if ( active.exifWrap.contains( document.activeElement ) ) active.close.focus();
 		active.exifWrap.hidden = ! item.exif.length;
@@ -246,6 +342,10 @@
 		}
 		active.counter.textContent = `${ active.index + 1 } / ${ active.items.length }`;
 		active.live.textContent = format( strings.imageStatus || 'Image %1$d of %2$d%3$s', [ active.index + 1, active.items.length, item.title ? `: ${ item.title }` : '' ] );
+		active.play.disabled = active.items.length < 2;
+		active.slidePrevious.disabled = active.items.length < 2 || ( ! active.loop && active.index === 0 );
+		active.slideNext.disabled = active.items.length < 2 || ( ! active.loop && active.index === active.items.length - 1 );
+		if ( active.slideshow && [ active.slidePrevious, active.slideNext ].includes( document.activeElement ) && document.activeElement.disabled ) active.play.focus();
 		active.previous.disabled = active.items.length < 2;
 		active.next.disabled = active.items.length < 2;
 		Array.from( active.thumbnails.children ).forEach( ( thumbnail, thumbnailIndex ) => {
@@ -258,28 +358,33 @@
 			}
 		} );
 		setZoom( 1 );
+		syncSlideshow();
 	}
 
-	function open( gallery, trigger ) {
+	function open( gallery, trigger, directSlideshow = false, returnFocus = trigger ) {
 		const items = collectItems( gallery );
 		const index = items.findIndex( ( item ) => item.trigger === trigger );
 		if ( ! items.length || index < 0 ) {
 			return;
 		}
-		previousFocus = trigger;
+		gallery.dispatchEvent( new CustomEvent( 'uplink-mbe-lightbox-opening' ) );
+		previousFocus = returnFocus;
 		const lightbox = createLightbox( gallery, items, index );
 		lightbox.overlay.hidden = false;
 		document.documentElement.classList.add( 'uplink-mbe-lightbox-open' );
 		showItem( index );
-		lightbox.close.focus();
+		if ( lightbox.startSlideshow && ( directSlideshow || gallery.dataset.uplinkMbeLightboxAutoplay === 'true' ) ) startSlideshow( directSlideshow || ! reducedMotion.matches );
+		else lightbox.close.focus();
 	}
 
 	function close() {
 		if ( ! active ) {
 			return;
 		}
+		clearTimeout( active.playbackTimer );
+		clearTimeout( active.controlsTimer );
 		if ( document.fullscreenElement === active.dialog ) {
-			document.exitFullscreen();
+			document.exitFullscreen().catch( () => {} );
 		}
 		if ( active.resizeObserver ) {
 			active.resizeObserver.disconnect();
@@ -308,6 +413,12 @@
 			first.focus();
 		}
 	}
+
+	document.addEventListener( 'uplink-mbe-start-slideshow', ( event ) => {
+		const gallery = event.target;
+		if ( active || ! gallery.matches?.( selector ) || gallery.dataset.uplinkMbeLightboxSlideshow === 'false' ) return;
+		open( gallery, event.detail?.trigger, true, event.detail?.returnFocus );
+	} );
 
 	document.addEventListener( 'click', ( event ) => {
 		const trigger = event.target.closest( '.uplink-mbe-custom-lightbox-trigger' );
@@ -350,12 +461,16 @@
 		if ( ! active ) {
 			return;
 		}
+		active.keyboardControls = true;
+		revealSlideshowControls();
 		// Let the focused metadata region handle its own scrolling keys.
 		if ( active.exifPanel.contains( event.target ) && ! [ 'Escape', 'Tab' ].includes( event.key ) ) return;
 		if ( event.key === 'Escape' ) {
 			event.preventDefault();
 			if ( ! active.exifPanel.hidden ) { active.exifPanel.hidden = true; active.exifButton.setAttribute( 'aria-expanded', 'false' ); active.exifButton.focus(); return; }
 			close();
+		} else if ( active.slideshow && [ '+', '=', '-', '0' ].includes( event.key ) ) {
+			return;
 		} else if ( event.key === 'ArrowLeft' ) {
 			event.preventDefault();
 			showItem( active.index - 1 );
@@ -388,7 +503,10 @@
 		}
 	} );
 
+	document.addEventListener( 'visibilitychange', syncSlideshow );
+	reducedMotion.addEventListener( 'change', () => { if ( active && reducedMotion.matches ) { active.playing = false; syncSlideshow(); } } );
 	document.addEventListener( 'fullscreenchange', () => {
+		if ( active?.slideshowFullscreen && document.fullscreenElement !== active.dialog ) leaveSlideshow();
 		if ( active && active.fullscreenButton ) {
 			const fullscreen = document.fullscreenElement === active.dialog;
 			active.fullscreenButton.setAttribute( 'aria-label', fullscreen ? ( strings.fullscreenExit || 'Exit fullscreen' ) : ( strings.fullscreenEnter || 'Enter fullscreen' ) );

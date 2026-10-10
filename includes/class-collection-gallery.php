@@ -55,6 +55,9 @@ final class Collection_Gallery {
 			'uplink-mbe-gallery-lightbox',
 			'uplinkMbeGalleryLightbox',
 			array(
+				'slideshowStart' => __( 'Start fullscreen slideshow', 'media-bridge-for-etch' ),
+				'slideshowPlay' => __( 'Play slideshow', 'media-bridge-for-etch' ),
+				'slideshowPause' => __( 'Pause slideshow', 'media-bridge-for-etch' ),
 				'exifLabel'       => __( 'Photo details', 'media-bridge-for-etch' ),
 				'dialogLabel'     => __( 'Image gallery lightbox', 'media-bridge-for-etch' ),
 				'closeLabel'      => __( 'Close gallery lightbox', 'media-bridge-for-etch' ),
@@ -247,6 +250,7 @@ final class Collection_Gallery {
 				'autoplay' => 'false',
 				'interval' => 5000,
 				'show_status' => 'true',
+				'show_slideshow' => 'false',
 				'status_position' => 'auto',
 				'progress_color' => '',
 				'nav_content' => 'text',
@@ -269,6 +273,10 @@ final class Collection_Gallery {
 				'lightbox_thumbnails' => 'true',
 				'lightbox_fullscreen' => 'true',
 				'lightbox_zoom'    => 'true',
+				'lightbox_slideshow' => 'true',
+				'lightbox_autoplay' => 'false',
+				'lightbox_interval' => 5000,
+				'lightbox_loop' => 'true',
 				'lightbox_size'    => 'full',
 				'lightbox_thumbnail_position' => 'horizontal',
 				'lightbox_info_position' => 'bottom',
@@ -316,6 +324,7 @@ final class Collection_Gallery {
 				'sliderAutoplay' => $this->to_bool( $attributes['autoplay'] ),
 				'sliderInterval' => absint( $attributes['interval'] ),
 				'sliderShowStatus' => $this->to_bool( $attributes['show_status'] ),
+				'sliderShowSlideshow' => $this->to_bool( $attributes['show_slideshow'] ),
 				'sliderStatusPosition' => $attributes['status_position'],
 				'sliderProgressColor' => $attributes['progress_color'],
 				'navContent' => $attributes['nav_content'],
@@ -338,6 +347,10 @@ final class Collection_Gallery {
 				'lightboxThumbnails' => $this->to_bool( $attributes['lightbox_thumbnails'] ),
 				'lightboxFullscreen' => $this->to_bool( $attributes['lightbox_fullscreen'] ),
 				'lightboxZoom'    => $this->to_bool( $attributes['lightbox_zoom'] ),
+				'lightboxSlideshow' => $this->to_bool( $attributes['lightbox_slideshow'] ),
+				'lightboxAutoplay' => $this->to_bool( $attributes['lightbox_autoplay'] ),
+				'lightboxInterval' => absint( $attributes['lightbox_interval'] ),
+				'lightboxLoop' => $this->to_bool( $attributes['lightbox_loop'] ),
 				'lightboxSizeSlug' => (string) $attributes['lightbox_size'],
 				'lightboxThumbnailPosition' => (string) $attributes['lightbox_thumbnail_position'],
 				'lightboxInfoPosition' => (string) $attributes['lightbox_info_position'],
@@ -466,6 +479,10 @@ final class Collection_Gallery {
 				'data-uplink-mbe-lightbox-title'      => $attributes['lightboxShowTitle'] ? 'true' : 'false',
 				'data-uplink-mbe-lightbox-caption'    => $attributes['lightboxShowCaption'] ? 'true' : 'false',
 				'data-uplink-mbe-lightbox-fullscreen' => $attributes['lightboxFullscreen'] ? 'true' : 'false',
+				'data-uplink-mbe-lightbox-slideshow' => $attributes['lightboxSlideshow'] ? 'true' : 'false',
+				'data-uplink-mbe-lightbox-autoplay' => $attributes['lightboxAutoplay'] ? 'true' : 'false',
+				'data-uplink-mbe-lightbox-interval' => (string) $attributes['lightboxInterval'],
+				'data-uplink-mbe-lightbox-loop' => $attributes['lightboxLoop'] ? 'true' : 'false',
 				'data-uplink-mbe-lightbox-zoom'       => $attributes['lightboxZoom'] ? 'true' : 'false',
 			);
 		}
@@ -591,7 +608,8 @@ final class Collection_Gallery {
 		// Keep lazy loading but restore the explicit responsive sizes value.
 		$rendered_gallery = preg_replace( '/(\ssizes=["\'])auto,\s*/', '$1', $rendered_gallery );
 
-		if ( 'slider' === $attributes['layout'] && count( $image_blocks ) > 1 ) {
+		$show_slideshow = $attributes['sliderShowSlideshow'] && $attributes['lightboxSlideshow'] && 'custom' === $attributes['lightboxMode'];
+		if ( 'slider' === $attributes['layout'] && ( count( $image_blocks ) > 1 || $show_slideshow ) ) {
 			$buttons = array();
 			foreach ( array( 'prev' => __( 'Previous', 'media-bridge-for-etch' ), 'next' => __( 'Next', 'media-bridge-for-etch' ) ) as $direction => $label ) {
 				$path = 'prev' === $direction ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7';
@@ -604,14 +622,18 @@ final class Collection_Gallery {
 				'<button type="button" data-slider-play aria-label="%1$s" aria-pressed="false" data-play-label="%1$s" data-pause-label="%2$s" data-play-text="%3$s" data-pause-text="%4$s"><svg class="uplink-mbe-slider-icon uplink-mbe-slider-play-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor" /></svg><svg class="uplink-mbe-slider-icon uplink-mbe-slider-pause-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor" /></svg><span class="uplink-mbe-slider-label">%3$s</span></button>',
 				esc_attr__( 'Play slideshow', 'media-bridge-for-etch' ), esc_attr__( 'Pause slideshow', 'media-bridge-for-etch' ), esc_html__( 'Play', 'media-bridge-for-etch' ), esc_html__( 'Pause', 'media-bridge-for-etch' )
 			);
+			$slideshow_button = $show_slideshow ? sprintf(
+				'<button type="button" data-slider-slideshow aria-label="%1$s" aria-haspopup="dialog"><svg class="uplink-mbe-slider-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 7l8 5-8 5z" fill="currentColor"/></svg><span class="uplink-mbe-slider-label">%2$s</span></button>',
+				esc_attr__( 'Start fullscreen slideshow', 'media-bridge-for-etch' ), esc_html__( 'Slideshow', 'media-bridge-for-etch' )
+			) : '';
 			$rendered_gallery .= sprintf(
-				'<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>',
+				'<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%6$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>',
 				$buttons['prev'], $buttons['next'],
 				/* translators: 1: Current image number, 2: Total images. */
 				esc_attr__( 'Image %1$d of %2$d', 'media-bridge-for-etch' ),
 				/* translators: 1: First visible image, 2: Last visible image, 3: Total images. */
 				esc_attr__( 'Images %1$d–%2$d of %3$d', 'media-bridge-for-etch' ),
-				$play_button
+				$play_button, $slideshow_button
 			);
 		}
 		return sprintf( '<div %1$s>%2$s</div>', $wrapper, $rendered_gallery );
@@ -668,6 +690,7 @@ final class Collection_Gallery {
 			'navContent' => in_array( $attributes['navContent'] ?? '', array( 'text', 'icon', 'both' ), true ) ? $attributes['navContent'] : 'text',
 			'sliderAutoplay' => ! empty( $attributes['sliderAutoplay'] ),
 			'sliderProgressColor' => $this->sanitize_progress_color( (string) ( $attributes['sliderProgressColor'] ?? '' ) ),
+			'sliderShowSlideshow' => ! empty( $attributes['sliderShowSlideshow'] ),
 			'sliderShowStatus' => ! array_key_exists( 'sliderShowStatus', $attributes ) || ! empty( $attributes['sliderShowStatus'] ),
 			'sliderStatusPosition' => in_array( $attributes['sliderStatusPosition'] ?? '', array( 'auto', 'before', 'between', 'after', 'above', 'below' ), true ) ? $attributes['sliderStatusPosition'] : 'auto',
 			'sliderInterval' => max( 2000, min( 20000, absint( $attributes['sliderInterval'] ?? 5000 ) ) ),
@@ -685,6 +708,10 @@ final class Collection_Gallery {
 			'showCaptions'    => ! empty( $attributes['showCaptions'] ),
 			'useLightbox'     => ! array_key_exists( 'useLightbox', $attributes ) || ! empty( $attributes['useLightbox'] ),
 			'lightboxMode'    => in_array( $lightbox_mode, array( 'custom', 'native', 'none' ), true ) ? $lightbox_mode : 'custom',
+			'lightboxSlideshow' => ! array_key_exists( 'lightboxSlideshow', $attributes ) || ! empty( $attributes['lightboxSlideshow'] ),
+			'lightboxAutoplay' => ! empty( $attributes['lightboxAutoplay'] ),
+			'lightboxInterval' => max( 2000, min( 30000, absint( $attributes['lightboxInterval'] ?? 5000 ) ) ),
+			'lightboxLoop' => ! array_key_exists( 'lightboxLoop', $attributes ) || ! empty( $attributes['lightboxLoop'] ),
 			'lightboxShowExif' => ! array_key_exists( 'lightboxShowExif', $attributes ) || ! empty( $attributes['lightboxShowExif'] ),
 			'lightboxExifFields' => array_values( array_intersect( array_keys( $this->exif_fields() ), is_array( $attributes['lightboxExifFields'] ?? null ) ? $attributes['lightboxExifFields'] : array( 'camera_model', 'lens', 'aperture_display', 'exposure_display', 'iso', 'focal_display' ) ) ),
 			'lightboxShowTitle' => ! array_key_exists( 'lightboxShowTitle', $attributes ) || ! empty( $attributes['lightboxShowTitle'] ),

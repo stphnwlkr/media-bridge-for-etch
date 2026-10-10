@@ -10,8 +10,13 @@
 		slidesPerView: 1,
 		sliderAutoplay: false,
 		sliderInterval: 5000,
+		lightboxSlideshow: true,
+		lightboxAutoplay: false,
+		lightboxInterval: 5000,
+		lightboxLoop: true,
 		sliderProgressColor: '',
 		sliderShowStatus: true,
+		sliderShowSlideshow: false,
 		sliderStatusPosition: 'auto',
 		lightboxShowExif: true,
 		lightboxExifFields: ['camera_model', 'lens', 'aperture_display', 'exposure_display', 'iso', 'focal_display'],
@@ -273,7 +278,7 @@
 			} else if ( control.type === 'checkbox' ) {
 				control.checked = Boolean( value );
 			} else {
-				control.value = String( key === 'sliderInterval' ? Number( value ) / 1000 : value );
+				control.value = String( [ 'sliderInterval', 'lightboxInterval' ].includes( key ) ? Number( value ) / 1000 : value );
 			}
 		} );
 	}
@@ -289,7 +294,7 @@
 			} else if ( control.type === 'checkbox' ) {
 				values[ control.name ] = control.checked;
 			} else if ( control.type === 'number' ) {
-				values[ control.name ] = Number( control.value ) * ( control.name === 'sliderInterval' ? 1000 : 1 );
+				values[ control.name ] = Number( control.value ) * ( [ 'sliderInterval', 'lightboxInterval' ].includes( control.name ) ? 1000 : 1 );
 			} else {
 				values[ control.name ] = control.value;
 			}
@@ -384,6 +389,7 @@
 		field( form, 'number', 'columns', 'Gallery columns', [ { min: 1, max: 8, step: 1 } ] );
 		field( form, 'checkbox', 'sliderAutoplay', 'Autoplay' );
 		field( form, 'text', 'sliderProgressColor', 'Progress bar color (hex, blank to inherit)' );
+		field( form, 'checkbox', 'sliderShowSlideshow', 'Show fullscreen slideshow button' );
 		field( form, 'checkbox', 'sliderShowStatus', 'Show slider image count' );
 		field( form, 'select', 'sliderStatusPosition', 'Status position', [ { value: 'auto', label: 'Automatic' }, { value: 'before', label: 'Before buttons' }, { value: 'between', label: 'Between buttons' }, { value: 'after', label: 'After buttons' }, { value: 'above', label: 'Above buttons' }, { value: 'below', label: 'Below buttons' } ] );
 		field( form, 'number', 'sliderInterval', 'Seconds between images', [ { min: 2, max: 20, step: 1 } ] );
@@ -417,6 +423,10 @@
 			{ value: 'native', label: 'Native WordPress lightbox' },
 			{ value: 'none', label: 'No interaction' },
 		] );
+		field( form, 'checkbox', 'lightboxSlideshow', 'Enable fullscreen slideshow' );
+		field( form, 'checkbox', 'lightboxAutoplay', 'Autoplay when lightbox opens' );
+		field( form, 'number', 'lightboxInterval', 'Lightbox seconds between images', [ { min: 2, max: 30, step: 1 } ] );
+		field( form, 'checkbox', 'lightboxLoop', 'Loop slideshow' );
 		field( form, 'checkbox', 'lightboxShowExif', 'Show EXIF photo details (requires EXIF enabled)' );
 		field( form, 'select', 'lightboxExifFields', 'Photo detail fields (select multiple)', Object.entries( config.exifFields || {} ).map( ( [ value, label ] ) => ( { value, label } ) ) );
 		form.elements.namedItem( 'lightboxExifFields' ).multiple = true;
@@ -425,14 +435,20 @@
 		setFormValues( form, block.gutenbergBlock.attrs || {} );
 		const updateLayoutFields = () => {
 			const slider = form.elements.namedItem( 'layout' ).value === 'slider';
-			for ( const name of [ 'sliderProgressColor', 'sliderShowStatus', 'sliderStatusPosition', 'sliderAutoplay', 'sliderInterval', 'slidesPerView', 'carouselTablet', 'carouselMobile', 'navPosition', 'navAlignment', 'navShape', 'navContent' ] ) {
+			for ( const name of [ 'sliderProgressColor', 'sliderShowSlideshow', 'sliderShowStatus', 'sliderStatusPosition', 'sliderAutoplay', 'sliderInterval', 'slidesPerView', 'carouselTablet', 'carouselMobile', 'navPosition', 'navAlignment', 'navShape', 'navContent' ] ) {
 				form.elements.namedItem( name ).closest( 'label' ).hidden = ! slider;
 			}
 			form.elements.namedItem( 'sliderStatusPosition' ).closest( 'label' ).hidden = ! slider || ! form.elements.namedItem( 'sliderShowStatus' ).checked;
 			form.elements.namedItem( 'columns' ).closest( 'label' ).hidden = slider;
+			const customLightbox = form.elements.namedItem( 'lightboxMode' ).value === 'custom';
+			form.elements.namedItem( 'sliderShowSlideshow' ).disabled = ! customLightbox || ! form.elements.namedItem( 'lightboxSlideshow' ).checked;
+			form.elements.namedItem( 'lightboxSlideshow' ).closest( 'label' ).hidden = ! customLightbox;
+			for ( const name of [ 'lightboxAutoplay', 'lightboxInterval', 'lightboxLoop' ] ) form.elements.namedItem( name ).closest( 'label' ).hidden = ! customLightbox || ! form.elements.namedItem( 'lightboxSlideshow' ).checked;
 		};
 		form.elements.namedItem( 'layout' ).addEventListener( 'change', updateLayoutFields );
 		form.elements.namedItem( 'sliderShowStatus' ).addEventListener( 'change', updateLayoutFields );
+		form.elements.namedItem( 'lightboxMode' ).addEventListener( 'change', updateLayoutFields );
+		form.elements.namedItem( 'lightboxSlideshow' ).addEventListener( 'change', updateLayoutFields );
 		updateLayoutFields();
 
 

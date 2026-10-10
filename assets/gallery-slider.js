@@ -12,7 +12,8 @@
 			if ( ! track || initialized.has( track ) ) return;
 			const slides = Array.from( track.children ).filter( ( child ) => child.classList.contains( 'wp-block-image' ) );
 			track.style.setProperty( '--uplink-mbe-carousel-total', slides.length );
-			if ( ! controls || slides.length < 2 ) return;
+			if ( ! controls || ! slides.length ) return;
+			const slideshow = controls.querySelector( '[data-slider-slideshow]' );
 			const view = gallery.ownerDocument.defaultView;
 			const events = new view.AbortController();
 			track.classList.add( 'is-slider-ready' );
@@ -80,11 +81,12 @@
 				} );
 				const canScroll = slides.length > visible;
 				// Keep focus reachable when a wider viewport makes the controls unnecessary.
-				if ( ! canScroll && controls.contains( gallery.ownerDocument.activeElement ) ) {
+				if ( ! canScroll && ! slideshow && controls.contains( gallery.ownerDocument.activeElement ) ) {
 					track.tabIndex = 0;
 					track.focus( { preventScroll: true } );
 				}
-				controls.hidden = ! canScroll;
+				controls.hidden = ! canScroll && ! slideshow;
+				for ( const control of [ previous, next, play ] ) control.hidden = ! canScroll;
 				track.tabIndex = canScroll ? 0 : -1;
 				previous.setAttribute( 'aria-disabled', String( current === 0 ) );
 				next.setAttribute( 'aria-disabled', String( current >= slides.length - visible ) );
@@ -106,6 +108,10 @@
 				} );
 				if ( instant ) update();
 			}
+			slideshow?.addEventListener( 'click', () => {
+				update();
+				gallery.dispatchEvent( new CustomEvent( 'uplink-mbe-start-slideshow', { bubbles: true, detail: { trigger: slides[ current ].querySelector( '.uplink-mbe-custom-lightbox-trigger' ), returnFocus: slideshow } } ) );
+			}, { signal: events.signal } );
 			previous.addEventListener( 'click', () => { stopPlayback(); move( current - 1 ); }, { signal: events.signal } );
 			next.addEventListener( 'click', () => { stopPlayback(); move( current + 1 ); }, { signal: events.signal } );
 			gallery.addEventListener( 'keydown', ( event ) => {
@@ -131,6 +137,7 @@
 			gallery.addEventListener( 'focusin', ( event ) => {
 				if ( event.target !== play ) stopPlayback();
 			}, { signal: events.signal } );
+			gallery.addEventListener( 'uplink-mbe-lightbox-opening', stopPlayback, { signal: events.signal } );
 			track.addEventListener( 'pointerdown', stopPlayback, { signal: events.signal } );
 			gallery.ownerDocument.addEventListener( 'visibilitychange', syncPlayback, { signal: events.signal } );
 			motion.addEventListener( 'change', () => { if ( motion.matches ) stopPlayback(); }, { signal: events.signal } );
