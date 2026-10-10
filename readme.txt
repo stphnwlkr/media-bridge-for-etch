@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -45,6 +45,8 @@ File replacement is optional and disabled by default. Enable it in Settings > Fi
 Both options preserve the attachment ID, title, alt text, caption, description, collections, and custom collection order. The dialog shows the retained filename when applicable and displays replacement errors directly in the dialog.
 
 = Collection galleries =
+
+Choose Collection Slider to show one or several images at a time, with responsive image counts, configurable navigation, autoplay, Play/Pause, and a visible countdown. Optional lightbox photo details display only selected, available EXIF fields.
 
 Display collection images with the Collection Gallery block or the `[etch_collection_gallery]` shortcode. Choose a layout, image size, captions, custom collection order, and lightbox settings. A shortcode generator provides a preview and copyable code.
 
@@ -104,6 +106,10 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.5.0 =
+
+Adds configurable collection sliders, autoplay controls, and selectable lightbox EXIF details. Existing galleries retain their layouts.
 
 = 2.4.0 =
 
@@ -225,7 +231,22 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
+== Configurable Collection Slider ==
+
+Insert Collection Slider and select a collection. Choose one image for a single-image slider or up to eight for a carousel. Tablet and mobile counts can reduce the desktop count. Navigation button settings control position, alignment, shape, and text or icons. Playback settings add optional autoplay, a two-to-twenty-second interval, and a visitor Play/Pause button. Autoplay pauses on hover or when offscreen, stops for manual navigation and keyboard focus, and respects reduced motion. Shortcodes also accept autoplay="true" interval="5000". Existing single-image sliders retain their one-image behavior. The Etch gallery dialog provides the same settings; its preview remains static.
+
+Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
+
 == Changelog ==
+
+= 2.5.0 =
+
+* Add a Collection Slider preset with responsive single-image and multi-image layouts using live collection data.
+* Add configurable navigation buttons, image count placement, autoplay, Play/Pause, and a visible countdown strip with a configurable color.
+* Add a lightbox photo-details popover with selectable EXIF fields, photo-title headers, and a scrollable metadata area.
+* Group slider controls, lightbox styles, and thumbnail colors into collapsed settings panels with white headings and shaded open panels.
+* Use the new gallery-thumbnail icon for the Collection Slider preset.
+* Avoid EXIF file-read warnings when an attachment file is missing.
 
 = 2.4.0 =
 

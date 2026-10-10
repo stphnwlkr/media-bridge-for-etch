@@ -141,7 +141,7 @@ final class Etch_Dynamic_Data {
 		$camera      = sanitize_text_field( (string) ( $image_meta['camera'] ?? '' ) );
 		$captured    = ! empty( $image_meta['created_timestamp'] ) && is_numeric( $image_meta['created_timestamp'] ) ? (int) $image_meta['created_timestamp'] : 0;
 		$raw_exif      = array();
-		$exif_mime     = $exif_file && function_exists( 'wp_get_image_mime' ) ? wp_get_image_mime( $exif_file ) : false;
+		$exif_mime     = $exif_file && is_file( $exif_file ) && is_readable( $exif_file ) && function_exists( 'wp_get_image_mime' ) ? wp_get_image_mime( $exif_file ) : false;
 		$can_read_exif = in_array( $exif_mime, array( 'image/jpeg', 'image/tiff' ), true );
 		if ( $can_read_exif && is_file( $exif_file ) && is_readable( $exif_file ) && function_exists( 'exif_read_data' ) ) {
 			$read = @exif_read_data( $exif_file, 'ANY_TAG', true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- EXIF support varies by image format and host.

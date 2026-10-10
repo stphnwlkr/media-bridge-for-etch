@@ -22,8 +22,10 @@
 	function collectItems( gallery ) {
 		return Array.from( gallery.querySelectorAll( '.uplink-mbe-custom-lightbox-trigger' ) ).map( ( trigger ) => {
 			const image = trigger.querySelector( 'img' );
+			let exif = [];
+			try { const rows = JSON.parse( trigger.dataset.uplinkMbeExif || '[]' ); if ( Array.isArray( rows ) ) exif = rows.filter( ( row ) => row && typeof row.label === 'string' && typeof row.value === 'string' ); } catch ( error ) {}
 			return {
-				trigger,
+				trigger, exif,
 				src: trigger.dataset.uplinkMbeSrc,
 				thumb: image ? ( image.currentSrc || image.src ) : trigger.dataset.uplinkMbeSrc,
 				alt: image ? image.alt : '',
@@ -101,6 +103,22 @@
 			toolbar.append( zoomOut, zoomReset, zoomIn );
 		}
 
+		const exifWrap = document.createElement( 'div' );
+		exifWrap.className = 'uplink-mbe-exif';
+		const exifButton = button( 'uplink-mbe-custom-lightbox-control uplink-mbe-exif-button', strings.exifLabel || 'Photo details', 'EXIF' );
+		exifButton.setAttribute( 'aria-expanded', 'false' );
+		exifButton.setAttribute( 'aria-controls', 'uplink-mbe-exif-panel' );
+		const exifPanel = document.createElement( 'section' );
+		exifPanel.id = 'uplink-mbe-exif-panel';
+		exifPanel.className = 'uplink-mbe-exif-panel';
+		exifPanel.hidden = true;
+		exifPanel.setAttribute( 'aria-label', strings.exifLabel || 'Photo details' );
+		exifWrap.append( exifButton, exifPanel );
+		toolbar.appendChild( exifWrap );
+		exifButton.addEventListener( 'click', () => {
+			exifPanel.hidden = ! exifPanel.hidden;
+			exifButton.setAttribute( 'aria-expanded', String( ! exifPanel.hidden ) );
+		} );
 		const close = button( 'uplink-mbe-custom-lightbox-close', strings.closeLabel || 'Close gallery lightbox', '×' );
 		toolbar.appendChild( close );
 
@@ -153,7 +171,7 @@
 		overlay.appendChild( dialog );
 		document.body.appendChild( overlay );
 
-		active = { gallery, items, index, overlay, dialog, media, image, title, caption, info, counter, live, thumbnails, previous, next, close, fullscreenButton, zoomOut, zoomIn, zoomReset, resizeObserver: null };
+		active = { exifWrap, exifButton, exifPanel, gallery, items, index, overlay, dialog, media, image, title, caption, info, counter, live, thumbnails, previous, next, close, fullscreenButton, zoomOut, zoomIn, zoomReset, resizeObserver: null };
 		if ( 'ResizeObserver' in window ) {
 			active.resizeObserver = new ResizeObserver( syncInfoWidth );
 			active.resizeObserver.observe( media );
@@ -185,6 +203,35 @@
 		}
 		active.index = ( index + active.items.length ) % active.items.length;
 		const item = active.items[ active.index ];
+		if ( active.exifWrap.contains( document.activeElement ) ) active.close.focus();
+		active.exifWrap.hidden = ! item.exif.length;
+		active.exifPanel.hidden = true;
+		active.exifButton.setAttribute( 'aria-expanded', 'false' );
+		const header = document.createElement( 'header' );
+		header.className = 'uplink-mbe-exif-header';
+		const eyebrow = document.createElement( 'span' );
+		eyebrow.className = 'uplink-mbe-exif-eyebrow';
+		eyebrow.textContent = strings.exifLabel || 'Photo details';
+		const heading = document.createElement( 'h3' );
+		heading.id = 'uplink-mbe-exif-title';
+		heading.textContent = item.title || strings.exifLabel || 'Photo details';
+		heading.title = heading.textContent;
+		if ( item.title ) header.appendChild( eyebrow );
+		header.appendChild( heading );
+		active.exifPanel.setAttribute( 'aria-labelledby', heading.id );
+		const body = document.createElement( 'div' );
+		body.className = 'uplink-mbe-exif-body';
+		body.tabIndex = 0;
+		body.setAttribute( 'role', 'region' );
+		body.setAttribute( 'aria-label', strings.exifLabel || 'Photo details' );
+		const list = document.createElement( 'dl' );
+		item.exif.forEach( ( row ) => {
+			const label = document.createElement( 'dt' ); label.textContent = row.label;
+			const value = document.createElement( 'dd' ); value.textContent = row.value;
+			list.append( label, value );
+		} );
+		body.appendChild( list );
+		active.exifPanel.replaceChildren( header, body );
 		active.image.src = item.src;
 		active.image.alt = item.alt;
 		active.title.textContent = item.title;
@@ -275,6 +322,7 @@
 		if ( ! active ) {
 			return;
 		}
+		if ( ! active.exifWrap.contains( event.target ) ) { active.exifPanel.hidden = true; active.exifButton.setAttribute( 'aria-expanded', 'false' ); }
 		if ( event.target === active.overlay || event.target === active.close ) {
 			close();
 		} else if ( event.target.closest( '.uplink-mbe-custom-lightbox-navigation.is-previous' ) ) {
@@ -302,8 +350,11 @@
 		if ( ! active ) {
 			return;
 		}
+		// Let the focused metadata region handle its own scrolling keys.
+		if ( active.exifPanel.contains( event.target ) && ! [ 'Escape', 'Tab' ].includes( event.key ) ) return;
 		if ( event.key === 'Escape' ) {
 			event.preventDefault();
+			if ( ! active.exifPanel.hidden ) { active.exifPanel.hidden = true; active.exifButton.setAttribute( 'aria-expanded', 'false' ); active.exifButton.focus(); return; }
 			close();
 		} else if ( event.key === 'ArrowLeft' ) {
 			event.preventDefault();

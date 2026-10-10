@@ -1,0 +1,16 @@
+/* Scope editor panel styling to Collection Gallery and Slider settings. */
+.components-panel__body.uplink-mbe-settings-panel.is-opened {
+	background-color: #f5f5f5;
+	padding-top: 1rem;
+}
+/* Offset WordPress's padded panel so the white heading stays flush. */
+.components-panel__body.uplink-mbe-settings-panel > .components-panel__body-title {
+	background-color: #fff;
+}
+.components-panel__body.uplink-mbe-settings-panel.is-opened > .components-panel__body-title {
+	margin-top: -1rem;
+	margin-bottom: 1rem;
+}
+.components-panel__body.uplink-mbe-settings-panel.is-opened .components-tools-panel {
+	background-color: transparent;
+}

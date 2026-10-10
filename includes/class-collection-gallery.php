@@ -43,6 +43,7 @@ final class Collection_Gallery {
 			array(),
 			UPLINK_MBE_ASSET_VERSION
 		);
+		wp_register_script( 'uplink-mbe-gallery-slider', UPLINK_MBE_URL . 'assets/gallery-slider.js', array(), UPLINK_MBE_ASSET_VERSION, true );
 		wp_register_script(
 			'uplink-mbe-gallery-lightbox',
 			UPLINK_MBE_URL . 'assets/gallery-lightbox.js',
@@ -54,6 +55,7 @@ final class Collection_Gallery {
 			'uplink-mbe-gallery-lightbox',
 			'uplinkMbeGalleryLightbox',
 			array(
+				'exifLabel'       => __( 'Photo details', 'media-bridge-for-etch' ),
 				'dialogLabel'     => __( 'Image gallery lightbox', 'media-bridge-for-etch' ),
 				'closeLabel'      => __( 'Close gallery lightbox', 'media-bridge-for-etch' ),
 				'previousLabel'   => __( 'Previous image', 'media-bridge-for-etch' ),
@@ -78,6 +80,8 @@ final class Collection_Gallery {
 	}
 
 	public function editor_data(): void {
+		wp_enqueue_style( 'uplink-mbe-gallery-editor', UPLINK_MBE_URL . 'assets/gallery-editor.css', array(), UPLINK_MBE_ASSET_VERSION );
+		wp_enqueue_script( 'uplink-mbe-gallery-slider' );
 		wp_localize_script( 'uplink-mbe-gallery-block', 'uplinkMbeGalleryBlock', $this->editor_config() );
 	}
 
@@ -158,6 +162,35 @@ final class Collection_Gallery {
 		);
 	}
 
+	private function exif_fields(): array {
+		return array(
+			'camera_model' => __( 'Camera', 'media-bridge-for-etch' ),
+			'lens' => __( 'Lens', 'media-bridge-for-etch' ),
+			'aperture_display' => __( 'Aperture', 'media-bridge-for-etch' ),
+			'exposure_display' => __( 'Shutter speed', 'media-bridge-for-etch' ),
+			'iso' => __( 'ISO', 'media-bridge-for-etch' ),
+			'focal_display' => __( 'Focal length', 'media-bridge-for-etch' ),
+			'date_taken' => __( 'Date taken', 'media-bridge-for-etch' ),
+			'credit' => __( 'Photographer', 'media-bridge-for-etch' ),
+			'copyright' => __( 'Copyright', 'media-bridge-for-etch' ),
+			'dimensions' => __( 'Dimensions', 'media-bridge-for-etch' ),
+			'file_format' => __( 'File format', 'media-bridge-for-etch' ),
+			'file_size' => __( 'File size', 'media-bridge-for-etch' ),
+		);
+	}
+
+	private function lightbox_exif( int $id, array $attributes ): array {
+		if ( ! $attributes['lightboxShowExif'] || ! $attributes['lightboxExifFields'] || empty( Plugin::settings()['exif_dynamic_data'] ) ) return array();
+		$data = Etch_Dynamic_Data::attachment_exif( $id );
+		$rows = array();
+		foreach ( $this->exif_fields() as $key => $label ) {
+			if ( in_array( $key, $attributes['lightboxExifFields'], true ) && isset( $data[ $key ] ) && '' !== (string) $data[ $key ] && 0 !== $data[ $key ] ) {
+				$rows[] = array( 'label' => $label, 'value' => wp_strip_all_tags( (string) $data[ $key ] ) );
+			}
+		}
+		return $rows;
+	}
+
 	private function editor_config(): array {
 		$collections = array();
 		$terms       = $this->etch->get_terms();
@@ -187,6 +220,8 @@ final class Collection_Gallery {
 		return array(
 			'collections' => $collections,
 			'imageSizes'  => $sizes,
+			'exifEnabled' => ! empty( $settings['exif_dynamic_data'] ),
+			'exifFields' => $this->exif_fields(),
 			'managerLabel' => '' !== $manager_label ? $manager_label : __( 'Etch Collections', 'media-bridge-for-etch' ),
 		);
 	}
@@ -208,6 +243,18 @@ final class Collection_Gallery {
 				'collection'       => 0,
 				'include_children' => 'false',
 				'layout'           => 'grid',
+				'slides' => 1,
+				'autoplay' => 'false',
+				'interval' => 5000,
+				'show_status' => 'true',
+				'status_position' => 'auto',
+				'progress_color' => '',
+				'nav_content' => 'text',
+				'nav_shape' => 'rounded',
+				'nav_alignment' => 'spread',
+				'nav_position' => 'bottom',
+				'carousel_mobile' => 1,
+				'carousel_tablet' => 2,
 				'columns'          => 3,
 				'size'             => 'large',
 				'crop'             => 'true',
@@ -265,6 +312,18 @@ final class Collection_Gallery {
 				'collectionId'   => (int) $term->term_id,
 				'includeChildren' => $this->to_bool( $attributes['include_children'] ),
 				'layout'          => (string) $attributes['layout'],
+				'slidesPerView' => $attributes['slides'],
+				'sliderAutoplay' => $this->to_bool( $attributes['autoplay'] ),
+				'sliderInterval' => absint( $attributes['interval'] ),
+				'sliderShowStatus' => $this->to_bool( $attributes['show_status'] ),
+				'sliderStatusPosition' => $attributes['status_position'],
+				'sliderProgressColor' => $attributes['progress_color'],
+				'navContent' => $attributes['nav_content'],
+				'navShape' => $attributes['nav_shape'],
+				'navAlignment' => $attributes['nav_alignment'],
+				'navPosition' => $attributes['nav_position'],
+				'carouselMobile' => $attributes['carousel_mobile'],
+				'carouselTablet' => $attributes['carousel_tablet'],
 				'columns'         => absint( $attributes['columns'] ),
 				'sizeSlug'        => (string) $attributes['size'],
 				'imageCrop'       => $this->to_bool( $attributes['crop'] ),
@@ -337,6 +396,9 @@ final class Collection_Gallery {
 		}
 
 		wp_enqueue_style( 'uplink-mbe-collection-gallery' );
+		if ( 'slider' === $attributes['layout'] ) {
+			wp_enqueue_script( 'uplink-mbe-gallery-slider' );
+		}
 		if ( 'custom' === $attributes['lightboxMode'] && ! is_admin() ) {
 			wp_enqueue_script( 'uplink-mbe-gallery-lightbox' );
 		}
@@ -350,6 +412,13 @@ final class Collection_Gallery {
 		}
 		if ( $attributes['imageCrop'] ) {
 			$classes[] = 'is-cropped';
+		}
+		if ( 'slider' === $attributes['layout'] ) {
+			if ( ! $attributes['sliderShowStatus'] ) $classes[] = 'has-hidden-slider-status';
+			$classes[] = 'has-slider-status-' . $attributes['sliderStatusPosition'];
+			foreach ( array( 'navPosition', 'navAlignment', 'navShape', 'navContent' ) as $setting ) {
+				$classes[] = 'has-' . strtolower( $setting ) . '-' . $attributes[ $setting ];
+			}
 		}
 		$background_rgb = $this->hex_to_rgb( $attributes['textBackgroundColor'] );
 		$lightbox_background_rgb = $this->hex_to_rgb( $attributes['lightboxBackgroundColor'] );
@@ -385,6 +454,8 @@ final class Collection_Gallery {
 			$attributes['lightboxTitleFontWeight'],
 			$attributes['lightboxCaptionFontWeight']
 		);
+		if ( $attributes['sliderProgressColor'] ) $style .= '--uplink-mbe-slider-progress-color:' . $attributes['sliderProgressColor'] . ';';
+		$style .= sprintf( '--uplink-mbe-carousel-desktop:%1$d;--uplink-mbe-carousel-tablet:%2$d;--uplink-mbe-carousel-mobile:%3$d;', $attributes['slidesPerView'], min( $attributes['slidesPerView'], $attributes['carouselTablet'] ), min( $attributes['slidesPerView'], $attributes['carouselMobile'] ) );
 		$data_attributes = array();
 		if ( 'custom' === $attributes['lightboxMode'] ) {
 			$data_attributes = array(
@@ -398,6 +469,13 @@ final class Collection_Gallery {
 				'data-uplink-mbe-lightbox-zoom'       => $attributes['lightboxZoom'] ? 'true' : 'false',
 			);
 		}
+		if ( 'slider' === $attributes['layout'] ) {
+			$data_attributes['data-slider-autoplay'] = $attributes['sliderAutoplay'] ? 'true' : 'false';
+			$data_attributes['data-slider-interval'] = (string) $attributes['sliderInterval'];
+			$data_attributes['role'] = 'region';
+			$data_attributes['aria-roledescription'] = __( 'carousel', 'media-bridge-for-etch' );
+			$data_attributes['aria-label'] = $term->name;
+		}
 		$wrapper = $is_block
 			? get_block_wrapper_attributes( array_merge( array( 'class' => implode( ' ', $classes ), 'style' => $style ), $data_attributes ) )
 			: $this->html_attributes( array_merge( array( 'class' => implode( ' ', $classes ), 'style' => $style ), $data_attributes ) );
@@ -405,6 +483,9 @@ final class Collection_Gallery {
 		$image_blocks = array();
 		$column_width = max( 1, (int) ceil( 100 / max( 1, (int) $attributes['columns'] ) ) );
 		$image_sizes  = sprintf( '(max-width: 599px) 100vw, %dvw', $column_width );
+		if ( 'slider' === $attributes['layout'] ) {
+			$image_sizes = sprintf( '(max-width: 599px) %1$dvw, (max-width: 959px) %2$dvw, %3$dvw', (int) ceil( 100 / min( $attributes['slidesPerView'], $attributes['carouselMobile'] ) ), (int) ceil( 100 / min( $attributes['slidesPerView'], $attributes['carouselTablet'] ) ), (int) ceil( 100 / $attributes['slidesPerView'] ) );
+		}
 		foreach ( $query->posts as $attachment ) {
 			$attachment_id = (int) $attachment->ID;
 			$image          = wp_get_attachment_image(
@@ -430,13 +511,14 @@ final class Collection_Gallery {
 			if ( 'custom' === $attributes['lightboxMode'] ) {
 				$lightbox_image = wp_get_attachment_image_src( $attachment_id, $attributes['lightboxSizeSlug'] );
 				$figure .= sprintf(
-					'<button type="button" class="uplink-mbe-custom-lightbox-trigger" data-uplink-mbe-src="%1$s" data-uplink-mbe-title="%2$s" data-uplink-mbe-caption="%3$s" aria-label="%4$s">%5$s</button>',
+					'<button type="button" class="uplink-mbe-custom-lightbox-trigger" data-uplink-mbe-src="%1$s" data-uplink-mbe-title="%2$s" data-uplink-mbe-caption="%3$s" data-uplink-mbe-exif="%6$s" aria-label="%4$s">%5$s</button>',
 						esc_url( $lightbox_image ? $lightbox_image[0] : wp_get_attachment_url( $attachment_id ) ),
 						esc_attr( $attachment_title ),
 						esc_attr( wp_strip_all_tags( $attachment_caption ) ),
 						/* translators: %s: Attachment title. */
 						esc_attr( sprintf( __( 'Open %s in gallery lightbox', 'media-bridge-for-etch' ), $attachment_title ) ),
-					$image
+					$image,
+					esc_attr( wp_json_encode( $this->lightbox_exif( $attachment_id, $attributes ) ) )
 				);
 			} else {
 				$figure .= $image;
@@ -509,13 +591,47 @@ final class Collection_Gallery {
 		// Keep lazy loading but restore the explicit responsive sizes value.
 		$rendered_gallery = preg_replace( '/(\ssizes=["\'])auto,\s*/', '$1', $rendered_gallery );
 
+		if ( 'slider' === $attributes['layout'] && count( $image_blocks ) > 1 ) {
+			$buttons = array();
+			foreach ( array( 'prev' => __( 'Previous', 'media-bridge-for-etch' ), 'next' => __( 'Next', 'media-bridge-for-etch' ) ) as $direction => $label ) {
+				$path = 'prev' === $direction ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7';
+				$buttons[ $direction ] = sprintf(
+					'<button type="button" data-slider-%1$s aria-label="%2$s"><svg class="uplink-mbe-slider-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="%3$s" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg><span class="uplink-mbe-slider-label">%2$s</span></button>',
+					esc_attr( $direction ), esc_attr( $label ), $path
+				);
+			}
+			$play_button = sprintf(
+				'<button type="button" data-slider-play aria-label="%1$s" aria-pressed="false" data-play-label="%1$s" data-pause-label="%2$s" data-play-text="%3$s" data-pause-text="%4$s"><svg class="uplink-mbe-slider-icon uplink-mbe-slider-play-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor" /></svg><svg class="uplink-mbe-slider-icon uplink-mbe-slider-pause-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor" /></svg><span class="uplink-mbe-slider-label">%3$s</span></button>',
+				esc_attr__( 'Play slideshow', 'media-bridge-for-etch' ), esc_attr__( 'Pause slideshow', 'media-bridge-for-etch' ), esc_html__( 'Play', 'media-bridge-for-etch' ), esc_html__( 'Pause', 'media-bridge-for-etch' )
+			);
+			$rendered_gallery .= sprintf(
+				'<div class="uplink-mbe-slider-controls" hidden>%1$s<span data-slider-status role="status" aria-live="polite" aria-atomic="true" data-format="%3$s" data-range-format="%4$s"></span>%5$s%2$s<span class="uplink-mbe-slider-progress" aria-hidden="true"><span></span></span></div>',
+				$buttons['prev'], $buttons['next'],
+				/* translators: 1: Current image number, 2: Total images. */
+				esc_attr__( 'Image %1$d of %2$d', 'media-bridge-for-etch' ),
+				/* translators: 1: First visible image, 2: Last visible image, 3: Total images. */
+				esc_attr__( 'Images %1$d–%2$d of %3$d', 'media-bridge-for-etch' ),
+				$play_button
+			);
+		}
 		return sprintf( '<div %1$s>%2$s</div>', $wrapper, $rendered_gallery );
+	}
+
+	private function sanitize_progress_color( string $color ): string {
+		$color = trim( $color );
+		$hex = sanitize_hex_color( $color );
+		if ( $hex ) return $hex;
+		// Preserve site palette variables without allowing arbitrary CSS declarations.
+		if ( preg_match( '/^var\(\s*(--[a-zA-Z_][a-zA-Z0-9_-]*)\s*\)$/', $color, $matches ) ) {
+			return 'var(' . $matches[1] . ')';
+		}
+		return '';
 	}
 
 	private function sanitize_attributes( array $attributes ): array {
 		$sort = sanitize_key( (string) ( $attributes['sortOrder'] ?? '' ) );
 		$sort = in_array( $sort, array( 'date', 'random', 'custom' ), true ) ? $sort : ( ! empty( $attributes['randomOrder'] ) ? 'random' : 'date' );
-		$layouts = array( 'grid', 'tiled', 'circles', 'square', 'columns' );
+		$layouts = array( 'grid', 'tiled', 'circles', 'square', 'columns', 'slider' );
 		$layout  = sanitize_key( (string) ( $attributes['layout'] ?? 'grid' ) );
 		$size    = sanitize_key( (string) ( $attributes['sizeSlug'] ?? 'large' ) );
 		$sizes   = array_merge( get_intermediate_image_sizes(), array( 'full' ) );
@@ -544,6 +660,18 @@ final class Collection_Gallery {
 		$font_weights = array( 300, 400, 500, 600, 700, 800, 900 );
 
 		return array(
+			'carouselTablet' => max( 1, min( 8, absint( $attributes['carouselTablet'] ?? 2 ) ) ),
+			'carouselMobile' => max( 1, min( 8, absint( $attributes['carouselMobile'] ?? 1 ) ) ),
+			'navPosition' => in_array( $attributes['navPosition'] ?? '', array( 'bottom', 'top', 'overlay' ), true ) ? $attributes['navPosition'] : 'bottom',
+			'navAlignment' => in_array( $attributes['navAlignment'] ?? '', array( 'spread', 'start', 'center', 'end' ), true ) ? $attributes['navAlignment'] : 'spread',
+			'navShape' => in_array( $attributes['navShape'] ?? '', array( 'square', 'rounded', 'pill' ), true ) ? $attributes['navShape'] : 'rounded',
+			'navContent' => in_array( $attributes['navContent'] ?? '', array( 'text', 'icon', 'both' ), true ) ? $attributes['navContent'] : 'text',
+			'sliderAutoplay' => ! empty( $attributes['sliderAutoplay'] ),
+			'sliderProgressColor' => $this->sanitize_progress_color( (string) ( $attributes['sliderProgressColor'] ?? '' ) ),
+			'sliderShowStatus' => ! array_key_exists( 'sliderShowStatus', $attributes ) || ! empty( $attributes['sliderShowStatus'] ),
+			'sliderStatusPosition' => in_array( $attributes['sliderStatusPosition'] ?? '', array( 'auto', 'before', 'between', 'after', 'above', 'below' ), true ) ? $attributes['sliderStatusPosition'] : 'auto',
+			'sliderInterval' => max( 2000, min( 20000, absint( $attributes['sliderInterval'] ?? 5000 ) ) ),
+			'slidesPerView' => max( 1, min( 8, absint( $attributes['slidesPerView'] ?? 1 ) ) ),
 			'collectionId'   => absint( $attributes['collectionId'] ?? 0 ),
 			'includeChildren' => ! empty( $attributes['includeChildren'] ),
 			'layout'          => in_array( $layout, $layouts, true ) ? $layout : 'grid',
@@ -557,6 +685,8 @@ final class Collection_Gallery {
 			'showCaptions'    => ! empty( $attributes['showCaptions'] ),
 			'useLightbox'     => ! array_key_exists( 'useLightbox', $attributes ) || ! empty( $attributes['useLightbox'] ),
 			'lightboxMode'    => in_array( $lightbox_mode, array( 'custom', 'native', 'none' ), true ) ? $lightbox_mode : 'custom',
+			'lightboxShowExif' => ! array_key_exists( 'lightboxShowExif', $attributes ) || ! empty( $attributes['lightboxShowExif'] ),
+			'lightboxExifFields' => array_values( array_intersect( array_keys( $this->exif_fields() ), is_array( $attributes['lightboxExifFields'] ?? null ) ? $attributes['lightboxExifFields'] : array( 'camera_model', 'lens', 'aperture_display', 'exposure_display', 'iso', 'focal_display' ) ) ),
 			'lightboxShowTitle' => ! array_key_exists( 'lightboxShowTitle', $attributes ) || ! empty( $attributes['lightboxShowTitle'] ),
 			'lightboxShowCaption' => ! array_key_exists( 'lightboxShowCaption', $attributes ) || ! empty( $attributes['lightboxShowCaption'] ),
 			'lightboxThumbnails' => ! array_key_exists( 'lightboxThumbnails', $attributes ) || ! empty( $attributes['lightboxThumbnails'] ),

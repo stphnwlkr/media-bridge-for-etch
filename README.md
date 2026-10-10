@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -152,6 +152,18 @@ The Collection Gallery block displays a live gallery fed by an Etch collection. 
 
 Image behavior can use the custom gallery lightbox, the native WordPress lightbox, or no interaction. The custom lightbox includes optional titles and captions, a horizontal or vertical thumbnail strip, separate lightbox image resolution, fullscreen and zoom controls, customizable colors and font sizes, and information above or below the image. It supports Escape, arrow, Home, End, Tab, Shift+Tab, plus/minus, and zero keyboard controls, traps focus while open, announces slide changes, and restores focus to the originating thumbnail when closed. Images are never linked directly to a media file or attachment page.
 
+= Collection Slider =
+
+Insert Collection Slider in the WordPress block editor, choose a collection, and publish. This preset uses the existing Collection Gallery block with the Slider layout, a 16:9 crop, and custom collection order. Existing galleries can switch to this layout in their Layout panel. The Etch gallery settings also expose the layout; the Etch builder retains its static preview, while navigation runs on the published page.
+
+One Collection Slider handles both single-image and carousel presentation. Set Images shown to one for a single-image slider or up to eight for a carousel. Tablet and mobile counts can reduce the desktop count. Navigation advances one image and stops at the last full group; controls hide when every image fits. Each visible image remains available to keyboard users and the lightbox.
+
+Navigation buttons can appear above, below, or over the images; align on opposite sides, at the start, center, or end; use square, rounded, or pill shapes; and show text, icons, or both. Icon buttons keep screen-reader labels. The same settings are available in the Etch gallery dialog. For four images on desktop, two on tablet, and one on mobile, shortcodes accept `layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"`.
+
+The slider supports touch scrolling, Previous and Next buttons, a position counter, Left/Right arrows, and Home/End keys. Motion respects the visitor's reduced-motion preference. Titles, captions, image resolution, crop, child collections, limits, and lightbox behavior use the existing gallery settings. It reads current collection membership and attachment metadata on each render. Page caches may need refreshing after media changes.
+
+For a shortcode, use `[etch_collection_gallery collection="123" layout="slider" sort="custom" aspect_ratio="16/9" show_title="true" captions="true"]`, replacing 123 with the collection ID. Playback settings provide optional autoplay and a two-to-twenty-second interval. The Play/Pause button also lets visitors start a paused slider. Autoplay wraps to the first image, pauses on hover or while offscreen, and stops after manual navigation or keyboard focus. It does not start automatically when reduced motion is requested. Custom slide templates and EXIF overlays are not included.
+
 = Image optimizer compatibility =
 
 Media Bridge organizes standard WordPress attachments, so image optimizers that create separate WebP or AVIF files do not interfere with collections or folder synchronization. Front-end delivery needs more care when an optimizer wraps the same gallery image through both `wp_get_attachment_image` and `wp_content_img_tag`, because that can create nested `<picture>` elements.
@@ -211,6 +223,10 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.5.0 =
+
+Adds configurable collection sliders, autoplay controls, and selectable lightbox EXIF details. Existing galleries retain their layouts.
 
 = 2.4.0 =
 
@@ -333,6 +349,15 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.0 =
+
+* Add a Collection Slider preset with responsive single-image and multi-image layouts using live collection data.
+* Add configurable navigation buttons, image count placement, autoplay, Play/Pause, and a visible countdown strip with a configurable color.
+* Add a lightbox photo-details popover with selectable EXIF fields, photo-title headers, and a scrollable metadata area.
+* Group slider controls, lightbox styles, and thumbnail colors into collapsed settings panels with white headings and shaded open panels.
+* Use the new gallery-thumbnail icon for the Collection Slider preset.
+* Avoid EXIF file-read warnings when an attachment file is missing.
 
 = 2.4.0 =
 
@@ -700,3 +725,6 @@ Adds a responsive, pinnable media-library drawer and clearer attachment informat
 * Added Etch, Wicked Folders and HappyFiles providers.
 * Added bidirectional folders and attachment assignments.
 * Added reconciliation, conflict policy, deletion safety and sync history.
+
+
+Slider status can be hidden or positioned automatically, before, between, after, above, or below the buttons. Gutenberg: **Slider Controls** panel. Shortcodes: `show_status="false"` and `status_position="below"`.

@@ -16,6 +16,7 @@
 	);
 
 	const layoutOptions = [
+		{ label: __( 'Slider', 'media-bridge-for-etch' ), value: 'slider' },
 		{ label: __( 'Standard grid', 'media-bridge-for-etch' ), value: 'grid' },
 		{ label: __( 'Tiled mosaic', 'media-bridge-for-etch' ), value: 'tiled' },
 		{ label: __( 'Circular grid', 'media-bridge-for-etch' ), value: 'circles' },
@@ -36,6 +37,15 @@
 	registerBlockType( 'uplinkpress/collection-gallery', {
 		edit( { attributes, setAttributes } ) {
 			const previewRef = element.useRef( null );
+			element.useEffect( () => {
+				const root = previewRef.current;
+				if ( ! root ) return;
+				const initialize = () => window.uplinkMbeInitSliders?.( root );
+				const observer = new MutationObserver( initialize );
+				observer.observe( root, { childList: true, subtree: true } );
+				initialize();
+				return () => observer.disconnect();
+			}, [] );
 			const [ previewImages, setPreviewImages ] = element.useState( [] );
 			const [ previewIndex, setPreviewIndex ] = element.useState( 0 );
 			const blockProps = useBlockProps( { className: 'uplink-mbe-gallery-editor', ref: previewRef } );
@@ -49,6 +59,7 @@
 							alt: image.alt || '',
 							title: trigger ? trigger.dataset.uplinkMbeTitle : ( image.alt || '' ),
 							caption: trigger ? trigger.dataset.uplinkMbeCaption : '',
+							exif: JSON.parse( trigger?.dataset.uplinkMbeExif || '[]' ),
 						};
 					} ).filter( ( image ) => image.src )
 					: [];
@@ -68,7 +79,7 @@
 				el(
 					InspectorControls,
 					null,
-					el( PanelBody, { title: __( 'Gallery source', 'media-bridge-for-etch' ), initialOpen: true },
+					el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Gallery source', 'media-bridge-for-etch' ), initialOpen: false },
 						collectionControl,
 						el( ToggleControl, {
 							label: __( 'Include child collections', 'media-bridge-for-etch' ),
@@ -83,19 +94,32 @@
 							onChange: ( value ) => setAttributes( { limit: value } ),
 						} )
 					),
-					el( PanelBody, { title: __( 'Layout', 'media-bridge-for-etch' ), initialOpen: true },
+					el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Layout', 'media-bridge-for-etch' ), initialOpen: false },
 						el( SelectControl, {
 							label: __( 'Style', 'media-bridge-for-etch' ),
 							value: attributes.layout,
 							options: layoutOptions,
 							onChange: ( value ) => setAttributes( { layout: value } ),
 						} ),
-						el( RangeControl, {
+						attributes.layout !== 'slider' && el( RangeControl, {
 							label: __( 'Columns', 'media-bridge-for-etch' ),
 							value: attributes.columns,
 							min: 1,
 							max: 8,
 							onChange: ( value ) => setAttributes( { columns: value } ),
+						} ),
+						attributes.layout === 'slider' && el( RangeControl, {
+							label: __( 'Images shown — desktop', 'media-bridge-for-etch' ), value: attributes.slidesPerView, min: 1, max: 8,
+							help: __( 'Choose one for a single-image slider or several for a carousel.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { slidesPerView: value } ),
+						} ),
+						attributes.layout === 'slider' && el( RangeControl, {
+							label: __( 'Images shown — tablet', 'media-bridge-for-etch' ), value: attributes.carouselTablet, min: 1, max: 8,
+							onChange: ( value ) => setAttributes( { carouselTablet: value } ),
+						} ),
+						attributes.layout === 'slider' && el( RangeControl, {
+							label: __( 'Images shown — mobile', 'media-bridge-for-etch' ), value: attributes.carouselMobile, min: 1, max: 8,
+							onChange: ( value ) => setAttributes( { carouselMobile: value } ),
 						} ),
 						el( RangeControl, {
 							label: __( 'Spacing', 'media-bridge-for-etch' ),
@@ -129,7 +153,46 @@
 							onChange: ( value ) => setAttributes( { aspectRatio: value } ),
 						} )
 					),
-					el( PanelBody, { title: __( 'Gallery options', 'media-bridge-for-etch' ), initialOpen: false },
+					attributes.layout === 'slider' && el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Playback', 'media-bridge-for-etch' ), initialOpen: false },
+						el( ToggleControl, { label: __( 'Autoplay', 'media-bridge-for-etch' ), checked: attributes.sliderAutoplay,
+							help: __( 'Visitors can play or pause. Automatic playback respects reduced motion and pauses on hover.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { sliderAutoplay: value } ),
+						} ),
+						el( RangeControl, { label: __( 'Seconds between images', 'media-bridge-for-etch' ), value: attributes.sliderInterval / 1000, min: 2, max: 20, step: 1,
+							onChange: ( value ) => setAttributes( { sliderInterval: value * 1000 } ),
+						} ),
+						el( PanelColorSettings, { title: __( 'Progress bar', 'media-bridge-for-etch' ), colorSettings: [ { value: attributes.sliderProgressColor, onChange: ( value ) => setAttributes( { sliderProgressColor: value || '' } ), label: __( 'Progress bar color', 'media-bridge-for-etch' ) } ] } ),
+					),
+					attributes.layout === 'slider' && el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Slider Controls', 'media-bridge-for-etch' ), initialOpen: false },
+						el( SelectControl, { label: __( 'Button position', 'media-bridge-for-etch' ), value: attributes.navPosition,
+							options: [{ label: __( 'Below images', 'media-bridge-for-etch' ), value: 'bottom' }, { label: __( 'Above images', 'media-bridge-for-etch' ), value: 'top' }, { label: __( 'Over images', 'media-bridge-for-etch' ), value: 'overlay' }],
+							onChange: ( value ) => setAttributes( { navPosition: value } ),
+						} ),
+						el( SelectControl, { label: __( 'Button alignment', 'media-bridge-for-etch' ), value: attributes.navAlignment,
+							options: [{ label: __( 'Opposite sides', 'media-bridge-for-etch' ), value: 'spread' }, { label: __( 'Start', 'media-bridge-for-etch' ), value: 'start' }, { label: __( 'Center', 'media-bridge-for-etch' ), value: 'center' }, { label: __( 'End', 'media-bridge-for-etch' ), value: 'end' }],
+							onChange: ( value ) => setAttributes( { navAlignment: value } ),
+						} ),
+						el( SelectControl, { label: __( 'Button shape', 'media-bridge-for-etch' ), value: attributes.navShape,
+							options: [{ label: __( 'Square', 'media-bridge-for-etch' ), value: 'square' }, { label: __( 'Rounded', 'media-bridge-for-etch' ), value: 'rounded' }, { label: __( 'Pill', 'media-bridge-for-etch' ), value: 'pill' }],
+							onChange: ( value ) => setAttributes( { navShape: value } ),
+						} ),
+						el( SelectControl, { label: __( 'Button content', 'media-bridge-for-etch' ), value: attributes.navContent,
+							options: [{ label: __( 'Text', 'media-bridge-for-etch' ), value: 'text' }, { label: __( 'Icons', 'media-bridge-for-etch' ), value: 'icon' }, { label: __( 'Text and icons', 'media-bridge-for-etch' ), value: 'both' }],
+							onChange: ( value ) => setAttributes( { navContent: value } ),
+						} ),
+						el( ToggleControl, { label: __( 'Show image count', 'media-bridge-for-etch' ), checked: attributes.sliderShowStatus,
+							onChange: ( value ) => setAttributes( { sliderShowStatus: value } ) } ),
+						attributes.sliderShowStatus && el( SelectControl, { label: __( 'Status position', 'media-bridge-for-etch' ), value: attributes.sliderStatusPosition,
+							options: [
+								{ value: 'auto', label: __( 'Automatic', 'media-bridge-for-etch' ) },
+								{ value: 'before', label: __( 'Before buttons', 'media-bridge-for-etch' ) },
+								{ value: 'between', label: __( 'Between buttons', 'media-bridge-for-etch' ) },
+								{ value: 'after', label: __( 'After buttons', 'media-bridge-for-etch' ) },
+								{ value: 'above', label: __( 'Above buttons', 'media-bridge-for-etch' ) },
+								{ value: 'below', label: __( 'Below buttons', 'media-bridge-for-etch' ) },
+							], onChange: ( value ) => setAttributes( { sliderStatusPosition: value } ) } )
+					),
+					el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Gallery options', 'media-bridge-for-etch' ), initialOpen: false },
 						el( SelectControl, {
 							label: __( 'Image order', 'media-bridge-for-etch' ),
 							value: attributes.sortOrder || ( attributes.randomOrder ? 'random' : 'date' ),
@@ -142,7 +205,7 @@
 							onChange: ( value ) => setAttributes( { sortOrder: value, randomOrder: 'random' === value } ),
 						} )
 					),
-					el( PanelBody, { title: __( 'Lightbox', 'media-bridge-for-etch' ), initialOpen: true },
+					el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Lightbox', 'media-bridge-for-etch' ), initialOpen: false },
 						el( SelectControl, {
 							label: __( 'Image behavior', 'media-bridge-for-etch' ),
 							help: __( 'Images are never linked to an attachment page or directly to a media file.', 'media-bridge-for-etch' ),
@@ -203,6 +266,14 @@
 							checked: attributes.lightboxZoom,
 							onChange: ( value ) => setAttributes( { lightboxZoom: value } ),
 						} ),
+						attributes.lightboxMode !== 'none' && attributes.collectionId > 0 && el( Button, {
+							variant: 'secondary',
+							onClick: openLightboxPreview,
+							className: 'uplink-mbe-gallery-preview-button',
+							'aria-label': __( 'Preview the selected lightbox layout', 'media-bridge-for-etch' ),
+						}, __( 'Preview lightbox', 'media-bridge-for-etch' ) ),
+					),
+					attributes.lightboxMode === 'custom' && el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Lightbox Styles', 'media-bridge-for-etch' ), initialOpen: false },
 						attributes.lightboxMode === 'custom' && ( attributes.lightboxShowTitle || attributes.lightboxShowCaption ) && el( SelectControl, {
 							label: __( 'Lightbox font family', 'media-bridge-for-etch' ),
 							value: attributes.lightboxFontFamily,
@@ -235,14 +306,7 @@
 							options: lightboxWeightOptions,
 							onChange: ( value ) => setAttributes( { lightboxCaptionFontWeight: Number( value ) } ),
 						} ),
-						attributes.lightboxMode !== 'none' && attributes.collectionId > 0 && el( Button, {
-							variant: 'secondary',
-							onClick: openLightboxPreview,
-							className: 'uplink-mbe-gallery-preview-button',
-							'aria-label': __( 'Preview the selected lightbox layout', 'media-bridge-for-etch' ),
-						}, __( 'Preview lightbox', 'media-bridge-for-etch' ) ),
-					),
-					attributes.lightboxMode === 'custom' && el( PanelColorSettings, {
+					el( PanelColorSettings, {
 						title: __( 'Lightbox colors', 'media-bridge-for-etch' ),
 						initialOpen: false,
 						colorSettings: [
@@ -252,7 +316,17 @@
 							attributes.lightboxShowCaption && { value: attributes.lightboxCaptionColor, onChange: ( value ) => setAttributes( { lightboxCaptionColor: value || '#d9dde1' } ), label: __( 'Caption', 'media-bridge-for-etch' ) },
 						].filter( Boolean ),
 					} ),
-					el( PanelBody, { title: __( 'Thumbnail title and caption', 'media-bridge-for-etch' ), initialOpen: false },
+					),
+					attributes.lightboxMode === 'custom' && el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Lightbox Photo Details', 'media-bridge-for-etch' ), initialOpen: false },
+						el( ToggleControl, { label: __( 'Show EXIF popover', 'media-bridge-for-etch' ), checked: attributes.lightboxShowExif, disabled: ! config.exifEnabled,
+							help: config.exifEnabled ? __( 'Only selected fields with available data appear.', 'media-bridge-for-etch' ) : __( 'Enable EXIF dynamic data in Media Bridge settings first.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { lightboxShowExif: value } ) } ),
+						config.exifEnabled && attributes.lightboxShowExif && Object.entries( config.exifFields || {} ).map( ( [ key, label ] ) => el( ToggleControl, {
+							key, label, checked: ( attributes.lightboxExifFields || [] ).includes( key ),
+							onChange: ( checked ) => setAttributes( { lightboxExifFields: checked ? [ ...attributes.lightboxExifFields, key ] : attributes.lightboxExifFields.filter( ( field ) => field !== key ) } ),
+						} ) )
+					),
+					el( PanelBody, { className: 'uplink-mbe-settings-panel', title: __( 'Thumbnail title and caption', 'media-bridge-for-etch' ), initialOpen: false },
 						el( ToggleControl, {
 							label: __( 'Show title on thumbnails', 'media-bridge-for-etch' ),
 							checked: attributes.showTitle,
@@ -303,9 +377,8 @@
 							min: 0,
 							max: 100,
 							onChange: ( value ) => setAttributes( { textBackgroundOpacity: value } ),
-						} )
-					),
-					( attributes.showTitle || attributes.showCaptions ) && el( PanelColorSettings, {
+						} ),
+						( attributes.showTitle || attributes.showCaptions ) && el( PanelColorSettings, {
 						title: __( 'Title and caption colors', 'media-bridge-for-etch' ),
 						initialOpen: false,
 						colorSettings: [
@@ -326,6 +399,7 @@
 							},
 						].filter( Boolean ),
 					} )
+					)
 				),
 				previewImages.length > 0 && el( Modal, {
 					title: attributes.lightboxMode === 'custom' ? __( 'Custom lightbox preview', 'media-bridge-for-etch' ) : __( 'Native lightbox preview', 'media-bridge-for-etch' ),
@@ -357,6 +431,10 @@
 								src: previewImages[ previewIndex ].src,
 								alt: previewImages[ previewIndex ].alt,
 							} ),
+							attributes.lightboxMode === 'custom' && previewImages[ previewIndex ].exif.length > 0 && el( 'details', { key: previewIndex, className: 'uplink-mbe-preview-exif' },
+								el( 'summary', null, __( 'Photo details', 'media-bridge-for-etch' ) ),
+								el( 'dl', null, previewImages[ previewIndex ].exif.map( ( row ) => el( element.Fragment, { key: row.label }, el( 'dt', null, row.label ), el( 'dd', null, row.value ) ) ) )
+							),
 							attributes.lightboxMode === 'custom' && ( attributes.lightboxShowTitle || attributes.lightboxShowCaption ) && el( 'div', { className: 'uplink-mbe-lightbox-preview-info' },
 								attributes.lightboxShowTitle && previewImages[ previewIndex ].title && el( 'strong', null, previewImages[ previewIndex ].title ),
 								attributes.lightboxShowCaption && previewImages[ previewIndex ].caption && el( 'span', null, previewImages[ previewIndex ].caption )
@@ -403,5 +481,16 @@
 		save() {
 			return null;
 		},
+	} );
+	blocks.registerBlockVariation( 'uplinkpress/collection-gallery', {
+		name: 'collection-slider',
+		title: __( 'Collection Slider', 'media-bridge-for-etch' ),
+		description: __( 'Show one or several images at a time from a live Etch collection.', 'media-bridge-for-etch' ),
+		icon: el( 'svg', { viewBox: '0 0 24 24', width: 24, height: 24, fill: 'none', 'aria-hidden': true, focusable: false },
+			el( 'path', { d: 'M4.5 19.25C5.19036 19.25 5.75 19.8096 5.75 20.5C5.75 21.1904 5.19036 21.75 4.5 21.75C3.80964 21.75 3.25 21.1904 3.25 20.5C3.25 19.8096 3.80964 19.25 4.5 19.25ZM9.5 19.25C10.1904 19.25 10.75 19.8096 10.75 20.5C10.75 21.1904 10.1904 21.75 9.5 21.75C8.80964 21.75 8.25 21.1904 8.25 20.5C8.25 19.8096 8.80964 19.25 9.5 19.25ZM14.5 19.25C15.1904 19.25 15.75 19.8096 15.75 20.5C15.75 21.1904 15.1904 21.75 14.5 21.75C13.8096 21.75 13.25 21.1904 13.25 20.5C13.25 19.8096 13.8096 19.25 14.5 19.25ZM19.5 19.25C20.1904 19.25 20.75 19.8096 20.75 20.5C20.75 21.1904 20.1904 21.75 19.5 21.75C18.8096 21.75 18.25 21.1904 18.25 20.5C18.25 19.8096 18.8096 19.25 19.5 19.25ZM21.75 16.75H2.25V3.25H21.75V16.75ZM3.75 15.25H20.25V4.75H3.75V15.25Z', fill: 'currentColor' } )
+		),
+		attributes: { layout: 'slider', slidesPerView: 1, columns: 1, aspectRatio: '16/9', sortOrder: 'custom' },
+		isActive: [ 'layout' ],
+		scope: [ 'inserter' ],
 	} );
 } )( window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.element, window.wp.i18n, window.wp.serverSideRender );

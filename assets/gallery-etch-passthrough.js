@@ -7,6 +7,20 @@
 		collectionId: 0,
 		includeChildren: false,
 		layout: 'grid',
+		slidesPerView: 1,
+		sliderAutoplay: false,
+		sliderInterval: 5000,
+		sliderProgressColor: '',
+		sliderShowStatus: true,
+		sliderStatusPosition: 'auto',
+		lightboxShowExif: true,
+		lightboxExifFields: ['camera_model', 'lens', 'aperture_display', 'exposure_display', 'iso', 'focal_display'],
+		carouselTablet: 2,
+		carouselMobile: 1,
+		navPosition: "bottom",
+		navAlignment: "spread",
+		navShape: "rounded",
+		navContent: "text",
 		columns: 3,
 		sizeSlug: 'large',
 		imageCrop: true,
@@ -254,10 +268,12 @@
 			if ( ! control ) {
 				return;
 			}
-			if ( control.type === 'checkbox' ) {
+			if ( control.multiple ) {
+				Array.from( control.options ).forEach( ( option ) => { option.selected = Array.isArray( value ) && value.includes( option.value ); } );
+			} else if ( control.type === 'checkbox' ) {
 				control.checked = Boolean( value );
 			} else {
-				control.value = String( value );
+				control.value = String( key === 'sliderInterval' ? Number( value ) / 1000 : value );
 			}
 		} );
 	}
@@ -268,10 +284,12 @@
 			if ( ! control.name ) {
 				return;
 			}
-			if ( control.type === 'checkbox' ) {
+			if ( control.multiple ) {
+				values[ control.name ] = Array.from( control.selectedOptions, ( option ) => option.value );
+			} else if ( control.type === 'checkbox' ) {
 				values[ control.name ] = control.checked;
 			} else if ( control.type === 'number' ) {
-				values[ control.name ] = Number( control.value );
+				values[ control.name ] = Number( control.value ) * ( control.name === 'sliderInterval' ? 1000 : 1 );
 			} else {
 				values[ control.name ] = control.value;
 			}
@@ -356,13 +374,26 @@
 		field( form, 'select', 'collectionId', `${ config.managerLabel || 'Etch Collections' } folder`, collectionOptions() );
 		field( form, 'checkbox', 'includeChildren', 'Include child collections' );
 		field( form, 'select', 'layout', 'Layout', [
+			{ value: 'slider', label: 'Slider' },
 			{ value: 'grid', label: 'Standard grid' },
 			{ value: 'tiled', label: 'Tiled mosaic' },
 			{ value: 'circles', label: 'Circular grid' },
 			{ value: 'square', label: 'Square tiles' },
 			{ value: 'columns', label: 'Tiled columns' },
 		] );
-		field( form, 'number', 'columns', 'Columns', [ { min: 1, max: 8, step: 1 } ] );
+		field( form, 'number', 'columns', 'Gallery columns', [ { min: 1, max: 8, step: 1 } ] );
+		field( form, 'checkbox', 'sliderAutoplay', 'Autoplay' );
+		field( form, 'text', 'sliderProgressColor', 'Progress bar color (hex, blank to inherit)' );
+		field( form, 'checkbox', 'sliderShowStatus', 'Show slider image count' );
+		field( form, 'select', 'sliderStatusPosition', 'Status position', [ { value: 'auto', label: 'Automatic' }, { value: 'before', label: 'Before buttons' }, { value: 'between', label: 'Between buttons' }, { value: 'after', label: 'After buttons' }, { value: 'above', label: 'Above buttons' }, { value: 'below', label: 'Below buttons' } ] );
+		field( form, 'number', 'sliderInterval', 'Seconds between images', [ { min: 2, max: 20, step: 1 } ] );
+		field( form, 'number', 'slidesPerView', 'Slider images on desktop', [ { min: 1, max: 8, step: 1 } ] );
+		field( form, 'number', 'carouselTablet', 'Slider images on tablet', [ { min: 1, max: 8, step: 1 } ] );
+		field( form, 'number', 'carouselMobile', 'Slider images on mobile', [ { min: 1, max: 8, step: 1 } ] );
+		field( form, 'select', 'navPosition', 'Button position', [ { value: 'bottom', label: 'Below images' }, { value: 'top', label: 'Above images' }, { value: 'overlay', label: 'Over images' } ] );
+		field( form, 'select', 'navAlignment', 'Button alignment', [ { value: 'spread', label: 'Opposite sides' }, { value: 'start', label: 'Start' }, { value: 'center', label: 'Center' }, { value: 'end', label: 'End' } ] );
+		field( form, 'select', 'navShape', 'Button shape', [ { value: 'square', label: 'Square' }, { value: 'rounded', label: 'Rounded' }, { value: 'pill', label: 'Pill' } ] );
+		field( form, 'select', 'navContent', 'Button content', [ { value: 'text', label: 'Text' }, { value: 'icon', label: 'Icons' }, { value: 'both', label: 'Text and icons' } ] );
 		field( form, 'number', 'gap', 'Spacing', [ { min: 0, max: 40, step: 1 } ] );
 		field( form, 'select', 'sizeSlug', 'Image resolution', config.imageSizes || [] );
 		field( form, 'checkbox', 'imageCrop', 'Crop images to fit' );
@@ -386,8 +417,24 @@
 			{ value: 'native', label: 'Native WordPress lightbox' },
 			{ value: 'none', label: 'No interaction' },
 		] );
+		field( form, 'checkbox', 'lightboxShowExif', 'Show EXIF photo details (requires EXIF enabled)' );
+		field( form, 'select', 'lightboxExifFields', 'Photo detail fields (select multiple)', Object.entries( config.exifFields || {} ).map( ( [ value, label ] ) => ( { value, label } ) ) );
+		form.elements.namedItem( 'lightboxExifFields' ).multiple = true;
+		form.elements.namedItem( 'lightboxExifFields' ).size = 6;
 		field( form, 'number', 'limit', 'Maximum images', [ { min: 1, max: 100, step: 1 } ] );
 		setFormValues( form, block.gutenbergBlock.attrs || {} );
+		const updateLayoutFields = () => {
+			const slider = form.elements.namedItem( 'layout' ).value === 'slider';
+			for ( const name of [ 'sliderProgressColor', 'sliderShowStatus', 'sliderStatusPosition', 'sliderAutoplay', 'sliderInterval', 'slidesPerView', 'carouselTablet', 'carouselMobile', 'navPosition', 'navAlignment', 'navShape', 'navContent' ] ) {
+				form.elements.namedItem( name ).closest( 'label' ).hidden = ! slider;
+			}
+			form.elements.namedItem( 'sliderStatusPosition' ).closest( 'label' ).hidden = ! slider || ! form.elements.namedItem( 'sliderShowStatus' ).checked;
+			form.elements.namedItem( 'columns' ).closest( 'label' ).hidden = slider;
+		};
+		form.elements.namedItem( 'layout' ).addEventListener( 'change', updateLayoutFields );
+		form.elements.namedItem( 'sliderShowStatus' ).addEventListener( 'change', updateLayoutFields );
+		updateLayoutFields();
+
 
 		const notice = document.createElement( 'p' );
 		notice.id = 'uplink-mbe-etch-modal-description';
