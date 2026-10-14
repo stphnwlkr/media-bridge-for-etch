@@ -9,7 +9,9 @@
 
 	const elements = {
 		wrap: document.querySelector( '.uplink-mbe-native-wrap' ),
+		sidebarResize: document.getElementById( 'uplink-mbe-sidebar-resizer' ),
 		tree: document.getElementById( 'uplink-mbe-collection-tree' ),
+		collectionTreeToggle: document.getElementById( 'uplink-mbe-collection-tree-toggle' ),
 		libraryTab: document.getElementById( 'uplink-mbe-library-tab' ),
 		healthTab: document.getElementById( 'uplink-mbe-health-tab' ),
 		healthTabCount: document.getElementById( 'uplink-mbe-health-tab-count' ),
@@ -183,6 +185,99 @@
 	let savedPalette = JSON.parse( JSON.stringify( config.palette || {} ) );
 	let activePaletteMode = 'light';
 	const colorSchemeQuery = window.matchMedia?.( '(prefers-color-scheme: dark)' );
+	const panelWidthStorageKey = 'uplink-mbe-collection-panel-width';
+	const panelWidthDefault = 280;
+	const panelWidthMin = 220;
+	const panelWidthMax = 480;
+
+	function enableSidebarResize() {
+		const handle = elements.sidebarResize;
+		if ( ! handle ) {
+			return;
+		}
+		let width = panelWidthDefault;
+		let resizing = false;
+		let pointerId = null;
+		const clampWidth = ( nextWidth ) => Math.min( panelWidthMax, Math.max( panelWidthMin, Math.round( Number( nextWidth ) || panelWidthDefault ) ) );
+		const applyWidth = ( nextWidth, persist = false ) => {
+			width = clampWidth( nextWidth );
+			library.style.setProperty( '--uplink-mbe-sidebar-width', `${ width }px` );
+			handle.setAttribute( 'aria-valuenow', String( width ) );
+			if ( persist ) {
+				try {
+					window.localStorage.setItem( panelWidthStorageKey, String( width ) );
+				} catch ( error ) {
+					// Resizing still works when browser storage is unavailable.
+				}
+			}
+		};
+		try {
+			const savedWidth = window.localStorage.getItem( panelWidthStorageKey );
+			if ( null !== savedWidth && '' !== savedWidth ) {
+				width = clampWidth( savedWidth );
+			}
+		} catch ( error ) {
+			// Use the default width when browser storage is unavailable.
+		}
+		applyWidth( width );
+
+		const widthFromPointer = ( event ) => {
+			const bounds = library.getBoundingClientRect();
+			return 'rtl' === window.getComputedStyle( library ).direction ? bounds.right - event.clientX : event.clientX - bounds.left;
+		};
+		const finish = ( event ) => {
+			if ( ! resizing || event.pointerId !== pointerId ) {
+				return;
+			}
+			resizing = false;
+			handle.classList.remove( 'is-active' );
+			document.body.classList.remove( 'uplink-mbe-resizing-collections' );
+			if ( handle.hasPointerCapture?.( pointerId ) ) {
+				handle.releasePointerCapture( pointerId );
+			}
+			pointerId = null;
+			applyWidth( width, true );
+		};
+
+		handle.addEventListener( 'pointerdown', ( event ) => {
+			if ( 0 !== event.button || window.matchMedia( '(max-width: 900px)' ).matches ) {
+				return;
+			}
+			resizing = true;
+			pointerId = event.pointerId;
+			handle.setPointerCapture?.( pointerId );
+			handle.classList.add( 'is-active' );
+			document.body.classList.add( 'uplink-mbe-resizing-collections' );
+			event.preventDefault();
+		} );
+		handle.addEventListener( 'pointermove', ( event ) => {
+			if ( resizing && event.pointerId === pointerId ) {
+				applyWidth( widthFromPointer( event ) );
+			}
+		} );
+		handle.addEventListener( 'pointerup', finish );
+		handle.addEventListener( 'pointercancel', finish );
+		handle.addEventListener( 'dblclick', () => applyWidth( panelWidthDefault, true ) );
+		handle.addEventListener( 'keydown', ( event ) => {
+			const direction = 'rtl' === window.getComputedStyle( library ).direction ? -1 : 1;
+			let nextWidth = width;
+			if ( 'ArrowLeft' === event.key ) {
+				nextWidth -= 10 * direction;
+			} else if ( 'ArrowRight' === event.key ) {
+				nextWidth += 10 * direction;
+			} else if ( 'Home' === event.key ) {
+				nextWidth = panelWidthMin;
+			} else if ( 'End' === event.key ) {
+				nextWidth = panelWidthMax;
+			} else {
+				return;
+			}
+			event.preventDefault();
+			applyWidth( nextWidth, true );
+		} );
+	}
+
+	enableSidebarResize();
 
 	const state = {
 		filter: Number( config.initialCollectionId ) ? 'collection' : 'all',
@@ -1347,6 +1442,16 @@
 		};
 		state.collections.filter( ( item ) => 0 === Number( item.parent ) ).forEach( ( collection ) => appendBranch( collection, list ) );
 		elements.tree.append( list );
+		const parentIds = state.collections
+			.filter( ( collection ) => siblingCollections( Number( collection.id ) ).length )
+			.map( ( collection ) => Number( collection.id ) );
+		const allCollapsed = parentIds.length > 0 && parentIds.every( ( id ) => state.collapsedCollections.has( id ) );
+		const treeLabel = allCollapsed ? config.strings.expandAllCollections : config.strings.collapseAllCollections;
+		elements.collectionTreeToggle.hidden = ! parentIds.length;
+		elements.collectionTreeToggle.dataset.treeAction = allCollapsed ? 'expand' : 'collapse';
+		elements.collectionTreeToggle.setAttribute( 'aria-label', treeLabel );
+		elements.collectionTreeToggle.title = treeLabel;
+		elements.collectionTreeToggle.querySelector( '.uplink-mbe-tree-icon' ).className = `uplink-mbe-tree-icon ${ allCollapsed ? 'is-open' : 'is-close' }`;
 	}
 
 	function renderHealthNavigation() {
@@ -2819,6 +2924,17 @@
 	} );
 	elements.drawerToggle.addEventListener( 'click', () => {
 		setDrawerOpen( 'true' !== elements.drawerToggle.getAttribute( 'aria-expanded' ) );
+	} );
+	elements.collectionTreeToggle.addEventListener( 'click', () => {
+		const parentIds = state.collections
+			.filter( ( collection ) => siblingCollections( Number( collection.id ) ).length )
+			.map( ( collection ) => Number( collection.id ) );
+		if ( 'expand' === elements.collectionTreeToggle.dataset.treeAction ) {
+			parentIds.forEach( ( id ) => state.collapsedCollections.delete( id ) );
+		} else {
+			parentIds.forEach( ( id ) => state.collapsedCollections.add( id ) );
+		}
+		renderTree();
 	} );
 	elements.libraryTab.addEventListener( 'click', () => setWorkspaceMode( 'library' ) );
 	elements.healthTab.addEventListener( 'click', () => setWorkspaceMode( 'health' ) );

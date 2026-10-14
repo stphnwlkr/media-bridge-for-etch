@@ -2,13 +2,39 @@
 namespace UplinkPress\MediaBridgeForEtch;
 
 final class Upload_Workspace {
+	private const SELECTOR = '.uplink-mbe-upload-workspace';
+
+	/**
+	 * Register Cimo's public selector filters before it localizes its settings.
+	 *
+	 * Cimo 1.5.0 introduced these PHP filters. Keeping the browser filters in
+	 * assets() preserves compatibility with earlier Cimo releases.
+	 */
+	public static function register_cimo_integration(): void {
+		add_filter( 'cimo/select_files/allowed_locations', array( self::class, 'allow_cimo_location' ) );
+		add_filter( 'cimo/drop_zone/allowed_locations', array( self::class, 'allow_cimo_location' ) );
+	}
+
+	/** @param mixed $locations */
+	public static function allow_cimo_location( $locations ): array {
+		$locations = is_array( $locations ) ? $locations : array();
+		if ( ! in_array( self::SELECTOR, $locations, true ) ) {
+			$locations[] = self::SELECTOR;
+		}
+		return $locations;
+	}
+
 	public static function assets(): void {
 		static $enqueued = false;
 		if ( $enqueued ) return;
 		$enqueued = true;
-		// Cimo exposes location filters for custom upload interfaces.
+		// Cimo 1.5.0 can be loaded explicitly on frontend upload screens.
+		if ( ! is_admin() && function_exists( 'cimo_enqueue_assets' ) ) {
+			cimo_enqueue_assets();
+		}
+		// Cimo releases before 1.5.0 expose only the browser-side filters.
 		wp_enqueue_script( 'wp-hooks' );
-		wp_add_inline_script( 'wp-hooks', "['cimo.selectFiles.allowedLocations', 'cimo.dropZone.allowedLocations'].forEach(function (hook) { wp.hooks.addFilter(hook, 'uplink-media-bridge/upload-workspace', function (locations) { return locations.concat(['.uplink-mbe-upload-workspace']); }); });" );
+		wp_add_inline_script( 'wp-hooks', "['cimo.selectFiles.allowedLocations', 'cimo.dropZone.allowedLocations'].forEach(function (hook) { wp.hooks.addFilter(hook, 'uplink-media-bridge/upload-workspace', function (locations) { locations = Array.isArray(locations) ? locations : []; return locations.indexOf('" . self::SELECTOR . "') === -1 ? locations.concat(['" . self::SELECTOR . "']) : locations; }); });" );
 		wp_enqueue_style( 'uplink-mbe-upload-workspace', UPLINK_MBE_URL . 'assets/media-modal.css', array(), UPLINK_MBE_ASSET_VERSION );
 		wp_enqueue_script( 'uplink-mbe-upload-workspace', UPLINK_MBE_URL . 'assets/upload-workspace.js', array( 'jquery' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script( 'uplink-mbe-upload-workspace', 'uplinkMbeUploadConfig', array(

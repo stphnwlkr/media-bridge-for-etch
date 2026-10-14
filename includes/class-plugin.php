@@ -69,6 +69,7 @@ final class Plugin {
 
 	private function __construct() {
 		self::migrate_options();
+		Upload_Workspace::register_cimo_integration();
 		$this->providers = array(
 			'etch'       => new Etch_Provider(),
 			'wicked'     => new Wicked_Provider(),

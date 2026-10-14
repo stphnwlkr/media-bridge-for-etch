@@ -13,6 +13,161 @@
 	let collectionOrderSaving = false;
 	let collectionPointerDrag = null;
 	let suppressCollectionClick = false;
+	const panelWidthStorageKey = 'uplink-mbe-collection-panel-width';
+	const panelWidthDefault = 280;
+	const panelWidthMin = 220;
+	const panelWidthMax = 480;
+
+	function clampPanelWidth( width ) {
+		return Math.min( panelWidthMax, Math.max( panelWidthMin, Math.round( Number( width ) || panelWidthDefault ) ) );
+	}
+
+	function storedPanelWidth() {
+		try {
+			const savedWidth = window.localStorage.getItem( panelWidthStorageKey );
+			return null === savedWidth || '' === savedWidth ? panelWidthDefault : clampPanelWidth( savedWidth );
+		} catch ( error ) {
+			return panelWidthDefault;
+		}
+	}
+
+	function savePanelWidth( width ) {
+		try {
+			window.localStorage.setItem( panelWidthStorageKey, String( clampPanelWidth( width ) ) );
+		} catch ( error ) {
+			// Resizing still works when browser storage is unavailable.
+		}
+	}
+
+	function enablePanelResize( view, layoutHost, handle ) {
+		let width = storedPanelWidth();
+		let resizing = false;
+		let pointerId = null;
+		const applyWidth = ( nextWidth, persist = false ) => {
+			width = clampPanelWidth( nextWidth );
+			layoutHost.style.setProperty( '--uplink-mbe-native-panel-open-width', `${ width }px` );
+			handle.setAttribute( 'aria-valuenow', String( width ) );
+			if ( persist ) {
+				savePanelWidth( width );
+			}
+		};
+		const widthFromPointer = ( event ) => {
+			const bounds = layoutHost.getBoundingClientRect();
+			return 'rtl' === window.getComputedStyle( layoutHost ).direction ? bounds.right - event.clientX : event.clientX - bounds.left;
+		};
+		const finish = ( event ) => {
+			if ( ! resizing || event.pointerId !== pointerId ) {
+				return;
+			}
+			resizing = false;
+			handle.classList.remove( 'is-active' );
+			document.body.classList.remove( 'uplink-mbe-resizing-collections' );
+			if ( handle.hasPointerCapture?.( pointerId ) ) {
+				handle.releasePointerCapture( pointerId );
+			}
+			pointerId = null;
+			applyWidth( width, true );
+			view.controller?.uploader?.refresh?.();
+		};
+
+		applyWidth( width );
+		handle.addEventListener( 'pointerdown', ( event ) => {
+			if ( 0 !== event.button || layoutHost.classList.contains( 'uplink-mbe-native-collections-collapsed' ) ) {
+				return;
+			}
+			resizing = true;
+			pointerId = event.pointerId;
+			handle.setPointerCapture?.( pointerId );
+			handle.classList.add( 'is-active' );
+			document.body.classList.add( 'uplink-mbe-resizing-collections' );
+			event.preventDefault();
+		} );
+		handle.addEventListener( 'pointermove', ( event ) => {
+			if ( resizing && event.pointerId === pointerId ) {
+				applyWidth( widthFromPointer( event ) );
+			}
+		} );
+		handle.addEventListener( 'pointerup', finish );
+		handle.addEventListener( 'pointercancel', finish );
+		handle.addEventListener( 'dblclick', () => applyWidth( panelWidthDefault, true ) );
+		handle.addEventListener( 'keydown', ( event ) => {
+			const direction = 'rtl' === window.getComputedStyle( layoutHost ).direction ? -1 : 1;
+			let nextWidth = width;
+			if ( 'ArrowLeft' === event.key ) {
+				nextWidth -= 10 * direction;
+			} else if ( 'ArrowRight' === event.key ) {
+				nextWidth += 10 * direction;
+			} else if ( 'Home' === event.key ) {
+				nextWidth = panelWidthMin;
+			} else if ( 'End' === event.key ) {
+				nextWidth = panelWidthMax;
+			} else {
+				return;
+			}
+			event.preventDefault();
+			applyWidth( nextWidth, true );
+			view.controller?.uploader?.refresh?.();
+		} );
+	}
+
+	function keepStandalonePanelMounted( layoutHost, view ) {
+		layoutHost.uplinkMbeNativeCollectionsView = view;
+		if ( layoutHost.uplinkMbeNativeCollectionsObserver || ! window.MutationObserver ) {
+			return;
+		}
+		const observer = new MutationObserver( () => {
+			const activeView = layoutHost.uplinkMbeNativeCollectionsView;
+			if ( ! layoutHost.isConnected || ! activeView?.el?.isConnected || layoutHost.querySelector( ':scope > .uplink-mbe-native-collections-panel' ) ) {
+				return;
+			}
+			window.requestAnimationFrame( () => {
+				if ( layoutHost.isConnected && activeView.el?.isConnected && ! layoutHost.querySelector( ':scope > .uplink-mbe-native-collections-panel' ) ) {
+					createPanel( activeView );
+				}
+			} );
+		} );
+		observer.observe( layoutHost, { childList: true } );
+		layoutHost.uplinkMbeNativeCollectionsObserver = observer;
+	}
+
+	function keepStandalonePanelInViewport( layoutHost, panel ) {
+		layoutHost.uplinkMbeNativeViewportPanel = panel;
+		const syncPosition = () => {
+			const activePanel = layoutHost.uplinkMbeNativeViewportPanel;
+			if ( ! layoutHost.isConnected || ! activePanel?.isConnected ) {
+				return;
+			}
+			const bounds = layoutHost.getBoundingClientRect();
+			const adminBarBottom = document.querySelector( '#wpadminbar' )?.getBoundingClientRect().bottom || 0;
+			const inlineStart = 'rtl' === window.getComputedStyle( layoutHost ).direction ? window.innerWidth - bounds.right : bounds.left;
+			layoutHost.style.setProperty( '--uplink-mbe-native-panel-viewport-top', `${ Math.max( 0, Math.round( adminBarBottom ) ) }px` );
+			layoutHost.style.setProperty( '--uplink-mbe-native-panel-viewport-inline-start', `${ Math.max( 0, Math.round( inlineStart ) ) }px` );
+		};
+		if ( layoutHost.uplinkMbeNativeViewportSync ) {
+			layoutHost.uplinkMbeNativeViewportSync();
+			return;
+		}
+		let pending = false;
+		const scheduleSync = () => {
+			if ( pending ) {
+				return;
+			}
+			pending = true;
+			window.requestAnimationFrame( () => {
+				pending = false;
+				syncPosition();
+			} );
+		};
+		layoutHost.uplinkMbeNativeViewportSync = scheduleSync;
+		window.addEventListener( 'resize', scheduleSync );
+		window.addEventListener( 'scroll', scheduleSync, { passive: true } );
+		if ( window.ResizeObserver ) {
+			const observer = new ResizeObserver( scheduleSync );
+			observer.observe( layoutHost );
+			layoutHost.uplinkMbeNativeViewportObserver = observer;
+		}
+		syncPosition();
+	}
 
 	function setCollectionData( collections ) {
 		config.collections = Array.isArray( collections ) ? collections : [];
@@ -123,8 +278,8 @@
 		saveCollectionOrder( view, panel, collection.parent, ids, collection.id );
 	}
 
-	function enableCollectionPointerReorder( view, panel, row, filter, collection ) {
-		filter.addEventListener( 'pointerdown', ( event ) => {
+	function enableCollectionPointerReorder( view, panel, row, handle, collection ) {
+		handle.addEventListener( 'pointerdown', ( event ) => {
 			if ( 0 !== event.button || collectionOrderSaving ) {
 				return;
 			}
@@ -137,9 +292,9 @@
 				placeAfter: false,
 				moved: false,
 			};
-			filter.setPointerCapture?.( event.pointerId );
+			handle.setPointerCapture?.( event.pointerId );
 		} );
-		filter.addEventListener( 'pointermove', ( event ) => {
+		handle.addEventListener( 'pointermove', ( event ) => {
 			const drag = collectionPointerDrag;
 			if ( ! drag || drag.pointerId !== event.pointerId ) {
 				return;
@@ -166,8 +321,8 @@
 				return;
 			}
 			collectionPointerDrag = null;
-			if ( filter.hasPointerCapture?.( event.pointerId ) ) {
-				filter.releasePointerCapture( event.pointerId );
+			if ( handle.hasPointerCapture?.( event.pointerId ) ) {
+				handle.releasePointerCapture( event.pointerId );
 			}
 			if ( drag.moved ) {
 				suppressCollectionClick = true;
@@ -187,8 +342,8 @@
 				clearCollectionDropIndicators( panel );
 			}
 		};
-		filter.addEventListener( 'pointerup', finishPointerReorder );
-		filter.addEventListener( 'pointercancel', finishPointerReorder );
+		handle.addEventListener( 'pointerup', finishPointerReorder );
+		handle.addEventListener( 'pointercancel', finishPointerReorder );
 	}
 
 	function collectionActionButton( action, label, iconName, collection ) {
@@ -262,6 +417,27 @@
 		toggle.setAttribute( 'aria-expanded', expanded ? 'true' : 'false' );
 		toggle.setAttribute( 'aria-label', `${ expanded ? config.strings.collapse : config.strings.expand }: ${ item.querySelector( '.uplink-mbe-native-collection-filter' )?.textContent || '' }` );
 		childList.hidden = ! expanded;
+	}
+
+	function parentCollectionIds() {
+		return config.collections
+			.filter( ( collection ) => ( childrenByParent.get( Number( collection.id ) ) || [] ).length )
+			.map( ( collection ) => Number( collection.id ) );
+	}
+
+	function updateTreeToggle( panel ) {
+		const button = panel.querySelector( '.uplink-mbe-native-tree-toggle' );
+		if ( ! button ) {
+			return;
+		}
+		const parentIds = parentCollectionIds();
+		const allCollapsed = parentIds.length > 0 && parentIds.every( ( id ) => collapsedCollections.has( id ) );
+		const label = allCollapsed ? config.strings.expandAllCollections : config.strings.collapseAllCollections;
+		button.hidden = ! parentIds.length;
+		button.dataset.treeAction = allCollapsed ? 'expand' : 'collapse';
+		button.setAttribute( 'aria-label', label );
+		button.title = label;
+		button.querySelector( 'span' ).className = `uplink-mbe-tree-icon ${ allCollapsed ? 'is-open' : 'is-close' }`;
 	}
 
 	function refreshActiveFilters( panel, filter, collectionId ) {
@@ -468,6 +644,7 @@
 		enableJqueryDropTargets( view, panel );
 		const active = view.uplinkMbeNativeCollectionsFilter || { filter: 'all', collectionId: 0 };
 		refreshActiveFilters( panel, active.filter, active.collectionId );
+		updateTreeToggle( panel );
 	}
 
 	function showPanelStatus( panel, message, type = 'success' ) {
@@ -658,6 +835,7 @@
 		const layoutHost = isStandaloneLibrary ? ( libraryRoot?.closest( '#wpbody-content' ) || document.querySelector( '#wpbody-content' ) ) : view.el;
 		if ( isStandaloneLibrary ) {
 			document.body.classList.add( 'uplink-mbe-native-collections-active' );
+			keepStandalonePanelMounted( layoutHost, view );
 		}
 		const oldPanel = layoutHost.querySelector( ':scope > .uplink-mbe-native-collections-panel' );
 		if ( oldPanel ) {
@@ -687,6 +865,9 @@
 		collapse.innerHTML = '<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>';
 		const headingActions = document.createElement( 'div' );
 		headingActions.className = 'uplink-mbe-native-panel-actions';
+		const treeToggle = iconButton( 'uplink-mbe-native-tree-toggle', config.strings.collapseAllCollections, 'editor-contract' );
+		treeToggle.querySelector( 'span' ).className = 'uplink-mbe-tree-icon is-close';
+		headingActions.append( treeToggle );
 		let newCollection = null;
 		if ( config.canManage ) {
 			newCollection = iconButton( 'uplink-mbe-native-new-collection', config.strings.newCollection, 'category' );
@@ -733,8 +914,21 @@
 
 		const body = document.createElement( 'div' );
 		body.className = 'uplink-mbe-native-collections-body';
-		panel.append( heading, creationForm, status, body );
+		const resizer = document.createElement( 'div' );
+		resizer.className = 'uplink-mbe-native-panel-resizer';
+		resizer.setAttribute( 'role', 'separator' );
+		resizer.setAttribute( 'aria-orientation', 'vertical' );
+		resizer.setAttribute( 'aria-label', config.strings.resizeCollections );
+		resizer.setAttribute( 'aria-valuemin', String( panelWidthMin ) );
+		resizer.setAttribute( 'aria-valuemax', String( panelWidthMax ) );
+		resizer.setAttribute( 'aria-valuenow', String( panelWidthDefault ) );
+		resizer.tabIndex = 0;
+		panel.append( heading, creationForm, status, body, resizer );
 		layoutHost.prepend( panel );
+		if ( isStandaloneLibrary ) {
+			keepStandalonePanelInViewport( layoutHost, panel );
+		}
+		enablePanelResize( view, layoutHost, resizer );
 		view.uplinkMbeNativeCollectionsPanel = panel;
 		view.uplinkMbeNativeDragAssignment = isStandaloneLibrary && config.canAssign;
 		if ( isListMode ) {
@@ -895,6 +1089,7 @@
 					collapsedCollections.add( collectionId );
 				}
 				toggleBranch( item, branchToggle, childList, expanded );
+				updateTreeToggle( panel );
 				return;
 			}
 			const filterButton = event.target.closest( '.uplink-mbe-native-collection-filter' );
@@ -905,6 +1100,15 @@
 				}
 				applyFilter( view, filterButton.dataset.filter, Number( filterButton.dataset.collection ) || 0 );
 			}
+		} );
+		treeToggle.addEventListener( 'click', () => {
+			const parentIds = parentCollectionIds();
+			if ( 'expand' === treeToggle.dataset.treeAction ) {
+				parentIds.forEach( ( id ) => collapsedCollections.delete( id ) );
+			} else {
+				parentIds.forEach( ( id ) => collapsedCollections.add( id ) );
+			}
+			renderPanelBody( panel, view );
 		} );
 	}
 

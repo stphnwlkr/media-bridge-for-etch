@@ -1,3 +1,66 @@
+.asset-core > .asset-core__sidebar {
+	flex: 0 0 var(--uplink-mbe-etch-asset-sidebar-width, 300px);
+	width: var(--uplink-mbe-etch-asset-sidebar-width, 300px);
+	min-width: var(--uplink-mbe-etch-asset-sidebar-width, 300px);
+}
+
+.asset-core > .uplink-mbe-etch-sidebar-resize {
+	position: relative;
+	z-index: 2;
+	align-self: center;
+	box-sizing: border-box;
+	width: 12px;
+	height: 48px;
+	flex: 0 0 12px;
+	margin-inline: calc(-6px - (var(--etch-space-md) / 2));
+	border: 1px solid var(--etch-neutral-medium);
+	border-radius: 6px;
+	background: var(--etch-neutral-dark);
+	box-shadow: -1px 0 3px rgb(0 0 0 / 30%);
+	touch-action: none;
+	cursor: col-resize;
+	transition: background-color 200ms ease-in-out, border-color 200ms ease-in-out;
+}
+
+.asset-core > .uplink-mbe-etch-sidebar-resize::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--e-foreground-color-muted, #aeb4bd);
+	box-shadow: 0 10px 0 var(--e-foreground-color-muted, #aeb4bd), 0 20px 0 var(--e-foreground-color-muted, #aeb4bd);
+	content: "";
+	transform: translate(-50%, calc(-50% - 10px));
+	transition: background-color 200ms ease-in-out, box-shadow 200ms ease-in-out;
+}
+
+.asset-core > .uplink-mbe-etch-sidebar-resize:hover,
+.asset-core > .uplink-mbe-etch-sidebar-resize:focus-visible,
+.asset-core > .uplink-mbe-etch-sidebar-resize.is-active {
+	border-color: var(--etch-primary);
+	background: var(--etch-primary);
+}
+
+.asset-core > .uplink-mbe-etch-sidebar-resize:hover::after,
+.asset-core > .uplink-mbe-etch-sidebar-resize:focus-visible::after,
+.asset-core > .uplink-mbe-etch-sidebar-resize.is-active::after {
+	background: var(--etch-neutral);
+	box-shadow: 0 10px 0 var(--etch-neutral), 0 20px 0 var(--etch-neutral);
+}
+
+.asset-core > .uplink-mbe-etch-sidebar-resize:focus-visible {
+	outline: var(--etch-focus-outline);
+	outline-offset: var(--etch-focus-outline-offset);
+}
+
+body.uplink-mbe-etch-asset-resizing,
+body.uplink-mbe-etch-asset-resizing * {
+	cursor: col-resize !important;
+	user-select: none !important;
+}
+
 .asset-core .uplink-mbe-uniform-grid-toggle {
 	display: inline-flex;
 	align-items: center;

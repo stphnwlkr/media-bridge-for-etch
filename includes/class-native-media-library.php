@@ -246,7 +246,7 @@ final class Native_Media_Library {
 		}
 
 		$taxonomy = get_taxonomy( $this->etch->taxonomy() );
-		$native_collections_asset_version = UPLINK_MBE_ASSET_VERSION . '.30';
+		$native_collections_asset_version = UPLINK_MBE_ASSET_VERSION . '.36';
 		wp_enqueue_style( 'uplink-mbe-native-collections', UPLINK_MBE_URL . 'assets/native-collections.css', array( 'media-views' ), $native_collections_asset_version );
 		wp_enqueue_script( 'uplink-mbe-native-collections', UPLINK_MBE_URL . 'assets/native-collections.js', array( 'media-views', 'wp-util', 'jquery-ui-draggable', 'jquery-ui-droppable' ), $native_collections_asset_version, true );
 		wp_localize_script(
@@ -266,7 +266,10 @@ final class Native_Media_Library {
 					'allMedia'      => __( 'All media', 'media-bridge-for-etch' ),
 					'uncategorized' => __( 'Uncategorized', 'media-bridge-for-etch' ),
 					'collapse'      => __( 'Collapse Etch Collections', 'media-bridge-for-etch' ),
+					'collapseAllCollections' => __( 'Collapse all collections', 'media-bridge-for-etch' ),
 					'expand'        => __( 'Expand Etch Collections', 'media-bridge-for-etch' ),
+					'expandAllCollections' => __( 'Expand all collections', 'media-bridge-for-etch' ),
+					'resizeCollections' => __( 'Resize collections panel', 'media-bridge-for-etch' ),
 					'destination'   => __( 'Etch Collection', 'media-bridge-for-etch' ),
 					'uploadHelp'    => __( 'Assign newly uploaded files to a collection.', 'media-bridge-for-etch' ),
 					'newCollection' => __( 'New collection', 'media-bridge-for-etch' ),
@@ -697,9 +700,10 @@ final class Native_Media_Library {
 		}
 
 		wp_enqueue_media();
-		wp_enqueue_style( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.css', array(), UPLINK_MBE_ASSET_VERSION . '.1' );
+		$native_media_asset_version = UPLINK_MBE_ASSET_VERSION . '.5';
+		wp_enqueue_style( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.css', array(), $native_media_asset_version );
 		wp_add_inline_style( 'uplink-mbe-native-media', $this->custom_color_css() );
-		wp_enqueue_script( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.js', array( 'media-editor' ), UPLINK_MBE_ASSET_VERSION, true );
+		wp_enqueue_script( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.js', array( 'media-editor' ), $native_media_asset_version, true );
 		$this->enqueue_attachment_compatibility_assets();
 
 		$taxonomy        = get_taxonomy( $this->etch->taxonomy() );
@@ -751,6 +755,7 @@ final class Native_Media_Library {
 					'clear'                => __( 'Move to Uncategorized', 'media-bridge-for-etch' ),
 					'chooseCollection'     => __( 'Choose a collection…', 'media-bridge-for-etch' ),
 					'collections'          => __( 'Collections', 'media-bridge-for-etch' ),
+					'resizeCollections'    => __( 'Resize collections panel', 'media-bridge-for-etch' ),
 					'collectionName'       => __( 'Collection name', 'media-bridge-for-etch' ),
 					'copied'               => __( 'File path copied.', 'media-bridge-for-etch' ),
 					'confirmDelete'        => __( 'Delete this collection? Media files will remain in the library.', 'media-bridge-for-etch' ),
@@ -778,6 +783,8 @@ final class Native_Media_Library {
 					'editCollection'       => __( 'Edit collection', 'media-bridge-for-etch' ),
 					'expandCollection'     => __( 'Expand collection', 'media-bridge-for-etch' ),
 					'collapseCollection'   => __( 'Collapse collection', 'media-bridge-for-etch' ),
+					'expandAllCollections' => __( 'Expand all collections', 'media-bridge-for-etch' ),
+					'collapseAllCollections' => __( 'Collapse all collections', 'media-bridge-for-etch' ),
 					'empty'                => __( 'No media found in this view.', 'media-bridge-for-etch' ),
 					'error'                => __( 'Something went wrong. Please try again.', 'media-bridge-for-etch' ),
 					'loading'              => __( 'Loading media…', 'media-bridge-for-etch' ),
@@ -978,6 +985,7 @@ final class Native_Media_Library {
 							<div class="uplink-mbe-collection-heading">
 								<h2><?php esc_html_e( 'Collections', 'media-bridge-for-etch' ); ?></h2>
 								<div class="uplink-mbe-collection-heading-actions">
+									<button type="button" class="uplink-mbe-icon-button" id="uplink-mbe-collection-tree-toggle" aria-label="<?php esc_attr_e( 'Collapse all collections', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Collapse all collections', 'media-bridge-for-etch' ); ?>"><span class="uplink-mbe-tree-icon is-close" aria-hidden="true"></span></button>
 									<?php if ( $gallery_enabled ) : ?>
 										<button type="button" class="uplink-mbe-icon-button" id="uplink-mbe-create-gallery" aria-label="<?php esc_attr_e( 'Create gallery', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Create gallery', 'media-bridge-for-etch' ); ?>" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="m7 15 3-3 3 3 2-2 3 3"></path><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M18 2v4M16 4h4"></path></svg></button>
 									<?php endif; ?>
@@ -992,6 +1000,7 @@ final class Native_Media_Library {
 						<nav id="uplink-mbe-health-navigation" class="uplink-mbe-health-navigation" aria-label="<?php esc_attr_e( 'Media health filters', 'media-bridge-for-etch' ); ?>" hidden></nav>
 						<p id="uplink-mbe-health-description" class="uplink-mbe-health-description" role="status" aria-live="polite" hidden></p>
 					</aside>
+					<div class="uplink-mbe-sidebar-resizer" id="uplink-mbe-sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="<?php esc_attr_e( 'Resize collections panel', 'media-bridge-for-etch' ); ?>" aria-valuemin="220" aria-valuemax="480" aria-valuenow="280" tabindex="0"></div>
 
 					<main class="uplink-mbe-native-content">
 						<div class="uplink-mbe-health-summary" id="uplink-mbe-health-summary" hidden><strong><?php esc_html_e( 'Media health', 'media-bridge-for-etch' ); ?></strong><div class="uplink-mbe-health-progress"><span id="uplink-mbe-health-progress-bar"></span></div><span id="uplink-mbe-health-status"></span><button type="button" class="uplink-mbe-toolbar-button" id="uplink-mbe-health-rescan" aria-label="<?php esc_attr_e( 'Rescan media health', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Rescan media health', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button></div>

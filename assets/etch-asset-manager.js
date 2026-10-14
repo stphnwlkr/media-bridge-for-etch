@@ -5,21 +5,134 @@
 	const sizeStorageKey = 'uplink-mbe-etch-asset-thumbnail-width';
 	const ratioStorageKey = 'uplink-mbe-etch-asset-thumbnail-ratio';
 	const originStorageKey = 'uplink-mbe-etch-asset-origin-view';
+	const sidebarWidthStorageKey = 'uplink-mbe-etch-asset-sidebar-width';
 	const activeClass = 'uplink-mbe-uniform-grid';
 	const buttonClass = 'uplink-mbe-uniform-grid-toggle';
 	const sizeButtonClass = 'uplink-mbe-asset-size-toggle';
 	const sizeWidgetClass = 'uplink-mbe-asset-size-widget';
 	const sizeControlClass = 'uplink-mbe-uniform-grid-size';
+	const sidebarResizeClass = 'uplink-mbe-etch-sidebar-resize';
 	const config = window.uplinkMbeEtchAssetManager || {};
 	const label = config.uniformGridLabel || 'Uniform grid';
 	const sizeLabel = config.thumbnailWidthLabel || 'Thumbnail width';
 	const ratioLabel = config.thumbnailRatioLabel || 'Aspect ratio';
+	const resizeSidebarLabel = config.resizeSidebarLabel || 'Resize collections panel';
+	const sidebarWidthDefault = 300;
+	const sidebarWidthMin = 220;
+	const sidebarWidthMax = 480;
 	let observer;
 	let syncing = false;
 	let pendingUniform = false;
 	let uniformPreference;
 	let uniformOrigin;
 	let sizeControlId = 0;
+
+	function clampSidebarWidth( width ) {
+		return Math.min( sidebarWidthMax, Math.max( sidebarWidthMin, Math.round( Number( width ) || sidebarWidthDefault ) ) );
+	}
+
+	function sidebarWidth() {
+		try {
+			const savedWidth = window.localStorage.getItem( sidebarWidthStorageKey );
+			return null === savedWidth || '' === savedWidth ? sidebarWidthDefault : clampSidebarWidth( savedWidth );
+		} catch ( error ) {
+			return sidebarWidthDefault;
+		}
+	}
+
+	function setupSidebarResize( core ) {
+		const sidebar = core.querySelector( ':scope > .asset-core__sidebar' );
+		if ( ! sidebar ) {
+			return;
+		}
+
+		let handle = core.querySelector( ':scope > .' + sidebarResizeClass );
+		if ( handle ) {
+			return;
+		}
+
+		let width = sidebarWidth();
+		let resizing = false;
+		let pointerId = null;
+		const applyWidth = function ( nextWidth, remember ) {
+			width = clampSidebarWidth( nextWidth );
+			core.style.setProperty( '--uplink-mbe-etch-asset-sidebar-width', width + 'px' );
+			handle.setAttribute( 'aria-valuenow', String( width ) );
+			if ( remember ) {
+				try {
+					window.localStorage.setItem( sidebarWidthStorageKey, String( width ) );
+				} catch ( error ) {
+					// Resizing still works when browser storage is unavailable.
+				}
+			}
+		};
+		const widthFromPointer = function ( event ) {
+			const bounds = core.getBoundingClientRect();
+			return window.getComputedStyle( core ).direction === 'rtl' ? bounds.right - event.clientX : event.clientX - bounds.left;
+		};
+		const finish = function ( event ) {
+			if ( ! resizing || event.pointerId !== pointerId ) {
+				return;
+			}
+			resizing = false;
+			handle.classList.remove( 'is-active' );
+			document.body.classList.remove( 'uplink-mbe-etch-asset-resizing' );
+			if ( handle.hasPointerCapture?.( pointerId ) ) {
+				handle.releasePointerCapture( pointerId );
+			}
+			pointerId = null;
+			applyWidth( width, true );
+		};
+
+		handle = document.createElement( 'div' );
+		handle.className = sidebarResizeClass;
+		handle.setAttribute( 'role', 'separator' );
+		handle.setAttribute( 'aria-orientation', 'vertical' );
+		handle.setAttribute( 'aria-label', resizeSidebarLabel );
+		handle.setAttribute( 'aria-valuemin', String( sidebarWidthMin ) );
+		handle.setAttribute( 'aria-valuemax', String( sidebarWidthMax ) );
+		handle.tabIndex = 0;
+		handle.addEventListener( 'pointerdown', function ( event ) {
+			if ( 0 !== event.button ) {
+				return;
+			}
+			resizing = true;
+			pointerId = event.pointerId;
+			handle.setPointerCapture?.( pointerId );
+			handle.classList.add( 'is-active' );
+			document.body.classList.add( 'uplink-mbe-etch-asset-resizing' );
+			event.preventDefault();
+		} );
+		handle.addEventListener( 'pointermove', function ( event ) {
+			if ( resizing && event.pointerId === pointerId ) {
+				applyWidth( widthFromPointer( event ), false );
+			}
+		} );
+		handle.addEventListener( 'pointerup', finish );
+		handle.addEventListener( 'pointercancel', finish );
+		handle.addEventListener( 'dblclick', function () {
+			applyWidth( sidebarWidthDefault, true );
+		} );
+		handle.addEventListener( 'keydown', function ( event ) {
+			const direction = window.getComputedStyle( core ).direction === 'rtl' ? -1 : 1;
+			let nextWidth = width;
+			if ( event.key === 'ArrowLeft' ) {
+				nextWidth -= 10 * direction;
+			} else if ( event.key === 'ArrowRight' ) {
+				nextWidth += 10 * direction;
+			} else if ( event.key === 'Home' ) {
+				nextWidth = sidebarWidthMin;
+			} else if ( event.key === 'End' ) {
+				nextWidth = sidebarWidthMax;
+			} else {
+				return;
+			}
+			event.preventDefault();
+			applyWidth( nextWidth, true );
+		} );
+		sidebar.after( handle );
+		applyWidth( width, false );
+	}
 
 	function preference() {
 		if ( typeof uniformPreference === 'boolean' ) {
@@ -294,6 +407,7 @@
 	}
 
 	function setupCore( core ) {
+		setupSidebarResize( core );
 		const actions = core.querySelector( '.asset-core__content-actions' );
 		const divider = actions?.querySelector( '.asset-core__divider' );
 		if ( ! actions || ! divider ) {

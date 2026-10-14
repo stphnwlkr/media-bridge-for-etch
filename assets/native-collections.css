@@ -1,6 +1,7 @@
 .uplink-mbe-native-collections-browser,
 .uplink-mbe-native-collections-page {
-	--uplink-mbe-native-panel-width: 280px;
+	--uplink-mbe-native-panel-open-width: 280px;
+	--uplink-mbe-native-panel-width: var(--uplink-mbe-native-panel-open-width);
 }
 
 .uplink-mbe-native-collections-browser > :is(.media-toolbar, .attachments, .uploader-inline),
@@ -44,14 +45,78 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 	flex-direction: column;
 	box-sizing: border-box;
 	width: var(--uplink-mbe-native-panel-width);
-	overflow: hidden;
+	overflow: visible;
 	border-right: 1px solid #dcdcde;
 	background: #f6f7f7;
 	color: #1d2327;
 }
 
+.uplink-mbe-native-collections-page > .uplink-mbe-native-collections-panel {
+	position: fixed;
+	inset-block: var(--uplink-mbe-native-panel-viewport-top, 32px) 0;
+	inset-inline-start: var(--uplink-mbe-native-panel-viewport-inline-start, 0px);
+	height: auto;
+}
+
+.uplink-mbe-native-panel-resizer {
+	position: absolute;
+	inset-block-start: calc(50% - 24px);
+	inset-inline-end: -6px;
+	z-index: 4;
+	box-sizing: border-box;
+	width: 12px;
+	height: 48px;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	background: #fff;
+	box-shadow: -1px 0 3px rgba(0, 0, 0, 0.12);
+	touch-action: none;
+	cursor: col-resize;
+	transition: background-color 200ms ease-in-out, border-color 200ms ease-in-out;
+}
+
+.uplink-mbe-native-panel-resizer::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: #646970;
+	box-shadow: 0 10px 0 #646970, 0 20px 0 #646970;
+	content: "";
+	transform: translate(-50%, calc(-50% - 10px));
+	transition: background-color 200ms ease-in-out, box-shadow 200ms ease-in-out;
+}
+
+.uplink-mbe-native-panel-resizer:hover,
+.uplink-mbe-native-panel-resizer:focus-visible,
+.uplink-mbe-native-panel-resizer.is-active {
+	border-color: #2271b1;
+	background: #2271b1;
+}
+
+.uplink-mbe-native-panel-resizer:hover::after,
+.uplink-mbe-native-panel-resizer:focus-visible::after,
+.uplink-mbe-native-panel-resizer.is-active::after {
+	background: #fff;
+	box-shadow: 0 10px 0 #fff, 0 20px 0 #fff;
+}
+
+.uplink-mbe-native-panel-resizer:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+}
+
+body.uplink-mbe-resizing-collections,
+body.uplink-mbe-resizing-collections * {
+	cursor: col-resize !important;
+	user-select: none !important;
+}
+
 .uplink-mbe-native-collections-heading {
 	display: flex;
+	flex-wrap: wrap;
 	min-height: 65px;
 	align-items: center;
 	justify-content: space-between;
@@ -67,7 +132,10 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 
 .uplink-mbe-native-panel-actions {
 	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
 	align-items: center;
+	max-width: 100%;
 	gap: 2px;
 }
 
@@ -93,6 +161,25 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 .uplink-mbe-native-panel-action.is-disabled {
 	opacity: .42;
 	cursor: default;
+}
+
+.uplink-mbe-native-panel-actions .uplink-mbe-tree-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+	background: currentColor;
+	-webkit-mask: center / contain no-repeat;
+	mask: center / contain no-repeat;
+}
+
+.uplink-mbe-native-panel-actions .uplink-mbe-tree-icon.is-open {
+	-webkit-mask-image: url("./list-tree-stroke-sharp.svg");
+	mask-image: url("./list-tree-stroke-sharp.svg");
+}
+
+.uplink-mbe-native-panel-actions .uplink-mbe-tree-icon.is-close {
+	-webkit-mask-image: url("./list-start-stroke-sharp.svg");
+	mask-image: url("./list-start-stroke-sharp.svg");
 }
 
 .uplink-mbe-native-panel-toggle,
@@ -169,6 +256,11 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 
 .uplink-mbe-native-collection-row.can-reorder .uplink-mbe-native-collection-filter {
 	cursor: grab;
+	touch-action: none;
+}
+
+.uplink-mbe-native-collection-row.is-reordering .uplink-mbe-native-collection-filter {
+	cursor: grabbing;
 }
 
 .uplink-mbe-native-collection-row.is-reordering {
@@ -631,7 +723,11 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 	}
 
 	.uplink-mbe-native-collections-panel.is-open {
-		width: min(280px, calc(100% - 52px));
+		width: min(var(--uplink-mbe-native-panel-open-width), calc(100% - 52px));
+	}
+
+	.uplink-mbe-native-panel-resizer {
+		display: none;
 	}
 
 	.uplink-mbe-native-collections-panel:not(.is-open) .uplink-mbe-native-collections-heading strong,
@@ -650,5 +746,9 @@ body.upload-php.uplink-mbe-native-collections-active #wpcontent {
 }
 
 .uplink-mbe-native-collections-compact .uplink-mbe-native-collections-panel.is-open {
-	width: min(280px, calc(100% - 52px));
+	width: min(var(--uplink-mbe-native-panel-open-width), calc(100% - 52px));
+}
+
+.uplink-mbe-native-collections-collapsed .uplink-mbe-native-panel-resizer {
+	display: none;
 }

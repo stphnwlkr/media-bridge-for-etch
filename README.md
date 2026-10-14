@@ -4,14 +4,14 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.4
+Stable tag: 2.5.5
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
 
 == Description ==
 
-Uplink Media Bridge for Etch adds a native Media > Etch Collections workspace for organizing the WordPress media library with Etch itself. Create and edit collections, upload or select media, assign items to multiple collections, drag selected items into a collection, and use bulk assignment tools without installing another folder plugin. The Experimental collection-depth setting extends Media Bridge management from Etch's standard two levels to as many as five.
+Uplink Media Bridge for Etch adds a native Media > Etch Collections workspace for organizing the WordPress media library with Etch itself. Create and edit collections, upload or select media, assign items to multiple collections, drag selected items into a collection, and use bulk assignment tools without installing another folder plugin. The collection sidebar can be resized with a remembered width in the WordPress, Enhanced, and Etch Asset Manager views. The Experimental collection-depth setting extends Media Bridge management from Etch's standard two levels to as many as five.
 
 [Read the Uplink Media Bridge for Etch 2.0 overview](https://uplinkplugins.com/articles/uplink-media-bridge-for-etch-version-2/).
 
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.5.5 =
+Adds resizable collection panels, global tree controls, and support for Cimo 1.5 upload hooks.
+
 = 2.5.4 =
 Adds clickable pills and dots, responsive indicator layouts, and independent slide-count positioning in opposite layouts.
 
@@ -361,6 +364,14 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.5 =
+
+* Add draggable, keyboard-accessible collection panel resizing in the WordPress Media Library and Enhanced Manager. Panel widths are saved between visits.
+* Keep folder controls visible at narrow panel widths and size the WordPress collection panel to the viewport.
+* Add one-button collapse and expand controls for the full collection tree in the WordPress Media Library and Enhanced Manager.
+* Use Cimo 1.5's public upload-location filters while retaining compatibility with earlier Cimo releases. Media Bridge still leaves optimization to Cimo or Etch.
+* Add collection panel resizing to Etch's Asset Manager. The extra tree control remains limited to the WordPress and Enhanced views.
 
 = 2.5.4 =
 
