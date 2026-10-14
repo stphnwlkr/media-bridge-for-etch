@@ -189,6 +189,64 @@
 	const panelWidthDefault = 280;
 	const panelWidthMin = 220;
 	const panelWidthMax = 480;
+	const fontExtensions = new Set( [ 'woff', 'woff2', 'ttf', 'otf' ] );
+	const fontFacePromises = new Map();
+	const fontPreviewMedia = new WeakMap();
+	const fontPreviewObserver = 'IntersectionObserver' in window ? new IntersectionObserver( ( entries ) => {
+		entries.forEach( ( entry ) => {
+			if ( ! entry.isIntersecting ) {
+				return;
+			}
+			fontPreviewObserver.unobserve( entry.target );
+			loadFontPreview( entry.target, fontPreviewMedia.get( entry.target ) );
+		} );
+	}, { rootMargin: '160px' } ) : null;
+
+	function fontExtension( media ) {
+		return ( media?.filename || media?.url || '' ).split( '.' ).pop().split( /[?#]/ )[ 0 ].toLowerCase();
+	}
+
+	function isFontMedia( media ) {
+		return Boolean( media?.url && ( ( media.mime || '' ).startsWith( 'font/' ) || fontExtensions.has( fontExtension( media ) ) ) );
+	}
+
+	async function loadFontPreview( preview, media ) {
+		if ( ! preview?.isConnected || ! isFontMedia( media ) || 'function' !== typeof window.FontFace ) {
+			return;
+		}
+		const family = `uplink-mbe-font-${ media.id }`;
+		let promise = fontFacePromises.get( media.id );
+		if ( ! promise ) {
+			const face = new FontFace( family, `url(${ JSON.stringify( media.url ) })` );
+			promise = face.load().then( ( loadedFace ) => {
+				document.fonts.add( loadedFace );
+				return family;
+			} );
+			fontFacePromises.set( media.id, promise );
+		}
+		try {
+			preview.style.fontFamily = await promise;
+			preview.classList.add( 'is-loaded' );
+		} catch ( error ) {
+			fontFacePromises.delete( media.id );
+			preview.classList.add( 'is-failed' );
+		}
+	}
+
+	function createFontPreview( media ) {
+		const preview = createElement( 'span', 'uplink-mbe-font-preview' );
+		preview.append(
+			createElement( 'span', 'uplink-mbe-font-sample', 'Aa' ),
+			createElement( 'span', 'uplink-mbe-font-extension', fontExtension( media ) )
+		);
+		if ( fontPreviewObserver ) {
+			fontPreviewMedia.set( preview, media );
+			fontPreviewObserver.observe( preview );
+		} else {
+			loadFontPreview( preview, media );
+		}
+		return preview;
+	}
 
 	function enableSidebarResize() {
 		const handle = elements.sidebarResize;
@@ -1921,6 +1979,9 @@
 				image.draggable = false;
 				image.loading = 'lazy';
 				preview.append( image );
+			} else if ( isFontMedia( media ) ) {
+				preview.classList.add( 'is-font' );
+				preview.append( createFontPreview( media ) );
 			} else {
 				preview.append( createFilePlaceholder( media ) );
 			}
@@ -2455,6 +2516,8 @@
 			image.src = media.isImage ? ( media.url || media.thumbnail ) : media.thumbnail;
 			image.alt = media.alt || '';
 			elements.attachmentPreview.append( image );
+		} else if ( isFontMedia( media ) ) {
+			elements.attachmentPreview.append( createFontPreview( media ) );
 		} else {
 			elements.attachmentPreview.append( createFilePlaceholder( media ) );
 		}

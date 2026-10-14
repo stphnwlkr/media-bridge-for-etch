@@ -226,3 +226,72 @@ body.uplink-mbe-etch-asset-resizing * {
 	aspect-ratio: var(--uplink-mbe-asset-tile-ratio, 1 / 1);
 	object-fit: cover;
 }
+
+.asset-core .asset-grid-item[data-uplink-mbe-font-id] > .asset-grid-item__img,
+.asset-core .asset-grid-item[data-uplink-mbe-font-id] > .asset-grid-item__placeholder {
+	visibility: hidden;
+}
+
+.asset-core .uplink-mbe-etch-font-preview {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	box-sizing: border-box;
+	place-items: center;
+	align-content: center;
+	gap: 10px;
+	padding: 14px;
+	background: var(--etch-neutral-dark);
+	color: var(--e-foreground-color);
+	pointer-events: none;
+}
+
+.asset-core .uplink-mbe-etch-font-sample {
+	font-family: inherit;
+	font-size: clamp(52px, 8vw, 112px);
+	font-weight: 400;
+	line-height: 1;
+}
+
+.asset-core .uplink-mbe-etch-font-extension {
+	padding: 2px 7px;
+	border: 1px solid var(--etch-neutral-medium);
+	border-radius: 999px;
+	background: var(--etch-neutral);
+	color: var(--e-foreground-color-muted);
+	font-family: var(--etch-font-interface);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: .05em;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+
+.asset-core .details-preview.uplink-mbe-etch-detail-font {
+	position: relative;
+}
+
+.asset-core .details-preview.uplink-mbe-etch-detail-font > .details-icon {
+	display: none;
+}
+
+.asset-core .uplink-mbe-etch-detail-font-preview {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	box-sizing: border-box;
+	place-items: center;
+	align-content: center;
+	gap: 14px;
+	padding: clamp(24px, 5vw, 72px);
+	background: var(--etch-neutral);
+	color: var(--e-foreground-color);
+	pointer-events: none;
+}
+
+.asset-core .uplink-mbe-etch-detail-font-sample {
+	font-family: inherit;
+	font-size: clamp(96px, 14vw, 240px);
+	font-weight: 400;
+	line-height: 1;
+}

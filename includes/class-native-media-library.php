@@ -246,7 +246,7 @@ final class Native_Media_Library {
 		}
 
 		$taxonomy = get_taxonomy( $this->etch->taxonomy() );
-		$native_collections_asset_version = UPLINK_MBE_ASSET_VERSION . '.36';
+		$native_collections_asset_version = UPLINK_MBE_ASSET_VERSION . '.37';
 		wp_enqueue_style( 'uplink-mbe-native-collections', UPLINK_MBE_URL . 'assets/native-collections.css', array( 'media-views' ), $native_collections_asset_version );
 		wp_enqueue_script( 'uplink-mbe-native-collections', UPLINK_MBE_URL . 'assets/native-collections.js', array( 'media-views', 'wp-util', 'jquery-ui-draggable', 'jquery-ui-droppable' ), $native_collections_asset_version, true );
 		wp_localize_script(
@@ -700,7 +700,7 @@ final class Native_Media_Library {
 		}
 
 		wp_enqueue_media();
-		$native_media_asset_version = UPLINK_MBE_ASSET_VERSION . '.5';
+		$native_media_asset_version = UPLINK_MBE_ASSET_VERSION . '.6';
 		wp_enqueue_style( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.css', array(), $native_media_asset_version );
 		wp_add_inline_style( 'uplink-mbe-native-media', $this->custom_color_css() );
 		wp_enqueue_script( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.js', array( 'media-editor' ), $native_media_asset_version, true );

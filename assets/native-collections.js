@@ -17,6 +17,90 @@
 	const panelWidthDefault = 280;
 	const panelWidthMin = 220;
 	const panelWidthMax = 480;
+	const fontExtensions = new Set( [ 'woff', 'woff2', 'ttf', 'otf' ] );
+	const fontFacePromises = new Map();
+	const fontPreviewData = new WeakMap();
+	const fontPreviewObserver = 'IntersectionObserver' in window ? new IntersectionObserver( ( entries ) => {
+		entries.forEach( ( entry ) => {
+			if ( ! entry.isIntersecting ) {
+				return;
+			}
+			fontPreviewObserver.unobserve( entry.target );
+			loadFontPreview( entry.target, fontPreviewData.get( entry.target ) );
+		} );
+	}, { rootMargin: '160px' } ) : null;
+
+	function fontExtension( attachment ) {
+		return ( attachment?.filename || attachment?.url || '' ).split( '.' ).pop().split( /[?#]/ )[ 0 ].toLowerCase();
+	}
+
+	function isFontAttachment( attachment ) {
+		return Boolean( attachment?.url && ( ( attachment.mime || '' ).startsWith( 'font/' ) || fontExtensions.has( fontExtension( attachment ) ) ) );
+	}
+
+	async function loadFontPreview( preview, attachment ) {
+		if ( ! preview?.isConnected || ! isFontAttachment( attachment ) || 'function' !== typeof window.FontFace ) {
+			return;
+		}
+		const family = `uplink-mbe-native-font-${ attachment.id }`;
+		let promise = fontFacePromises.get( attachment.id );
+		if ( ! promise ) {
+			const face = new FontFace( family, `url(${ JSON.stringify( attachment.url ) })` );
+			promise = face.load().then( ( loadedFace ) => {
+				document.fonts.add( loadedFace );
+				return family;
+			} );
+			fontFacePromises.set( attachment.id, promise );
+		}
+		try {
+			preview.style.fontFamily = await promise;
+			preview.classList.add( 'is-loaded' );
+		} catch ( error ) {
+			fontFacePromises.delete( attachment.id );
+			preview.classList.add( 'is-failed' );
+		}
+	}
+
+	function enableFontPreviews( view ) {
+		if ( view.uplinkMbeFontPreviewObserver ) {
+			return;
+		}
+		const enhance = () => {
+			view.el.querySelectorAll( '.attachment[data-id]' ).forEach( ( tile ) => {
+				if ( tile.dataset.uplinkMbeFontPreview ) {
+					return;
+				}
+				const attachment = wp.media.model.Attachment.get( Number( tile.dataset.id ) )?.toJSON();
+				if ( ! isFontAttachment( attachment ) ) {
+					return;
+				}
+				const thumbnail = tile.querySelector( '.thumbnail' );
+				if ( ! thumbnail ) {
+					return;
+				}
+				tile.dataset.uplinkMbeFontPreview = '1';
+				const preview = document.createElement( 'span' );
+				const sample = document.createElement( 'span' );
+				const extension = document.createElement( 'span' );
+				preview.className = 'uplink-mbe-native-font-preview';
+				sample.className = 'uplink-mbe-native-font-sample';
+				sample.textContent = 'Aa';
+				extension.className = 'uplink-mbe-native-font-extension';
+				extension.textContent = fontExtension( attachment );
+				preview.append( sample, extension );
+				thumbnail.append( preview );
+				if ( fontPreviewObserver ) {
+					fontPreviewData.set( preview, attachment );
+					fontPreviewObserver.observe( preview );
+				} else {
+					loadFontPreview( preview, attachment );
+				}
+			} );
+		};
+		enhance();
+		view.uplinkMbeFontPreviewObserver = new MutationObserver( enhance );
+		view.uplinkMbeFontPreviewObserver.observe( view.el, { childList: true, subtree: true } );
+	}
 
 	function clampPanelWidth( width ) {
 		return Math.min( panelWidthMax, Math.max( panelWidthMin, Math.round( Number( width ) || panelWidthDefault ) ) );
@@ -950,6 +1034,7 @@
 			view.uplinkMbeNativeCollectionsFilter = { filter: 'all', collectionId: 0 };
 		}
 		renderPanelBody( panel, view );
+		enableFontPreviews( view );
 		if ( isStandaloneLibrary ) {
 			enableDragAssignment( view, panel );
 		}

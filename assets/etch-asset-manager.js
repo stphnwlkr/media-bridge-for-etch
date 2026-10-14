@@ -12,6 +12,8 @@
 	const sizeWidgetClass = 'uplink-mbe-asset-size-widget';
 	const sizeControlClass = 'uplink-mbe-uniform-grid-size';
 	const sidebarResizeClass = 'uplink-mbe-etch-sidebar-resize';
+	const fontItemClass = 'uplink-mbe-etch-font-item';
+	const fontPreviewClass = 'uplink-mbe-etch-font-preview';
 	const config = window.uplinkMbeEtchAssetManager || {};
 	const label = config.uniformGridLabel || 'Uniform grid';
 	const sizeLabel = config.thumbnailWidthLabel || 'Thumbnail width';
@@ -26,6 +28,239 @@
 	let uniformPreference;
 	let uniformOrigin;
 	let sizeControlId = 0;
+	let manifestPromise;
+	const fontFacePromises = new Map();
+	const fontPreviewData = new WeakMap();
+	const fontPreviewObserver = 'IntersectionObserver' in window ? new IntersectionObserver( function ( entries ) {
+		entries.forEach( function ( entry ) {
+			if ( ! entry.isIntersecting ) {
+				return;
+			}
+			fontPreviewObserver.unobserve( entry.target );
+			loadFontPreview( entry.target, fontPreviewData.get( entry.target ) );
+		} );
+	}, { rootMargin: '160px' } ) : null;
+
+	function loadManifest() {
+		if ( manifestPromise ) {
+			return manifestPromise;
+		}
+		if ( ! config.ajaxUrl || ! config.nonce ) {
+			manifestPromise = Promise.resolve( null );
+			return manifestPromise;
+		}
+		const body = new URLSearchParams( {
+			action: 'uplink_mbe_etch_asset_manifest',
+			nonce: config.nonce,
+		} );
+		manifestPromise = window.fetch( config.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: body.toString(),
+		} ).then( function ( response ) {
+			if ( ! response.ok ) {
+				throw new Error( 'Font preview index request failed.' );
+			}
+			return response.json();
+		} ).then( function ( response ) {
+			if ( ! response?.success || ! Array.isArray( response.data?.assets ) ) {
+				throw new Error( 'Font preview index is unavailable.' );
+			}
+			return response.data;
+		} ).catch( function () {
+			return null;
+		} );
+		return manifestPromise;
+	}
+
+	function fontExtension( asset ) {
+		return ( asset?.fileName || asset?.fontUrl || '' ).split( '.' ).pop().split( /[?#]/ )[ 0 ].toLowerCase();
+	}
+
+	function isFontAsset( asset ) {
+		return Boolean( asset?.fontUrl && ( ( asset.mimeType || '' ).startsWith( 'font/' ) || [ 'woff', 'woff2', 'ttf', 'otf' ].includes( fontExtension( asset ) ) ) );
+	}
+
+	async function loadFontPreview( preview, asset ) {
+		if ( ! preview?.isConnected || ! isFontAsset( asset ) || 'function' !== typeof window.FontFace ) {
+			return;
+		}
+		const family = 'uplink-mbe-etch-font-' + String( asset.id );
+		let promise = fontFacePromises.get( asset.id );
+		if ( ! promise ) {
+			const face = new FontFace( family, 'url(' + JSON.stringify( asset.fontUrl ) + ')' );
+			promise = face.load().then( function ( loadedFace ) {
+				document.fonts.add( loadedFace );
+				return family;
+			} );
+			fontFacePromises.set( asset.id, promise );
+		}
+		try {
+			preview.style.fontFamily = await promise;
+			preview.classList.add( 'is-loaded' );
+		} catch ( error ) {
+			fontFacePromises.delete( asset.id );
+			preview.classList.add( 'is-failed' );
+		}
+	}
+
+	function visibleSearchQuery( core ) {
+		const inputs = core.querySelectorAll( 'input[type="search"], input[type="text"]' );
+		for ( const input of inputs ) {
+			if ( ! input.disabled && null !== input.offsetParent ) {
+				return input.value.trim().toLowerCase();
+			}
+		}
+		return '';
+	}
+
+	function selectedCollectionId( core ) {
+		const collection = core.querySelector( '.collection-list__item--selected[data-collection-id]' );
+		if ( collection ) {
+			return Number( collection.dataset.collectionId );
+		}
+		const sidebarItems = Array.from( core.querySelectorAll( '.asset-sidebar > .asset-sidebar__item' ) );
+		const selected = sidebarItems.findIndex( function ( item ) {
+			return item.getAttribute( 'selected' ) === 'true';
+		} );
+		return 1 === selected ? -1 : null;
+	}
+
+	function collectionFamily( collectionId, collections ) {
+		const ids = new Set( [ collectionId ] );
+		let changed = true;
+		while ( changed ) {
+			changed = false;
+			collections.forEach( function ( collection ) {
+				if ( ids.has( Number( collection.parentId ) ) && ! ids.has( Number( collection.id ) ) ) {
+					ids.add( Number( collection.id ) );
+					changed = true;
+				}
+			} );
+		}
+		return ids;
+	}
+
+	function filteredAssets( core, manifest ) {
+		const collectionId = selectedCollectionId( core );
+		const collectionIds = collectionId && collectionId > 0 ? collectionFamily( collectionId, manifest.collections || [] ) : null;
+		const query = visibleSearchQuery( core );
+		return manifest.assets.filter( function ( asset ) {
+			if ( -1 === collectionId && asset.collectionIds.length ) {
+				return false;
+			}
+			if ( collectionIds && ! asset.collectionIds.some( function ( id ) { return collectionIds.has( Number( id ) ); } ) ) {
+				return false;
+			}
+			if ( query ) {
+				const haystack = [ asset.fileName, asset.altText, asset.mimeType ].join( ' ' ).toLowerCase();
+				return haystack.includes( query );
+			}
+			return true;
+		} );
+	}
+
+	function removeFontPreview( tile ) {
+		tile.classList.remove( fontItemClass );
+		tile.querySelector( '.' + fontPreviewClass )?.remove();
+		delete tile.dataset.uplinkMbeFontId;
+	}
+
+	function syncFontPreview( tile, asset ) {
+		if ( ! isFontAsset( asset ) ) {
+			removeFontPreview( tile );
+			return;
+		}
+		if ( tile.dataset.uplinkMbeFontId === String( asset.id ) && tile.querySelector( '.' + fontPreviewClass ) ) {
+			tile.classList.add( fontItemClass );
+			return;
+		}
+		removeFontPreview( tile );
+		const preview = document.createElement( 'span' );
+		const sample = document.createElement( 'span' );
+		const extension = document.createElement( 'span' );
+		preview.className = fontPreviewClass;
+		sample.className = 'uplink-mbe-etch-font-sample';
+		sample.textContent = 'Aa';
+		extension.className = 'uplink-mbe-etch-font-extension';
+		extension.textContent = fontExtension( asset );
+		preview.append( sample, extension );
+		tile.append( preview );
+		tile.classList.add( fontItemClass );
+		tile.dataset.uplinkMbeFontId = String( asset.id );
+		if ( fontPreviewObserver ) {
+			fontPreviewData.set( preview, asset );
+			fontPreviewObserver.observe( preview );
+		} else {
+			loadFontPreview( preview, asset );
+		}
+	}
+
+	function removeDetailFontPreview( core ) {
+		const details = core.querySelector( '.details-preview' );
+		if ( ! details ) {
+			return;
+		}
+		details.classList.remove( 'uplink-mbe-etch-detail-font' );
+		details.querySelector( '.uplink-mbe-etch-detail-font-preview' )?.remove();
+		delete details.dataset.uplinkMbeFontId;
+	}
+
+	function syncDetailFontPreview( core, asset ) {
+		const details = core.querySelector( '.details-preview' );
+		if ( ! details || ! isFontAsset( asset ) ) {
+			removeDetailFontPreview( core );
+			return;
+		}
+		if ( details.dataset.uplinkMbeFontId === String( asset.id ) && details.querySelector( '.uplink-mbe-etch-detail-font-preview' ) ) {
+			return;
+		}
+		removeDetailFontPreview( core );
+		const preview = document.createElement( 'span' );
+		const sample = document.createElement( 'span' );
+		const extension = document.createElement( 'span' );
+		preview.className = 'uplink-mbe-etch-detail-font-preview';
+		sample.className = 'uplink-mbe-etch-detail-font-sample';
+		sample.textContent = 'Aa';
+		extension.className = 'uplink-mbe-etch-font-extension';
+		extension.textContent = fontExtension( asset );
+		preview.append( sample, extension );
+		details.append( preview );
+		details.classList.add( 'uplink-mbe-etch-detail-font' );
+		details.dataset.uplinkMbeFontId = String( asset.id );
+		if ( fontPreviewObserver ) {
+			fontPreviewData.set( preview, asset );
+			fontPreviewObserver.observe( preview );
+		} else {
+			loadFontPreview( preview, asset );
+		}
+	}
+
+	function enhanceFontPreviews( core ) {
+		loadManifest().then( function ( manifest ) {
+			if ( ! manifest || ! core.isConnected ) {
+				return;
+			}
+			const assets = filteredAssets( core, manifest );
+			let assetIndex = 0;
+			core.querySelectorAll( '.asset-grid > div' ).forEach( function ( wrapper ) {
+				const tile = wrapper.querySelector( ':scope > .asset-grid-item' );
+				if ( ! tile ) {
+					return;
+				}
+				if ( tile.classList.contains( 'asset-grid-item--uploading' ) ) {
+					removeFontPreview( tile );
+					return;
+				}
+				syncFontPreview( tile, assets[ assetIndex ] );
+				assetIndex += 1;
+			} );
+			const selectedTile = core.querySelector( '.asset-grid-item--selected[data-uplink-mbe-font-id]' );
+			const selectedId = Number( selectedTile?.dataset.uplinkMbeFontId || 0 );
+			syncDetailFontPreview( core, manifest.assets.find( function ( asset ) { return asset.id === selectedId; } ) );
+		} );
+	}
 
 	function clampSidebarWidth( width ) {
 		return Math.min( sidebarWidthMax, Math.max( sidebarWidthMin, Math.round( Number( width ) || sidebarWidthDefault ) ) );
@@ -408,6 +643,7 @@
 
 	function setupCore( core ) {
 		setupSidebarResize( core );
+		enhanceFontPreviews( core );
 		const actions = core.querySelector( '.asset-core__content-actions' );
 		const divider = actions?.querySelector( '.asset-core__divider' );
 		if ( ! actions || ! divider ) {
@@ -498,6 +734,16 @@
 		document.addEventListener( 'pointerdown', function ( event ) {
 			if ( ! event.target.closest( '.' + sizeWidgetClass ) ) {
 				closeSizePopovers();
+			}
+		} );
+		document.addEventListener( 'click', function ( event ) {
+			if ( event.target.closest( '.asset-core' ) ) {
+				window.requestAnimationFrame( refresh );
+			}
+		} );
+		document.addEventListener( 'input', function ( event ) {
+			if ( event.target.closest( '.asset-core' ) ) {
+				window.requestAnimationFrame( refresh );
 			}
 		} );
 		document.addEventListener( 'keydown', function ( event ) {
