@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.6
+Stable tag: 2.5.7
 License: GPLv2 or later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.5.7 =
+Preserves safe HTML, including attribution links, when captions are saved in Media Bridge.
+
 = 2.5.6 =
 Adds live previews for uploaded WOFF, WOFF2, TTF, and OTF fonts throughout the WordPress and Etch media interfaces.
 
@@ -367,6 +370,10 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.5.7 =
+
+* Preserve safe HTML, including attribution links, when captions are saved in the WordPress and Enhanced media interfaces.
 
 = 2.5.6 =
 

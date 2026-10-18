@@ -2082,7 +2082,7 @@ final class Native_Media_Library {
 		$fields = array(
 			'title'       => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
 			'alt'         => sanitize_text_field( wp_unslash( $_POST['alt_text'] ?? '' ) ),
-			'caption'     => sanitize_textarea_field( wp_unslash( $_POST['caption'] ?? '' ) ),
+			'caption'     => wp_kses_post( wp_unslash( $_POST['caption'] ?? '' ) ),
 			'description' => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
 			'decorative'  => isset( $_POST['decorative'] ) && '1' === sanitize_key( wp_unslash( $_POST['decorative'] ) ),
 		);
@@ -2811,7 +2811,7 @@ final class Native_Media_Library {
 			$post_update['post_title'] = sanitize_text_field( $fields['title'] );
 		}
 		if ( array_key_exists( 'caption', $fields ) ) {
-			$post_update['post_excerpt'] = sanitize_textarea_field( $fields['caption'] );
+			$post_update['post_excerpt'] = wp_kses_post( $fields['caption'] );
 		}
 		if ( array_key_exists( 'description', $fields ) ) {
 			$post_update['post_content'] = wp_kses_post( $fields['description'] );
