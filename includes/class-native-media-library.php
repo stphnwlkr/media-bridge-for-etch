@@ -316,7 +316,8 @@ final class Native_Media_Library {
 			return $query;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress verifies the media query request; this only adds a read-only taxonomy filter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- WordPress verifies the media query request; this only adds a read-only taxonomy filter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only filter on WordPress attachment queries. Only the ID normalized with absint and a boolean are used.
 		$request_query = isset( $_REQUEST['query'] ) && is_array( $_REQUEST['query'] ) ? wp_unslash( $_REQUEST['query'] ) : array();
 		$collection_id = absint( $request_query['uplink_mbe_collection'] ?? 0 );
 		$uncategorized = ! empty( $request_query['uplink_mbe_uncategorized'] );
@@ -510,7 +511,7 @@ final class Native_Media_Library {
 		if ( ! $this->native_collections_are_enabled() ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress verifies the upload request before creating the attachment.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- WordPress verifies the upload request before creating the attachment.
 		$collection_id = absint( $_REQUEST['uplink_mbe_collection'] ?? 0 );
 		$taxonomy      = get_taxonomy( $this->etch->taxonomy() );
 		if ( ! $collection_id || ! $taxonomy || ! current_user_can( $taxonomy->cap->assign_terms ) || ! $this->etch->get_term( $collection_id ) ) {
@@ -703,6 +704,8 @@ final class Native_Media_Library {
 		$native_media_asset_version = UPLINK_MBE_ASSET_VERSION . '.6';
 		wp_enqueue_style( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.css', array(), $native_media_asset_version );
 		wp_add_inline_style( 'uplink-mbe-native-media', $this->custom_color_css() );
+		Exif_Map::assets();
+		Image_Conversion::assets();
 		wp_enqueue_script( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.js', array( 'media-editor' ), $native_media_asset_version, true );
 		$this->enqueue_attachment_compatibility_assets();
 
@@ -1156,7 +1159,7 @@ final class Native_Media_Library {
 									</dl>
 								</div>
 								<div class="uplink-mbe-attachment-metadata-panel uplink-mbe-attachment-exif" id="uplink-mbe-attachment-exif" role="tabpanel" aria-labelledby="uplink-mbe-attachment-exif-tab" hidden><dl></dl></div>
-								<div class="uplink-mbe-attachment-metadata-panel uplink-mbe-optimization-details" id="uplink-mbe-attachment-optimization" role="tabpanel" aria-labelledby="uplink-mbe-attachment-optimization-tab" hidden><div class="uplink-mbe-optimization-groups" id="uplink-mbe-attachment-optimization-list"></div></div>
+								<div class="uplink-mbe-attachment-metadata-panel uplink-mbe-optimization-details" id="uplink-mbe-attachment-optimization" role="tabpanel" aria-labelledby="uplink-mbe-attachment-optimization-tab" hidden><div id="uplink-mbe-conversion-controls" hidden></div><div class="uplink-mbe-optimization-groups" id="uplink-mbe-attachment-optimization-list"></div></div>
 							</div>
 							<div class="uplink-mbe-attachment-actions">
 								<a href="#" class="button" id="uplink-mbe-attachment-edit" title="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" hidden><span class="dashicons dashicons-wordpress-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Edit', 'media-bridge-for-etch' ); ?></span></a>
@@ -2337,6 +2340,11 @@ final class Native_Media_Library {
 			'description' => $attachment instanceof \WP_Post ? (string) $attachment->post_content : '',
 			'decorative'  => '1' === (string) get_post_meta( $attachment_id, '_uplink_mbe_decorative', true ),
 			'exif'        => $this->attachment_exif( $attachment_id ),
+			'location' => Exif_Map::location( $attachment_id ),
+			'canConvert' => ! empty( Plugin::settings()['image_conversion'] ) && Image_Conversion::allowed( $attachment_id ) && in_array( get_post_mime_type( $attachment_id ), array( 'image/png', 'image/jpeg', 'image/webp', 'image/avif' ), true ),
+			'canRestore' => Image_Conversion::allowed( $attachment_id, 'restore' ),
+			'canCompress' => empty( $metadata['cimo'] ) && empty( $metadata['mbe_optimization'] ) && ! get_post_meta( $attachment_id, '_uplink_mbe_etch_optimization', true ),
+			'conversion' => Image_Conversion::summary( $attachment_id ),
 			'optimization' => $this->attachment_optimization( $attachment_id, is_array( $metadata ) ? $metadata : array() ),
 			'author'      => $attachment instanceof \WP_Post ? (string) get_the_author_meta( 'display_name', (int) $attachment->post_author ) : '',
 			'mime'        => (string) get_post_mime_type( $attachment_id ),
@@ -2461,7 +2469,7 @@ final class Native_Media_Library {
 	}
 
 	public function preserve_image_editor_context( string $location, int $attachment_id ): string {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WordPress verifies the attachment update before this redirect filter runs; these fields only preserve navigation state.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- WordPress verifies the attachment update before this redirect filter runs; these fields only preserve navigation state.
 		if ( empty( $_POST['uplink_mbe_image_editor'] ) || empty( $_POST['uplink_mbe_return'] ) || 'attachment' !== get_post_type( $attachment_id ) || ! current_user_can( 'edit_post', $attachment_id ) ) {
 			return $location;
 		}
@@ -2567,6 +2575,8 @@ final class Native_Media_Library {
 	}
 
 	private function attachment_optimization( int $attachment_id, array $metadata ): array {
+		$conversion = Image_Conversion::summary( $attachment_id );
+		if ( $conversion ) return array( 'optimized' => true, 'summary' => strtoupper( $conversion['format'] ), 'details' => array() );
 		$cimo = $this->attachment_cimo( $attachment_id, $metadata );
 		$etch = get_post_meta( $attachment_id, '_uplink_mbe_etch_optimization', true );
 		$etch = is_array( $etch ) && ! empty( $etch['optimized_size'] ) ? $etch : array();

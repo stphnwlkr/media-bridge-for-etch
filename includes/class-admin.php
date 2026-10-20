@@ -62,6 +62,11 @@ final class Admin {
 		$flag = static function ( string $key ) use ( $input, $current ): int {
 			return array_key_exists( $key, $input ) ? ( empty( $input[ $key ] ) ? 0 : 1 ) : ( empty( $current[ $key ] ) ? 0 : 1 );
 		};
+		$role_list = static function ( string $key ) use ( $input, $current ): array {
+			if ( ! array_key_exists( $key, $input ) ) return $current[ $key ];
+			$roles = is_array( $input[ $key ] ) ? $input[ $key ] : array();
+			return array_values( array_intersect( array_keys( wp_roles()->roles ), array_filter( $roles, 'is_string' ) ) );
+		};
 		$default_media_screen = $flag( 'default_media_screen' );
 		$manager_experience   = sanitize_key( $input['manager_experience'] ?? '' );
 		if ( in_array( $manager_experience, array( 'wordpress', 'manager_default' ), true ) ) {
@@ -84,6 +89,14 @@ final class Admin {
 			'collection_gallery' => $flag( 'collection_gallery' ),
 			'exif_dynamic_data' => $flag( 'exif_dynamic_data' ),
 			'exif_gps'         => $flag( 'exif_gps' ),
+			'exif_map'         => $flag( 'exif_map' ),
+			'image_conversion' => $flag( 'image_conversion' ),
+			'compression_roles' => $role_list( 'compression_roles' ),
+			'restoration_roles' => $role_list( 'restoration_roles' ),
+			'compression_webp' => $flag( 'compression_webp' ),
+			'compression_avif' => $flag( 'compression_avif' ),
+			'compression_jxl' => $flag( 'compression_jxl' ),
+			'compression_jpg' => $flag( 'compression_jpg' ),
 			'delete_data_on_deactivation' => $flag( 'delete_data_on_deactivation' ),
 			'delete_data_on_uninstall' => $flag( 'delete_data_on_uninstall' ),
 			'deep_folder_mode' => 'nearest_parent',
@@ -286,6 +299,37 @@ final class Admin {
 						</section>
 					<?php endif; ?>
 
+					<section class="uplink-mbe-card" id="uplink-mbe-compression-settings">
+						<h2><?php esc_html_e( 'Compression', 'media-bridge-for-etch' ); ?></h2>
+						<input type="hidden" name="uplink_mbe_settings[image_conversion]" value="0">
+						<label class="uplink-mbe-toggle"><input id="uplink-mbe-use-compression" type="checkbox" name="uplink_mbe_settings[image_conversion]" value="1" <?php checked( $settings['image_conversion'] ); ?>><span><?php esc_html_e( 'Use compression', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description"><?php esc_html_e( 'On by default. Lets permitted users preview and compress images in the Enhanced Manager. Turn it off to disable new compression; existing originals can still be restored.', 'media-bridge-for-etch' ); ?></p>
+						<fieldset class="uplink-mbe-compression-formats" aria-describedby="uplink-mbe-compression-formats-help">
+							<legend><?php esc_html_e( 'Output formats', 'media-bridge-for-etch' ); ?></legend>
+							<?php foreach ( array( 'webp' => 'WebP', 'avif' => 'AVIF', 'jxl' => 'JPEG XL', 'jpg' => 'JPG' ) as $format => $format_label ) : ?>
+								<input type="hidden" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="0">
+								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="1" <?php checked( $settings[ 'compression_' . $format ] ); ?>><span><?php echo esc_html( $format_label ); ?></span></label>
+							<?php endforeach; ?>
+							<p id="uplink-mbe-compression-formats-help" class="description"><?php esc_html_e( 'WebP and AVIF are on by default. JPEG XL and JPG are off by default. Only selected formats appear in the preview workspace. JPG does not support transparency.', 'media-bridge-for-etch' ); ?></p>
+						</fieldset>
+						<h3><?php esc_html_e( 'Compression and restoration permissions', 'media-bridge-for-etch' ); ?></h3>
+						<p class="description"><?php esc_html_e( 'Choose roles separately for each action. Users must also have permission to upload files and edit the specific image. Both actions default to administrators only. Restoration remains available to permitted users when compression is turned off.', 'media-bridge-for-etch' ); ?></p>
+						<table class="widefat striped">
+							<thead><tr><th scope="col"><?php esc_html_e( 'Role', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Compress images', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Restore originals', 'media-bridge-for-etch' ); ?></th></tr></thead>
+							<tbody>
+							<?php foreach ( wp_roles()->roles as $role_slug => $role_data ) : ?>
+								<tr><th scope="row"><?php echo esc_html( translate_user_role( $role_data['name'] ) ); ?></th>
+								<?php foreach ( array( 'compression_roles' => __( 'Compress images', 'media-bridge-for-etch' ), 'restoration_roles' => __( 'Restore originals', 'media-bridge-for-etch' ) ) as $permission_key => $permission_label ) : ?>
+									<td><label><input type="checkbox" name="uplink_mbe_settings[<?php echo esc_attr( $permission_key ); ?>][]" value="<?php echo esc_attr( $role_slug ); ?>" <?php checked( in_array( $role_slug, $settings[ $permission_key ], true ) ); ?>><span class="screen-reader-text"><?php echo esc_html( translate_user_role( $role_data['name'] ) . ': ' . $permission_label ); ?></span></label></td>
+								<?php endforeach; ?></tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+						<input type="hidden" name="uplink_mbe_settings[compression_roles][]" value="">
+						<input type="hidden" name="uplink_mbe_settings[restoration_roles][]" value="">
+
+					</section>
+
 					<section class="uplink-mbe-card">
 						<h2><?php esc_html_e( 'File replacement', 'media-bridge-for-etch' ); ?></h2>
 						<input type="hidden" name="uplink_mbe_settings[file_replacement]" value="0">
@@ -423,6 +467,10 @@ final class Admin {
 				<input type="hidden" name="uplink_mbe_settings[exif_gps]" value="0">
 				<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[exif_gps]" value="1" <?php checked( $settings['exif_gps'] ); ?>><span><?php esc_html_e( 'Include embedded GPS coordinates in Etch data and the attachment editor', 'media-bridge-for-etch' ); ?></span></label>
 				<p class="description uplink-mbe-warning"><?php esc_html_e( 'Disabled by default. Location metadata can reveal where a photograph was taken.', 'media-bridge-for-etch' ); ?></p>
+				<input type="hidden" name="uplink_mbe_settings[exif_map]" value="0">
+				<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[exif_map]" value="1" <?php checked( $settings['exif_map'] ); ?>><span><?php esc_html_e( 'Show photo locations on a map in the Enhanced Manager', 'media-bridge-for-etch' ); ?></span></label>
+				<p class="description"><?php esc_html_e( 'Requires embedded GPS coordinates to be enabled above. Opening the EXIF map sends the viewed location, your IP address and browser information to Esri or OpenStreetMap to load map tiles.', 'media-bridge-for-etch' ); ?></p>
+
 				<?php submit_button( __( 'Save EXIF settings', 'media-bridge-for-etch' ) ); ?>
 			</form>
 		</section>

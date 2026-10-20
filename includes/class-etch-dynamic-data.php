@@ -73,9 +73,13 @@ final class Etch_Dynamic_Data {
 		return $data;
 	}
 
-	public function invalidate_attachment( int $attachment_id ): void {
-		unset( self::$cache[ $attachment_id ] );
+	public static function invalidate_cache( int $attachment_id ): void {
+		unset( self::$cache[ $attachment_id . ':0' ], self::$cache[ $attachment_id . ':1' ] );
 		self::delete_global_caches();
+	}
+
+	public function invalidate_attachment( int $attachment_id ): void {
+		self::invalidate_cache( $attachment_id );
 	}
 
 	/**
@@ -128,14 +132,26 @@ final class Etch_Dynamic_Data {
 	}
 
 	public static function attachment_exif( int $attachment_id ): array {
-		if ( isset( self::$cache[ $attachment_id ] ) ) {
-			return self::$cache[ $attachment_id ];
+		$cache_key = $attachment_id . ':' . ( empty( Plugin::settings()['exif_gps'] ) ? '0' : '1' );
+		if ( isset( self::$cache[ $cache_key ] ) ) {
+			return self::$cache[ $cache_key ];
 		}
 		$metadata   = wp_get_attachment_metadata( $attachment_id );
 		$image_meta = is_array( $metadata ) && isset( $metadata['image_meta'] ) && is_array( $metadata['image_meta'] ) ? $metadata['image_meta'] : array();
 		$file        = get_attached_file( $attachment_id );
 		$original_file = function_exists( 'wp_get_original_image_path' ) ? wp_get_original_image_path( $attachment_id ) : '';
 		$exif_file   = $original_file && is_file( $original_file ) && is_readable( $original_file ) ? $original_file : $file;
+		$conversion = get_post_meta( $attachment_id, '_uplink_mbe_conversion_backup', true );
+		if ( is_array( $conversion ) ) {
+			$sources = $conversion['sources'] ?? array();
+			$candidate = $sources['original_image']['path'] ?? $sources['full']['path'] ?? '';
+			if ( $candidate && ! isset( $sources['original_image'] ) && 'bulk' === ( $conversion['old']['metadata']['cimo']['bulk_optimization']['full']['status'] ?? '' ) ) {
+				$cimo_backup = dirname( $candidate ) . '/' . pathinfo( $candidate, PATHINFO_FILENAME ) . '-backup.' . pathinfo( $candidate, PATHINFO_EXTENSION );
+				if ( is_file( $cimo_backup ) ) $candidate = $cimo_backup;
+			}
+			$base = realpath( wp_get_upload_dir()['basedir'] ); $real = $candidate ? realpath( $candidate ) : false;
+			if ( $base && $real && str_starts_with( $real, $base . DIRECTORY_SEPARATOR ) && is_readable( $real ) ) $exif_file = $real;
+		}
 		$width       = is_array( $metadata ) ? absint( $metadata['width'] ?? 0 ) : 0;
 		$height      = is_array( $metadata ) ? absint( $metadata['height'] ?? 0 ) : 0;
 		$camera      = sanitize_text_field( (string) ( $image_meta['camera'] ?? '' ) );
@@ -194,7 +210,7 @@ final class Etch_Dynamic_Data {
 				'altitude_ft' => null !== $altitude_m ? self::trim_decimal( $altitude_m * 3.28084 ) . ' ft' : null,
 			),
 		);
-		self::$cache[ $attachment_id ] = $result;
+		self::$cache[ $cache_key ] = $result;
 		return $result;
 	}
 

@@ -1,0 +1,104 @@
+/* Conversion controls use the manager palette, with measured foreground fallbacks. */
+#uplink-mbe-conversion-controls {box-sizing:border-box;padding:24px;margin-block-end:20px;color:var(--conversion-text,#1d2327);font-size:13px;line-height:1.55}
+#uplink-mbe-conversion-controls [hidden],.uplink-mbe-comparison-dialog [hidden] {display:none!important}
+#uplink-mbe-conversion-controls>h4 {font-size:18px;line-height:1.35;margin:0 0 10px;color:inherit}
+.uplink-mbe-conversion-intro {max-width:65ch;margin:0 0 18px;color:var(--conversion-muted)}
+.uplink-mbe-conversion-source {margin:0 0 16px;color:var(--conversion-muted);font-size:13px}
+.uplink-mbe-conversion-status {overflow-wrap:anywhere;padding:10px 0;margin:0;color:var(--conversion-text);font-size:13px}
+.uplink-mbe-conversion-cards {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:20px}
+.uplink-mbe-conversion-card {min-width:0;overflow:hidden;border:1px solid var(--mbe-border,#68707a);border-radius:12px;background:var(--conversion-surface);color:var(--conversion-text);padding:16px;box-shadow:0 2px 5px #0000000a}
+.uplink-mbe-conversion-card h4 {margin:0 0 14px!important;font-size:16px!important;line-height:1.3;color:inherit!important}
+.uplink-mbe-format-preview {min-width:0;overflow:hidden;border-radius:7px;background:var(--conversion-surface)}
+.uplink-mbe-format-preview>.uplink-mbe-preview-placeholder {display:block;width:100%;aspect-ratio:4/3;object-fit:contain;margin:0;opacity:.7}
+.uplink-mbe-format-stats {display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;min-height:24px;margin:14px 0;font-size:13px;font-variant-numeric:tabular-nums;color:var(--conversion-muted)}
+.uplink-mbe-format-stats strong {font-size:18px;font-weight:650;color:var(--conversion-text)}
+.uplink-mbe-savings {font-size:12px;font-weight:600;color:var(--conversion-text)}
+.uplink-mbe-format-quality {display:grid;grid-template-columns:1fr auto;gap:8px;margin:16px 0 18px;padding-top:14px;border-top:1px solid var(--mbe-border,#68707a);font-size:13px;color:var(--conversion-text);font-weight:600}
+.uplink-mbe-format-quality output {padding:0 6px;min-width:2ch;text-align:center;border-radius:4px;background:var(--conversion-surface);color:var(--conversion-text);font-variant-numeric:tabular-nums}
+.uplink-mbe-quality-hints {grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;color:var(--conversion-muted);font-size:11px;font-weight:400}
+.uplink-mbe-format-quality input[type="range"] {appearance:none;-webkit-appearance:none;grid-column:1/-1;width:100%;height:24px;max-width:none;margin:0;background:transparent;cursor:pointer}
+.uplink-mbe-format-quality input[type="range"]::-webkit-slider-runnable-track {height:4px;background:var(--conversion-border);border-radius:2px}
+.uplink-mbe-format-quality input[type="range"]::-moz-range-track {height:4px;background:var(--conversion-border);border-radius:2px}
+.uplink-mbe-format-quality input[type="range"]::-webkit-slider-thumb {appearance:none;-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:50%;border:2px solid var(--conversion-surface);background:var(--conversion-accent);box-shadow:0 0 0 1px var(--conversion-accent)}
+.uplink-mbe-format-quality input[type="range"]::-moz-range-thumb {width:16px;height:16px;border-radius:50%;border:2px solid var(--conversion-surface);background:var(--conversion-accent);box-shadow:0 0 0 1px var(--conversion-accent)}
+.uplink-mbe-format-actions {display:flex;align-items:center;gap:10px;margin-top:8px}
+.uplink-mbe-format-actions .button {flex:1}
+#uplink-mbe-conversion-controls .button,.uplink-mbe-comparison-dialog .button {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:40px;padding:8px 14px;border:1px solid var(--conversion-border)!important;border-radius:6px;background:var(--conversion-surface)!important;color:var(--conversion-text)!important;font-size:13px;font-weight:600;line-height:1.35;text-decoration:none;white-space:normal;text-shadow:none;box-shadow:none;cursor:pointer}
+#uplink-mbe-conversion-controls .button-primary {background:var(--conversion-accent)!important;color:var(--conversion-on-accent)!important;border-color:var(--conversion-accent)!important}
+#uplink-mbe-conversion-controls .button:hover:not(:disabled),.uplink-mbe-comparison-dialog .button:hover:not(:disabled) {text-decoration:underline;text-underline-offset:3px}
+#uplink-mbe-conversion-controls .button:disabled {opacity:1;cursor:wait;color:var(--conversion-muted)!important;background:var(--conversion-surface)!important;border-style:dashed}
+#uplink-mbe-conversion-controls .button:focus-visible,#uplink-mbe-conversion-controls input:focus-visible,#uplink-mbe-conversion-controls summary:focus-visible,.uplink-mbe-comparison-dialog button:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px;box-shadow:none}
+#uplink-mbe-conversion-controls table {width:100%;border-collapse:collapse;margin-block:16px;font-size:12px}
+#uplink-mbe-conversion-controls th,#uplink-mbe-conversion-controls td {text-align:start;padding:8px 5px;overflow-wrap:anywhere;border-block-end:1px solid var(--mbe-border,#68707a)}
+.uplink-mbe-attachment-inspector.is-expanded:has(#uplink-mbe-attachment-optimization-tab[aria-selected="true"]):has(#uplink-mbe-conversion-controls.is-comparing) .uplink-mbe-attachment-dialog {grid-template-columns:minmax(0,1fr)}
+.uplink-mbe-attachment-inspector.is-expanded:has(#uplink-mbe-attachment-optimization-tab[aria-selected="true"]):has(#uplink-mbe-conversion-controls.is-comparing) .uplink-mbe-attachment-preview-wrap {display:none}
+.uplink-mbe-attachment-inspector.is-expanded:has(#uplink-mbe-attachment-optimization-tab[aria-selected="true"]):has(#uplink-mbe-conversion-controls.is-comparing) .uplink-mbe-attachment-info {grid-column:1/-1}
+.uplink-mbe-attachment-inspector .uplink-mbe-attachment-metadata-tabs button {flex:1 1 auto;font-size:11px;padding-inline:7px}
+/* Pixels on both sides share the same frame, scaling and alignment. */
+.uplink-mbe-image-comparison {position:relative;width:100%;overflow:hidden;isolation:isolate;background:repeating-conic-gradient(#666 0% 25%,#333 0% 50%) 50%/16px 16px}
+.uplink-mbe-image-comparison img {position:absolute!important;inset:0;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;aspect-ratio:auto!important;margin:0!important;background:none!important;user-select:none;pointer-events:none}
+.uplink-mbe-comparison-original {z-index:1}
+.uplink-mbe-comparison-divider {position:absolute;top:0;bottom:0;z-index:2;width:2px;background:#fff;box-shadow:0 0 0 1px #000;pointer-events:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;text-shadow:0 1px 3px #000}
+.uplink-mbe-comparison-divider::before {content:"";position:absolute;top:50%;width:34px;height:34px;transform:translateY(-50%);border:2px solid #fff;border-radius:50%;background:#171a1d;box-shadow:0 0 0 1px #000;z-index:-1}
+.uplink-mbe-comparison-label {position:absolute;z-index:3;top:8px;padding:4px 7px;border-radius:4px;background:#171a1d;color:#fff;font-size:11px;font-weight:600;pointer-events:none}
+.uplink-mbe-comparison-label.is-original {left:8px}
+.uplink-mbe-comparison-label.is-compressed {right:8px}
+.uplink-mbe-image-comparison input.uplink-mbe-comparison-range {position:absolute;inset:0;z-index:4;width:100%;height:100%;min-height:0;max-width:none;margin:0;opacity:0;cursor:ew-resize;touch-action:pan-y}
+.uplink-mbe-image-comparison:focus-within {outline:3px solid var(--conversion-accent);outline-offset:-3px}
+.uplink-mbe-comparison-dialog {width:min(1400px,96vw);max-width:96vw;max-height:94dvh;box-sizing:border-box;padding:20px;border:1px solid var(--conversion-border);border-radius:12px;background:var(--conversion-surface);color:var(--conversion-text);overflow:auto}
+.uplink-mbe-comparison-dialog::backdrop {background:#000d}
+.uplink-mbe-comparison-dialog header {display:flex;align-items:center;justify-content:space-between;gap:16px}
+.uplink-mbe-comparison-dialog h2 {margin:0;font-size:18px;color:inherit}
+.uplink-mbe-comparison-dialog>.uplink-mbe-image-comparison {width:min(100%,calc(72dvh * var(--mbe-comparison-ratio,1.5)));margin:18px auto;border-radius:6px}
+.uplink-mbe-comparison-dialog>p {margin-bottom:0;font-size:13px;color:var(--conversion-muted)}
+/* Saving and restoration retain the blocking overlay; previews stay visible. */
+.uplink-mbe-attachment-dialog:has(> .uplink-mbe-conversion-overlay) {position:relative}
+.uplink-mbe-conversion-overlay[hidden] {display:none}
+.uplink-mbe-conversion-overlay {position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:24px;background:#000b;cursor:wait;outline:none;box-sizing:border-box}
+.uplink-mbe-conversion-overlay-panel {width:min(440px,100%);box-sizing:border-box;padding:32px 24px;text-align:center;background:var(--mbe-surface,#fff);color:var(--mbe-text,#1d2327);border:1px solid var(--mbe-border,#68707a);border-radius:12px;box-shadow:0 12px 48px #0006}
+.uplink-mbe-conversion-overlay-panel h3 {margin:16px 0 12px;font-size:20px;line-height:1.3;color:inherit}
+.uplink-mbe-conversion-overlay-status {margin:0;font-size:16px;line-height:1.5;font-weight:600;color:inherit;overflow-wrap:anywhere}
+.uplink-mbe-conversion-overlay-help {margin:16px 0 0;font-size:13px;line-height:1.5;color:var(--mbe-muted,#50575e)}
+.uplink-mbe-conversion-spinner {display:inline-block;width:36px;height:36px;border:4px solid var(--mbe-border,#68707a);border-top-color:var(--mbe-accent,#2271b1);border-radius:50%;animation:uplink-mbe-conversion-spin .9s linear infinite}
+.is-processing .uplink-mbe-format-stats::before {content:"";display:inline-block;width:12px;height:12px;border:2px solid var(--conversion-border);border-top-color:var(--conversion-accent);border-radius:50%;animation:uplink-mbe-conversion-spin .9s linear infinite}
+@keyframes uplink-mbe-conversion-spin {to {transform:rotate(360deg)}}
+@media(min-width:901px) {.uplink-mbe-attachment-inspector:not(.is-expanded) .uplink-mbe-conversion-cards {grid-template-columns:minmax(0,1fr)}}
+@media(max-width:900px) {.uplink-mbe-conversion-cards {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px) {.uplink-mbe-conversion-cards {grid-template-columns:minmax(0,1fr)}.uplink-mbe-comparison-dialog {padding:12px}.uplink-mbe-comparison-dialog h2 {font-size:15px}}
+@media(prefers-reduced-motion:reduce) {.uplink-mbe-conversion-spinner,.is-processing .uplink-mbe-format-stats::before {animation:none}}
+/* Keep the comparison, quality and apply action in one compact workspace. */
+#uplink-mbe-conversion-controls.is-comparing>h4 {display:none}
+.uplink-mbe-format-preview>.uplink-mbe-image-comparison,.uplink-mbe-format-preview>.uplink-mbe-preview-placeholder {height:clamp(120px,20vh,240px);aspect-ratio:auto!important}
+.uplink-mbe-conversion-card {padding:14px}
+.uplink-mbe-conversion-card h4 {margin-bottom:12px!important}
+.uplink-mbe-format-quality {margin:10px 0 12px;padding-top:10px;gap:6px}
+.uplink-mbe-quality-hints {display:none}
+.uplink-mbe-attachment-inspector.is-expanded:has(#uplink-mbe-attachment-optimization-tab[aria-selected="true"]):has(#uplink-mbe-conversion-controls.is-comparing) .uplink-mbe-attachment-actions {display:none}
+@media(max-width:640px) {.uplink-mbe-format-preview>.uplink-mbe-image-comparison,.uplink-mbe-format-preview>.uplink-mbe-preview-placeholder {height:clamp(160px,28vh,280px)}}
+#uplink-mbe-conversion-controls {background:var(--conversion-surface)}
+.uplink-mbe-image-comparison.is-opaque {background:#171a1d}
+
+@media(max-width:640px) {#uplink-mbe-conversion-controls {padding:16px}}
+.uplink-mbe-conversion-cards {grid-template-columns:repeat(var(--conversion-columns,3),minmax(0,1fr))}
+.uplink-mbe-format-heading {display:flex;justify-content:flex-start;align-items:center;gap:10px;margin-bottom:12px}
+.uplink-mbe-format-heading h4 {margin:0!important}
+#uplink-mbe-conversion-controls .uplink-mbe-format-info {display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;width:28px;height:28px;padding:0;border:1px solid var(--conversion-border);border-radius:50%;background:var(--conversion-surface);color:var(--conversion-text);font:600 14px/1 Georgia,serif;cursor:pointer}
+#uplink-mbe-conversion-controls .uplink-mbe-format-info:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
+.uplink-mbe-format-info-popup {position:fixed;z-index:1000000;box-sizing:border-box;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:18px;border:1px solid var(--conversion-border);border-radius:10px;background:var(--conversion-surface);color:var(--conversion-text);box-shadow:0 8px 32px #0006;font-size:13px;line-height:1.6}
+.uplink-mbe-format-info-header {display:flex;align-items:start;justify-content:space-between;gap:12px}
+.uplink-mbe-format-info-header h4 {margin:0;color:inherit;font-size:14px;line-height:1.5}
+.uplink-mbe-format-info-popup p {margin:12px 0 0;font-size:13px;color:inherit}
+.uplink-mbe-format-info-popup .uplink-mbe-info-close {display:grid;place-items:center;width:28px;height:28px;min-height:28px;padding:0;border:1px solid var(--conversion-border);border-radius:5px;background:var(--conversion-surface);color:var(--conversion-text);font:20px/1 sans-serif;cursor:pointer}
+.uplink-mbe-format-info-popup .uplink-mbe-info-close:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
+@media(max-width:900px) {.uplink-mbe-conversion-cards {grid-template-columns:repeat(min(var(--conversion-columns,3),2),minmax(0,1fr))}}
+@media(max-width:640px) {.uplink-mbe-conversion-cards {grid-template-columns:minmax(0,1fr)}}
+#uplink-mbe-conversion-controls>a {color:var(--conversion-text);text-decoration:underline;text-underline-offset:3px}
+#uplink-mbe-conversion-controls>a:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
+.uplink-mbe-comparison-dialog .uplink-mbe-large-preview>.uplink-mbe-image-comparison {width:min(100%,calc(60dvh * var(--mbe-comparison-ratio,1.5)));margin:18px auto;border-radius:6px}
+.uplink-mbe-large-controls {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:center;padding:16px 0;border-top:1px solid var(--conversion-border)}
+.uplink-mbe-large-controls>.uplink-mbe-format-stats {grid-column:1/-1;margin:0;justify-content:start;gap:14px}
+.uplink-mbe-large-controls>.uplink-mbe-format-quality {width:min(440px,100%);margin:0;padding:0;border:0}
+.uplink-mbe-comparison-dialog .button-primary {background:var(--conversion-accent)!important;color:var(--conversion-on-accent)!important;border-color:var(--conversion-accent)!important}
+.uplink-mbe-comparison-dialog .button:disabled {color:var(--conversion-muted)!important;background:var(--conversion-surface)!important;border-style:dashed;cursor:wait}
+.uplink-mbe-comparison-dialog input[type="range"]:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
+@media(max-width:640px) {.uplink-mbe-large-controls {grid-template-columns:minmax(0,1fr)}.uplink-mbe-large-controls>.button {width:100%}}

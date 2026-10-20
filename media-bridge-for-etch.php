@@ -2,10 +2,10 @@
 /**
  * Plugin Name: Uplink Media Bridge for Etch
  * Description: Manage Etch media collections in WordPress, with optional Wicked Folders or HappyFiles synchronization.
- * Version: 2.5.7
+ * Version: 2.6.5
  * Plugin URI: https://uplinkplugins.com/articles/uplink-media-bridge-for-etch-version-2/
  * Author: Stephen Walker
- * License: GPL-2.0-or-later
+ * License: GPL-3.0-or-later
  * Requires at least: 7.0
  * Requires PHP: 8.3
  * Text Domain: media-bridge-for-etch
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'UPLINK_MBE_VERSION', '2.5.7' );
-define( 'UPLINK_MBE_ASSET_VERSION', '2.5.7' );
+define( 'UPLINK_MBE_VERSION', '2.6.5' );
+define( 'UPLINK_MBE_ASSET_VERSION', '2.6.5' );
 define( 'UPLINK_MBE_FILE', __FILE__ );
 define( 'UPLINK_MBE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'UPLINK_MBE_URL', plugin_dir_url( __FILE__ ) );
@@ -80,6 +80,9 @@ require_once UPLINK_MBE_PATH . 'includes/class-data-cleanup.php';
 require_once UPLINK_MBE_PATH . 'includes/class-sync-engine.php';
 require_once UPLINK_MBE_PATH . 'includes/class-upload-workspace.php';
 require_once UPLINK_MBE_PATH . 'includes/class-file-replacement.php';
+require_once UPLINK_MBE_PATH . 'includes/class-exif-map.php';
+require_once UPLINK_MBE_PATH . 'includes/class-image-references.php';
+require_once UPLINK_MBE_PATH . 'includes/class-image-conversion.php';
 require_once UPLINK_MBE_PATH . 'includes/class-native-media-library.php';
 require_once UPLINK_MBE_PATH . 'includes/class-etch-asset-manager.php';
 require_once UPLINK_MBE_PATH . 'includes/class-collection-gallery.php';

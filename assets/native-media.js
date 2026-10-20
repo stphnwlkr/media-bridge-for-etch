@@ -2472,6 +2472,7 @@
 	}
 
 	function setAttachmentMetadataTab( requestedTab, moveFocus = false ) {
+		if ( requestedTab === 'exif' ) requestAnimationFrame( () => window.uplinkMbeExifMap?.refresh( elements.attachmentExif ) );
 		const exifAvailable = ! elements.attachmentExifTab.hidden;
 		const optimizationAvailable = ! elements.attachmentOptimizationTab.hidden;
 		const activeTab = 'file' === requestedTab
@@ -2526,6 +2527,7 @@
 		elements.attachmentFilename.textContent = media.filename || '—';
 		elements.attachmentPath.textContent = media.filePath || media.filename;
 		elements.attachmentFullPath.textContent = media.fullFilePath || media.url || '';
+		elements.attachmentReplace.disabled = Boolean( media.conversion );
 		elements.attachmentReplace.hidden = ! media.canEdit || ! window.uplinkMbeReplacement;
 		elements.attachmentType.textContent = media.mime || media.fileType || '—';
 		elements.attachmentSize.textContent = media.fileSize || '—';
@@ -2553,7 +2555,8 @@
 			row.append( createElement( 'dt', '', item.label ), createElement( 'dd', '', item.value ) );
 			exifList.append( row );
 		} );
-		const hasExif = Boolean( state.display.exif && exifList.childElementCount );
+		window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
+		const hasExif = Boolean( state.display.exif && ( exifList.childElementCount || media.location ) );
 		elements.attachmentExifTab.hidden = ! hasExif;
 		if ( ! hasExif && 'true' === elements.attachmentExifTab.getAttribute( 'aria-selected' ) ) {
 			setAttachmentMetadataTab( 'main' );
@@ -2611,7 +2614,7 @@
 				row.append( createElement( 'dt', '', item.label ), createElement( 'dd', '', item.value ) );
 				optimizationList.append( row );
 			} );
-			const hasOptimization = Boolean( elements.attachmentOptimizationList.childElementCount );
+			const hasOptimization = Boolean( elements.attachmentOptimizationList.childElementCount || media.conversion || ( media.canConvert && window.uplinkMbeConversion ) );
 			elements.attachmentOptimizationTab.hidden = ! hasOptimization;
 			if ( ! hasOptimization && 'true' === elements.attachmentOptimizationTab.getAttribute( 'aria-selected' ) ) {
 				setAttachmentMetadataTab( 'main' );
@@ -2621,6 +2624,7 @@
 		elements.attachmentDelete.hidden = ! media.canDelete;
 		updateAttachmentSaveState();
 		updateAttachmentNavigation();
+		document.dispatchEvent( new CustomEvent( 'uplink-mbe-attachment-shown', { detail: media } ) );
 	}
 
 	async function deleteMedia( ids, fromModal = false ) {
@@ -2695,7 +2699,7 @@
 	}
 
 	async function navigateAttachment( direction ) {
-		if ( attachmentNavigationBusy || ! currentAttachment ) {
+		if ( window.uplinkMbeConversionBusy || attachmentNavigationBusy || ! currentAttachment ) {
 			return;
 		}
 
@@ -2751,6 +2755,8 @@
 	}
 
 	function closeAttachmentModal() {
+		if ( window.uplinkMbeConversionBusy ) return;
+		window.uplinkMbeExifMap?.dispose( elements.attachmentExif );
 		attachmentCompatGeneration++;
 		clearAttachmentNotice();
 		elements.attachmentModal.hidden = true;
@@ -3020,7 +3026,8 @@
 				// Storage can be unavailable in privacy-restricted browser sessions.
 			}
 			if ( 'exif' === toggle.dataset.displayField && currentAttachment ) {
-				const hasExif = Boolean( toggle.checked && elements.attachmentExif.querySelector( 'dl' )?.childElementCount );
+				window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
+		const hasExif = Boolean( toggle.checked && elements.attachmentExif.querySelector( 'dl' )?.childElementCount );
 				elements.attachmentExifTab.hidden = ! hasExif;
 				if ( ! hasExif ) {
 					setAttachmentMetadataTab( 'main' );
@@ -3147,6 +3154,25 @@
 	} );
 	elements.collectionForm.addEventListener( 'submit', saveCollection );
 	elements.attachmentSaveAlt.addEventListener( 'click', () => saveAttachmentAlt() );
+	document.addEventListener( 'uplink-mbe-conversion-complete', async event => {
+		const id = event.detail.id;
+		try {
+			await loadState();
+			if ( currentAttachment?.id !== id ) return;
+			const media = await request( 'uplink_mbe_get_attachment', { attachment_id: id } );
+			showAttachment( media ); setAttachmentMetadataTab( 'optimization' );
+		} catch ( error ) { showToast( error.message, 'error' ); }
+	} );
+	const conversionDisabledState = new WeakMap();
+	document.addEventListener( 'uplink-mbe-conversion-busy', event => {
+		window.uplinkMbeConversionBusy = event.detail;
+		elements.attachmentModal.querySelectorAll( '[data-attachment-close], input, textarea, #uplink-mbe-attachment-previous, #uplink-mbe-attachment-next, #uplink-mbe-attachment-replace, #uplink-mbe-attachment-delete' ).forEach( node => {
+			if ( node.closest( '#uplink-mbe-conversion-controls' ) ) return;
+			if ( event.detail ) { conversionDisabledState.set( node, node.disabled ); node.disabled = true; }
+			else if ( conversionDisabledState.has( node ) ) { node.disabled = conversionDisabledState.get( node ); conversionDisabledState.delete( node ); }
+		} );
+		if ( ! event.detail ) { updateAttachmentNavigation(); updateAttachmentSaveState(); }
+	} );
 	elements.attachmentModal.addEventListener( 'input', updateAttachmentSaveState );
 	elements.attachmentModal.addEventListener( 'change', updateAttachmentSaveState );
 	elements.attachmentDecorative.addEventListener( 'change', () => {

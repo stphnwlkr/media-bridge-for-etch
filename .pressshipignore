@@ -1,1 +1,7 @@
-.gitattributes
+/.gitattributes
+/README.md
+/tests/
+/tools/
+/verification/
+/builds/
+/media-bridge-for-etch.zip

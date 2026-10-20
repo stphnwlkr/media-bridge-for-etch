@@ -4,8 +4,8 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.5.7
-License: GPLv2 or later
+Stable tag: 2.6.5
+License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
 
@@ -58,7 +58,7 @@ Wicked Folders and HappyFiles can synchronize folder hierarchies and media assig
 
 Media Bridge also adds an optional uniform square-grid view with adjustable thumbnail widths to the Etch Asset Manager. This does not add collection-specific sorting to that manager.
 
-Supported Cimo pre-upload optimization runs through the shared upload workflow. Media Bridge does not provide its own image compression engine. Instant Images and Ops Center integrations are available when those plugins are installed.
+Supported Cimo pre-upload optimization runs through the shared upload workflow. The Enhanced Manager also offers browser-based compression and format conversion without Cimo Pro. Instant Images and Ops Center integrations are available when those plugins are installed.
 
 = Permissions and data =
 
@@ -259,6 +259,42 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.6.5 =
+
+* Adds independent role permissions for image compression and original restoration, defaulting to administrators. Upload and image-edit permissions remain required.
+
+= 2.6.4 =
+
+* Adds Compression settings with an enabled-by-default master switch and individual WebP, AVIF, JPEG XL and JPG selections. WebP and AVIF default on; JPEG XL and JPG default off.
+* Uses the selected formats throughout previews and conversion, replacing the separate JPG action.
+* Moves JPEG XL fallback information into a popup beside its heading.
+* Adds synchronized quality adjustment and Apply compression to the larger comparison.
+
+= 2.6.3 =
+
+* Adds padding inside the compression panel, with a smaller inset on mobile.
+
+= 2.6.2 =
+
+* Starts compression with suggested-quality previews and reveals sliders beneath completed images.
+* Shows preview progress inline and lets completed comparisons be inspected while other formats process.
+* Simplifies format cards, savings summaries and actions, with current-format compression available separately.
+* Applies the manager palette and contrast-checked foregrounds to format controls and larger comparisons.
+
+= 2.6.1 =
+
+* Moves quality controls into each format card as sliders. Releasing a slider refreshes only that format.
+* Adds draggable Original/Compressed comparisons and a larger keyboard-accessible comparison dialog for every format.
+* Keeps preview pixels, size estimates and saved quality synchronized.
+
+= 2.6.0 =
+
+* Adds optional GPS maps with satellite and OpenStreetMap layers to the Enhanced attachment editor. GPS exposure and mapping both require administrator opt-in.
+* Adds a setting for local WebP, AVIF and JPEG XL compression, format previews, quality controls, all-size conversion, saved results and restoration of originals.
+* Keeps original-format fallbacks for JPEG XL and preserves attachment details, collections and image references.
+* Fixes upload translation context and file-writability checks found by WordPress Plugin Check.
+
 
 = 2.5.7 =
 
@@ -680,3 +716,16 @@ Example: [etch_collection_gallery collection="123" layout="slider" slides="4" ca
 * Added Etch, Wicked Folders and HappyFiles providers.
 * Added bidirectional folders and attachment assignments.
 * Added reconciliation, conflict policy, deletion safety and sync history.
+
+== Image compression and photo maps ==
+
+Under Media > Uplink Media Bridge > Settings > Compression, use the master switch and choose WebP, AVIF, JPEG XL or JPG to let permitted users compare the enabled formats in the Enhanced editor's Optimization tab. Quality controls and full-size previews help compare results before saving. Every stored image size is converted, with original files retained for restoration. JPEG XL adds responsive picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep the original format. Current-site content, metadata and options referencing converted WebP, AVIF or JPG files are updated. Custom tables and external sites are outside this workflow. Module workers, WebAssembly and OffscreenCanvas are required. Animated source images are left unchanged. Compression settings also provide separate role selections for compression and restoration. Both default to administrators only. Selected users must still be able to upload files and edit the specific image. Restoration access is independent of the compression master switch.
+
+GPS exposure and photo maps are off by default and require separate opt-ins under EXIF. The EXIF display option in the Enhanced Manager must also be on. Maps use bundled Leaflet 1.9.4. Opening a photo's EXIF map requests tiles from Esri World Imagery or OpenStreetMap and sends the displayed location, IP address and browser information to that provider. No map tiles are requested when mapping or GPS exposure is disabled.
+
+Esri terms: https://www.esri.com/en-us/legal/terms/full-master-agreement
+Esri privacy: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement
+OpenStreetMap terms: https://osmfoundation.org/wiki/Terms_of_Use
+OpenStreetMap privacy: https://osmfoundation.org/wiki/Privacy_Policy
+
+Bundled image encoders run locally. Codec source, build and license references are in assets/vendor/jsquash/SOURCES.md. Leaflet source and license are in assets/vendor/leaflet. This release uses GPL-3.0-or-later for compatibility with the bundled Apache-2.0 codec wrappers. Third-party libraries retain their own licenses.

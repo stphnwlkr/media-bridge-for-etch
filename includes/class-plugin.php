@@ -34,7 +34,7 @@ final class Plugin {
 
 	public static function toast_assets(): void {
 		// Frontend controls only load in the authenticated Etch builder.
-		if ( ! is_admin() && ( ! current_user_can( 'upload_files' ) || 'magic' !== ( $_GET['etch'] ?? '' ) ) ) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! is_admin() && ( ! current_user_can( 'upload_files' ) || 'magic' !== sanitize_key( wp_unslash( $_GET['etch'] ?? '' ) ) ) ) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_enqueue_style( 'uplink-mbe-toasts', UPLINK_MBE_URL . 'assets/toasts.css', array(), UPLINK_MBE_ASSET_VERSION );
 		wp_enqueue_script( 'uplink-mbe-toasts', UPLINK_MBE_URL . 'assets/toasts.js', array(), UPLINK_MBE_ASSET_VERSION, false );
 		wp_localize_script( 'uplink-mbe-toasts', 'uplinkMbeToastStrings', array( 'dismiss' => __( 'Dismiss notification', 'media-bridge-for-etch' ) ) );
@@ -82,6 +82,7 @@ final class Plugin {
 			new Etch_Dynamic_Data();
 		}
 		new File_Replacement();
+		new Image_Conversion();
 		new Etch_Asset_Manager();
 		new Native_Media_Library( $this->providers['etch'], is_admin() );
 		add_action( 'init', array( $this, 'boot' ), 100 );
@@ -212,6 +213,14 @@ final class Plugin {
 			'collection_gallery' => 1,
 			'exif_dynamic_data' => 1,
 			'exif_gps'         => 0,
+			'exif_map'         => 0,
+			'image_conversion' => 1,
+			'compression_roles' => array( 'administrator' ),
+			'restoration_roles' => array( 'administrator' ),
+			'compression_webp' => 1,
+			'compression_avif' => 1,
+			'compression_jxl' => 0,
+			'compression_jpg' => 0,
 			'delete_data_on_deactivation' => 0,
 			'delete_data_on_uninstall' => 0,
 			'deep_folder_mode' => 'nearest_parent',

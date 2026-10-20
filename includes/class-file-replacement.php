@@ -48,14 +48,16 @@ final class File_Replacement {
 		check_ajax_referer( 'uplink_mbe_replace_file', 'nonce' );
 		if ( empty( Plugin::settings()['file_replacement'] ) ) wp_send_json_error( array( 'message' => __( 'Media Bridge file replacement is disabled in settings.', 'media-bridge-for-etch' ) ), 403 );
 		$id = absint( $_POST['attachment_id'] ?? 0 );
+		if ( Image_Conversion::active( $id ) ) wp_send_json_error( array( 'message' => __( 'Restore the original in the Optimization tab before replacing this file.', 'media-bridge-for-etch' ) ), 409 );
 		$mode = sanitize_key( wp_unslash( $_POST['mode'] ?? '' ) );
 		if ( ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_post', $id ) || 'attachment' !== get_post_type( $id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You cannot replace this attachment.', 'media-bridge-for-etch' ) ), 403 );
 		}
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only presence is checked here; wp_handle_upload validates the file below.
 		if ( ! in_array( $mode, array( 'keep', 'new' ), true ) || empty( $_FILES['file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Choose a replacement file and how to name it.', 'media-bridge-for-etch' ) ), 400 );
 		}
-		if ( (int) ( $_FILES['file']['size'] ?? 0 ) > wp_max_upload_size() ) wp_send_json_error( array( 'message' => __( 'The replacement exceeds the upload size limit.', 'media-bridge-for-etch' ) ), 400 );
+		if ( absint( $_FILES['file']['size'] ?? 0 ) > wp_max_upload_size() ) wp_send_json_error( array( 'message' => __( 'The replacement exceeds the upload size limit.', 'media-bridge-for-etch' ) ), 400 );
 		// An atomic option prevents two replacements of the same attachment running together.
 		$lock = 'uplink_mbe_replacing_' . $id;
 		if ( ! add_option( $lock, time(), '', false ) ) {
@@ -92,7 +94,7 @@ final class File_Replacement {
 			if ( ! in_array( $mode, array( 'keep', 'new' ), true ) ) throw new \RuntimeException( __( 'Invalid replacement option.', 'media-bridge-for-etch' ) );
 			$base = realpath( wp_get_upload_dir()['basedir'] );
 			if ( ! $base || ! realpath( $staged ) || ! str_starts_with( realpath( $staged ), $base . DIRECTORY_SEPARATOR ) ) throw new \RuntimeException( __( 'The replacement must be stored in the local uploads directory.', 'media-bridge-for-etch' ) );
-			if ( 'keep' === $mode && ( ! $old_file || ! is_file( $old_file ) || ! str_starts_with( realpath( $old_file ), $base . DIRECTORY_SEPARATOR ) || ! is_writable( $old_file ) ) ) throw new \RuntimeException( __( 'The existing file must be writable in the local uploads directory to keep its URL.', 'media-bridge-for-etch' ) );
+			if ( 'keep' === $mode && ( ! $old_file || ! is_file( $old_file ) || ! str_starts_with( realpath( $old_file ), $base . DIRECTORY_SEPARATOR ) || ! wp_is_writable( $old_file ) ) ) throw new \RuntimeException( __( 'The existing file must be writable in the local uploads directory to keep its URL.', 'media-bridge-for-etch' ) );
 			// Generate against an isolated staging attachment so hooks cannot update the live record mid-replacement.
 			$temp_id = wp_insert_attachment( array( 'post_mime_type' => $upload['type'], 'post_title' => 'Media Bridge replacement staging', 'post_status' => 'inherit' ), $staged, 0, true );
 			if ( is_wp_error( $temp_id ) ) throw new \RuntimeException( $temp_id->get_error_message() );

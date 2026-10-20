@@ -55,26 +55,34 @@ final class Upload_Workspace {
 				'fileOverLimit' => __( 'Over the upload limit', 'media-bridge-for-etch' ),
 				'fileReady' => __( 'Ready', 'media-bridge-for-etch' ),
 				'fileWillOptimize' => __( 'Will optimize', 'media-bridge-for-etch' ),
+				/* translators: %d: Number of files exceeding the upload limit. */
 				'filesOverLimit' => __( '%d over limit', 'media-bridge-for-etch' ),
+				/* translators: %1$d: Total files. %2$s: Combined size of files ready to upload. */
 				'filesReady' => __( '%1$d files · %2$s ready', 'media-bridge-for-etch' ),
 				'keepOriginals' => __( 'Keep originals', 'media-bridge-for-etch' ),
 				'keepOriginalsHelp' => __( 'Upload the original file without Cimo pre-upload optimization. This can preserve embedded EXIF data.', 'media-bridge-for-etch' ),
 				'newCollection' => __( 'New collection', 'media-bridge-for-etch' ),
 				'parentCollection' => __( 'Parent collection', 'media-bridge-for-etch' ),
 				'perFile' => __( 'per file', 'media-bridge-for-etch' ),
+				/* translators: %s: File name. */
 				'removeFile' => __( 'Remove %s', 'media-bridge-for-etch' ),
 				'renameUploadHelp' => __( 'You can rename optimized files too. The extension matches the file format.', 'media-bridge-for-etch' ),
+				/* translators: %d: Number of failed uploads. */
 				'retryFiles' => __( 'Retry %d', 'media-bridge-for-etch' ),
 				'topLevel' => __( 'Top level', 'media-bridge-for-etch' ),
 				'uncategorized'  => __( 'Uncategorized', 'media-bridge-for-etch' ),
+				/* translators: %d: Number of uploaded files. */
 				'uploadComplete' => __( '%d uploaded', 'media-bridge-for-etch' ),
 				'uploadFailed' => __( 'WordPress could not upload this file.', 'media-bridge-for-etch' ),
 				'uploadFileName' => __( 'File name', 'media-bridge-for-etch' ),
+				/* translators: %d: Number of files queued for upload. */
 				'uploadFiles' => __( 'Upload %d', 'media-bridge-for-etch' ),
 				'uploadHeading' => __( 'Upload', 'media-bridge-for-etch' ),
 				'uploadInstructions' => defined( 'CIMO_FILE' ) ? __( 'Choose a collection, then add files. Optimization stays on unless you keep originals.', 'media-bridge-for-etch' ) : __( 'Choose a collection, then add files.', 'media-bridge-for-etch' ),
+				/* translators: %1$d: Uploaded files. %2$d: Failed uploads. */
 				'uploadResult' => __( '%1$d uploaded · %2$d failed', 'media-bridge-for-etch' ),
 				'uploading' => __( 'Uploading…', 'media-bridge-for-etch' ),
+				/* translators: %1$d: Finished files. %2$d: Total queued files. */
 				'uploadingFiles' => __( '%1$d of %2$d finished', 'media-bridge-for-etch' ),
 				'validFileName' => __( 'Enter a file name without slashes.', 'media-bridge-for-etch' ),
 				'replacementHeading' => __( 'Choose a replacement', 'media-bridge-for-etch' ),
@@ -82,6 +90,7 @@ final class Upload_Workspace {
 				'chooseOneFile' => __( 'Choose only one replacement file.', 'media-bridge-for-etch' ),
 				'chooseFile' => __( 'Choose file', 'media-bridge-for-etch' ),
 				'dropFile' => __( 'Drop one file here', 'media-bridge-for-etch' ),
+				/* translators: %s: Selected file size. */
 				'fileSelected' => __( '1 file · %s ready', 'media-bridge-for-etch' ),
 				'replaceFile' => __( 'Replace file', 'media-bridge-for-etch' ),
 			),
