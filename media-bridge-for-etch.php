@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'UPLINK_MBE_VERSION', '2.7.0' );
-define( 'UPLINK_MBE_ASSET_VERSION', '2.7.0.2' );
+define( 'UPLINK_MBE_ASSET_VERSION', '2.7.0.3' );
 define( 'UPLINK_MBE_FILE', __FILE__ );
 define( 'UPLINK_MBE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'UPLINK_MBE_URL', plugin_dir_url( __FILE__ ) );

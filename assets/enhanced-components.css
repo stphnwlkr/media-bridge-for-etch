@@ -51,3 +51,5 @@
 .uplink-mbe-native-wrap.uplink-mbe-optimization-theme {--conversion-text:var(--mbe-text);--conversion-muted:var(--mbe-muted);--conversion-surface:var(--mbe-surface);--conversion-border:var(--mbe-control-border);--conversion-accent:var(--mbe-accent);--conversion-on-accent:var(--mbe-accent-icon)}
 .uplink-mbe-native-wrap wa-button-group.uplink-mbe-grid-ratio-options {display:inline-flex;grid-template-columns:none;overflow:visible}
 .uplink-mbe-native-wrap wa-button[aria-pressed="true"]::part(button),.uplink-mbe-native-wrap wa-button[aria-expanded="true"]::part(button) {background:var(--mbe-accent)!important;color:var(--mbe-accent-icon)!important;border-color:var(--mbe-accent)!important}
+/* Four collection tools fit together even at the minimum sidebar width. */
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-collection-heading-actions wa-button::part(button) {min-width:calc(var(--wa-space-m) * 2);height:calc(var(--wa-space-m) * 2);padding:0}
