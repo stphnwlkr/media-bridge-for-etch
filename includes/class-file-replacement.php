@@ -21,6 +21,7 @@ final class File_Replacement {
 		if ( empty( Plugin::settings()['file_replacement'] ) || ! current_user_can( 'upload_files' ) ) return;
 		Upload_Workspace::assets();
 		wp_enqueue_style( 'uplink-mbe-file-replacement', UPLINK_MBE_URL . 'assets/file-replacement.css', array(), UPLINK_MBE_ASSET_VERSION );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-file-replacement' ) );
 		wp_enqueue_script( 'uplink-mbe-file-replacement', UPLINK_MBE_URL . 'assets/file-replacement.js', array( 'uplink-mbe-upload-workspace' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script( 'uplink-mbe-file-replacement', 'uplinkMbeReplacement', array(
 			'appearance' => Plugin::settings()['appearance'],
@@ -36,6 +37,7 @@ final class File_Replacement {
 				'new' => __( 'Use the replacement filename and type', 'media-bridge-for-etch' ),
 				'newHelp' => __( 'Creates a new file URL. Links written directly into content are not rewritten. Existing files are retained so those links keep working.', 'media-bridge-for-etch' ),
 				'preserve' => __( 'The attachment ID, title, alt text, captions, collections, and custom order stay the same.', 'media-bridge-for-etch' ),
+				'close' => __( 'Close', 'media-bridge-for-etch' ),
 				'cancel' => __( 'Cancel', 'media-bridge-for-etch' ),
 				'saving' => __( 'Replacing…', 'media-bridge-for-etch' ),
 				'saved' => __( 'File replaced.', 'media-bridge-for-etch' ),

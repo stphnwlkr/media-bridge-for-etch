@@ -20,6 +20,7 @@ final class Loop_Generator {
 			return;
 		}
 		wp_enqueue_style( 'uplink-mbe-loop-generator', UPLINK_MBE_URL . 'assets/loop-generator.css', array(), UPLINK_MBE_ASSET_VERSION );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-loop-generator' ) );
 		wp_enqueue_script( 'uplink-mbe-loop-generator', UPLINK_MBE_URL . 'assets/loop-generator.js', array(), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script( 'uplink-mbe-loop-generator', 'uplinkMbeLoopGenerator', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),

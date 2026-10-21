@@ -67,6 +67,7 @@ final class Native_Media_Library {
 
 		wp_enqueue_style( 'uplink-mbe-media-modal', UPLINK_MBE_URL . 'assets/media-modal.css', array( 'media-views' ), UPLINK_MBE_ASSET_VERSION );
 		wp_add_inline_style( 'uplink-mbe-media-modal', $this->custom_color_css( true ) );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-media-modal' ) );
 		wp_enqueue_script( 'uplink-mbe-media-modal', UPLINK_MBE_URL . 'assets/media-modal.js', array( 'media-views', 'wp-util', 'uplink-mbe-upload-workspace' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script(
 			'uplink-mbe-media-modal',
@@ -701,10 +702,12 @@ final class Native_Media_Library {
 		}
 
 		wp_enqueue_media();
+		Upload_Workspace::assets();
 		$native_media_asset_version = UPLINK_MBE_ASSET_VERSION . '.8';
 		wp_enqueue_script_module( 'uplink-mbe-optimization-components', UPLINK_MBE_URL . 'assets/optimization-components.js', array(), $native_media_asset_version );
 		wp_enqueue_style( 'uplink-mbe-optimization-theme', UPLINK_MBE_URL . 'assets/vendor/webawesome/theme.css', array(), $native_media_asset_version );
 		wp_enqueue_style( 'uplink-mbe-enhanced-components', UPLINK_MBE_URL . 'assets/enhanced-components.css', array( 'uplink-mbe-native-media', 'uplink-mbe-optimization-theme' ), $native_media_asset_version );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-enhanced-components' ) );
 		wp_enqueue_style( 'uplink-mbe-native-media', UPLINK_MBE_URL . 'assets/native-media.css', array(), $native_media_asset_version );
 		wp_add_inline_style( 'uplink-mbe-native-media', $this->custom_color_css() );
 		Exif_Map::assets();
@@ -744,10 +747,12 @@ final class Native_Media_Library {
 				'initialAction' => $initial_action,
 				'initialCollectionId' => $initial_collection_id,
 				'openGalleryGenerator' => $gallery_enabled && isset( $_GET['mbe_gallery_generator'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['mbe_gallery_generator'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This only opens a non-mutating interface panel.
+				'canAssign'    => $taxonomy && current_user_can( $taxonomy->cap->assign_terms ),
 				'canManage'    => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
 				'deletionSync' => ! empty( Plugin::settings()['sync_deletions'] ) && 'native' !== Plugin::settings()['provider'],
 				'strings'      => array(
 					'add'                  => __( 'Add to collection', 'media-bridge-for-etch' ),
+					'movedTo' => __( 'Moved to', 'media-bridge-for-etch' ),
 					'allMedia'             => __( 'All media', 'media-bridge-for-etch' ),
 					'attachmentDetails'    => __( 'Attachment details', 'media-bridge-for-etch' ),
 					'altSaved'             => __( 'Attachment saved.', 'media-bridge-for-etch' ),
@@ -1015,8 +1020,9 @@ final class Native_Media_Library {
 						<section class="uplink-mbe-library-drawer uplink-mbe-library-toolbar" id="uplink-mbe-library-drawer">
 							<div class="uplink-mbe-library-drawer-bar">
 								<form id="uplink-mbe-media-search" role="search">
-																		<wa-input class="wa-visually-hidden-label" size="small" label="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>" type="search" id="uplink-mbe-search-input" placeholder="<?php esc_attr_e( 'Search', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Use * as a filename wildcard, for example *-1.png.', 'media-bridge-for-etch' ); ?>"></wa-input>
-									<button type="submit" class="uplink-mbe-toolbar-button" aria-label="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
+																		<wa-input class="wa-visually-hidden-label" size="small" label="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>" type="search" id="uplink-mbe-search-input" placeholder="<?php esc_attr_e( 'Search', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Use * as a filename wildcard, for example *-1.png.', 'media-bridge-for-etch' ); ?>">
+									<button slot="end" type="submit" class="uplink-mbe-toolbar-button" aria-label="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Search media', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
+									</wa-input>
 								</form>
 								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="uplink-mbe-toolbar-button uplink-mbe-library-drawer-toggle" id="uplink-mbe-library-drawer-toggle" aria-expanded="false" aria-controls="uplink-mbe-library-drawer-panel" aria-label="<?php esc_attr_e( 'Open filters', 'media-bridge-for-etch' ); ?>" title="<?php esc_attr_e( 'Filter media', 'media-bridge-for-etch' ); ?>">
 									<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8z"></path></svg>
@@ -1068,14 +1074,19 @@ final class Native_Media_Library {
 								<label class="uplink-mbe-display-toggle"><span><?php esc_html_e( 'Show EXIF in inspector', 'media-bridge-for-etch' ); ?></span><input type="checkbox" data-display-field="exif"></label>
 							</div>
 							<div class="uplink-mbe-selection-tools" id="uplink-mbe-selection-tools" hidden>
-									<wa-badge id="uplink-mbe-selection-count" variant="neutral" appearance="outlined" aria-live="polite"></wa-badge>
-									<span class="uplink-mbe-selection-help" id="uplink-mbe-selection-help"><?php esc_html_e( 'Choose a collection to enable its Add and Remove actions. Shift-click checkboxes to select a range.', 'media-bridge-for-etch' ); ?></span>
-																		<wa-select size="small" label="<?php esc_attr_e( 'Choose a collection', 'media-bridge-for-etch' ); ?>" id="uplink-mbe-bulk-collection" aria-describedby="uplink-mbe-selection-help"></wa-select>
-									<wa-button-group label="<?php esc_attr_e( 'Collection assignment', 'media-bridge-for-etch' ); ?>"><wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-bulk-add" disabled><?php esc_html_e( 'Add to collection', 'media-bridge-for-etch' ); ?></wa-button>
-									<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-bulk-remove" disabled><?php esc_html_e( 'Remove from collection', 'media-bridge-for-etch' ); ?></wa-button></wa-button-group>
-									<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-bulk-clear"><?php esc_html_e( 'Uncategorize', 'media-bridge-for-etch' ); ?></wa-button>
-									<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-bulk-deselect"><?php esc_html_e( 'Clear selection', 'media-bridge-for-etch' ); ?></wa-button>
-									<wa-button size="small" variant="danger" appearance="outlined" type="button" class="button button-link-delete" id="uplink-mbe-bulk-delete"><?php esc_html_e( 'Delete permanently', 'media-bridge-for-etch' ); ?></wa-button>
+                                    <div class="uplink-mbe-selection-picker">
+                                        <div class="uplink-mbe-selection-picker-label"><label for="uplink-mbe-bulk-collection"><?php esc_html_e( 'Choose a collection', 'media-bridge-for-etch' ); ?></label><wa-button size="small" appearance="plain" variant="neutral" id="uplink-mbe-selection-help-toggle" aria-label="<?php esc_attr_e( 'About collection assignments', 'media-bridge-for-etch' ); ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg><span class="screen-reader-text"><?php esc_html_e( 'About collection assignments', 'media-bridge-for-etch' ); ?></span></wa-button></div>
+                                        <wa-select size="small" label="<?php esc_attr_e( 'Choose a collection', 'media-bridge-for-etch' ); ?>" id="uplink-mbe-bulk-collection"></wa-select>
+                                        <wa-popover for="uplink-mbe-selection-help-toggle" id="uplink-mbe-selection-help" placement="bottom-end"><p><?php esc_html_e( 'Drag images onto a collection to move them. Use Add and Remove for multiple assignments.', 'media-bridge-for-etch' ); ?></p></wa-popover>
+                                    </div>
+									<wa-button-group class="uplink-mbe-selection-actions" label="<?php esc_attr_e( 'Selected image actions', 'media-bridge-for-etch' ); ?>">
+										<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button uplink-mbe-selection-icon" id="uplink-mbe-bulk-add" aria-label="<?php esc_attr_e( 'Add to collection', 'media-bridge-for-etch' ); ?>" disabled><span class="uplink-mbe-selection-icon-art" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/folder-plus.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><span class="screen-reader-text"><?php esc_html_e( 'Add to collection', 'media-bridge-for-etch' ); ?></span></wa-button>
+										<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button uplink-mbe-selection-icon" id="uplink-mbe-bulk-remove" aria-label="<?php esc_attr_e( 'Remove from collection', 'media-bridge-for-etch' ); ?>" disabled><span class="uplink-mbe-selection-icon-art" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/folder-minus.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><span class="screen-reader-text"><?php esc_html_e( 'Remove from collection', 'media-bridge-for-etch' ); ?></span></wa-button>
+										<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button uplink-mbe-selection-icon" id="uplink-mbe-bulk-clear" aria-label="<?php esc_attr_e( 'Uncategorize', 'media-bridge-for-etch' ); ?>"><span class="uplink-mbe-selection-icon-art" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/folder-x.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><span class="screen-reader-text"><?php esc_html_e( 'Uncategorize', 'media-bridge-for-etch' ); ?></span></wa-button>
+										<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button uplink-mbe-selection-icon" id="uplink-mbe-bulk-deselect" aria-label="<?php esc_attr_e( 'Clear selection', 'media-bridge-for-etch' ); ?>"><span class="uplink-mbe-selection-icon-art" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/square-minus.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><span class="screen-reader-text"><?php esc_html_e( 'Clear selection', 'media-bridge-for-etch' ); ?></span></wa-button>
+										<wa-button size="small" variant="danger" appearance="outlined" type="button" class="button uplink-mbe-selection-icon" id="uplink-mbe-bulk-delete" aria-label="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>"><span class="uplink-mbe-selection-icon-art" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/trash.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><span class="screen-reader-text"><?php esc_html_e( 'Delete permanently', 'media-bridge-for-etch' ); ?></span></wa-button>
+									</wa-button-group>
+									<span id="uplink-mbe-selection-count" role="status" aria-live="polite"></span>
 							</div>
 						</section>
 						<p id="uplink-mbe-search-status" class="screen-reader-text" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -1112,7 +1123,7 @@ final class Native_Media_Library {
 							<div class="uplink-mbe-attachment-header-actions">
 								<wa-button-group label="<?php esc_attr_e( 'Image navigation', 'media-bridge-for-etch' ); ?>"><wa-button size="small" variant="neutral" appearance="outlined" type="button" class="uplink-mbe-attachment-header-nav" id="uplink-mbe-attachment-previous" aria-label="<?php esc_attr_e( 'Previous attachment', 'media-bridge-for-etch' ); ?>"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'Previous attachment', 'media-bridge-for-etch' ); ?></span></wa-button>
 								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="uplink-mbe-attachment-header-nav" id="uplink-mbe-attachment-next" aria-label="<?php esc_attr_e( 'Next attachment', 'media-bridge-for-etch' ); ?>"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'Next attachment', 'media-bridge-for-etch' ); ?></span></wa-button></wa-button-group>
-								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="uplink-mbe-attachment-header-nav" data-attachment-close aria-label="<?php esc_attr_e( 'Close', 'media-bridge-for-etch' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'Close', 'media-bridge-for-etch' ); ?></span></wa-button>
+								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="uplink-mbe-attachment-header-nav" data-attachment-close aria-label="<?php esc_attr_e( 'Close', 'media-bridge-for-etch' ); ?>"><span class="uplink-mbe-close-icon" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'Close', 'media-bridge-for-etch' ); ?></span></wa-button>
 							</div>
 						</header>
 						<div class="uplink-mbe-attachment-preview-wrap">
@@ -1127,7 +1138,7 @@ final class Native_Media_Library {
 <wa-tab panel="file" id="uplink-mbe-attachment-file-tab" aria-selected="false" aria-controls="uplink-mbe-attachment-file-panel"><?php esc_html_e( 'Metadata', 'media-bridge-for-etch' ); ?></wa-tab>
 <wa-tab panel="exif" id="uplink-mbe-attachment-exif-tab" aria-selected="false" aria-controls="uplink-mbe-attachment-exif" hidden><?php esc_html_e( 'EXIF', 'media-bridge-for-etch' ); ?></wa-tab>
 <wa-tab panel="optimization" id="uplink-mbe-attachment-optimization-tab" aria-selected="false" aria-controls="uplink-mbe-attachment-optimization" hidden><?php esc_html_e( 'Optimization', 'media-bridge-for-etch' ); ?></wa-tab>
-								<wa-tab-panel name="main" id="uplink-mbe-attachment-main-panel" class="uplink-mbe-attachment-metadata-panel uplink-mbe-attachment-section uplink-mbe-attachment-fields" role="tabpanel" aria-labelledby="uplink-mbe-attachment-main-tab">
+								<wa-tab-panel name="main" id="uplink-mbe-attachment-main-panel" class="uplink-mbe-attachment-metadata-panel uplink-mbe-attachment-section uplink-mbe-attachment-fields" role="tabpanel" aria-labelledby="uplink-mbe-attachment-main-tab"><div class="uplink-mbe-attachment-field-stack">
 																		<wa-input size="small" label="<?php esc_attr_e( 'Title', 'media-bridge-for-etch' ); ?>" type="text" id="uplink-mbe-attachment-title-input"></wa-input>
 																		<wa-textarea size="small" label="<?php esc_attr_e( 'Alt text', 'media-bridge-for-etch' ); ?>" id="uplink-mbe-attachment-alt" rows="3"></wa-textarea>
 									<label class="uplink-mbe-decorative-toggle"><input type="checkbox" id="uplink-mbe-attachment-decorative"> <?php esc_html_e( 'Decorative image', 'media-bridge-for-etch' ); ?></label>
@@ -1141,7 +1152,7 @@ final class Native_Media_Library {
 										<div id="uplink-mbe-attachment-collection-options"></div>
 										<p><?php esc_html_e( 'Leave every collection unchecked to place this item in Uncategorized.', 'media-bridge-for-etch' ); ?></p>
 									</fieldset>
-								</wa-tab-panel>
+								</div></wa-tab-panel>
 								<wa-tab-panel name="file" id="uplink-mbe-attachment-file-panel" class="uplink-mbe-attachment-metadata-panel uplink-mbe-attachment-section uplink-mbe-attachment-fields" role="tabpanel" aria-labelledby="uplink-mbe-attachment-file-tab" hidden>
 									<dl class="uplink-mbe-attachment-data-list">
 										<div><dt><?php esc_html_e( 'File name', 'media-bridge-for-etch' ); ?></dt><dd id="uplink-mbe-attachment-filename"></dd></div>
@@ -1160,9 +1171,9 @@ final class Native_Media_Library {
 							</wa-tab-group>
 							<div class="uplink-mbe-attachment-actions">
 								<a href="#" class="button" id="uplink-mbe-attachment-edit" title="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Edit image', 'media-bridge-for-etch' ); ?>" hidden><span class="dashicons dashicons-wordpress-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Edit', 'media-bridge-for-etch' ); ?></span></a>
-								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-attachment-replace" title="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" hidden><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/ai-swap-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Replace', 'media-bridge-for-etch' ); ?></wa-button>
-								<wa-button size="small" variant="brand" appearance="outlined" type="button" class="button button-primary" id="uplink-mbe-attachment-save-alt" disabled title="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/save-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Save', 'media-bridge-for-etch' ); ?></wa-button>
-								<wa-button size="small" variant="danger" appearance="outlined" type="button" class="button button-link-delete" id="uplink-mbe-attachment-delete" title="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/delete-02-stroke-sharp.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?><?php esc_html_e( 'Delete', 'media-bridge-for-etch' ); ?></wa-button>
+								<wa-button size="small" variant="neutral" appearance="outlined" type="button" class="button" id="uplink-mbe-attachment-replace" title="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Replace file', 'media-bridge-for-etch' ); ?>" hidden><span slot="start" class="uplink-mbe-footer-icon" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/ai-swap-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><?php esc_html_e( 'Replace', 'media-bridge-for-etch' ); ?></wa-button>
+								<wa-button size="small" variant="brand" appearance="outlined" type="button" class="button button-primary" id="uplink-mbe-attachment-save-alt" disabled title="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Save changes', 'media-bridge-for-etch' ); ?>"><span slot="start" class="uplink-mbe-footer-icon" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/save-twotone-rounded.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><?php esc_html_e( 'Save', 'media-bridge-for-etch' ); ?></wa-button>
+								<wa-button size="small" variant="danger" appearance="outlined" type="button" class="button button-link-delete" id="uplink-mbe-attachment-delete" title="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>" aria-label="<?php esc_attr_e( 'Delete permanently', 'media-bridge-for-etch' ); ?>"><span slot="start" class="uplink-mbe-footer-icon" aria-hidden="true"><?php echo file_get_contents( UPLINK_MBE_PATH . 'assets/vendor/lucide/trash.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted bundled SVG. ?></span><?php esc_html_e( 'Delete', 'media-bridge-for-etch' ); ?></wa-button>
 							</div>
 						</div>
 					</div>
@@ -1980,15 +1991,21 @@ final class Native_Media_Library {
 		$media_ids  = is_array( $media_ids ) ? array_values( array_unique( array_filter( array_map( 'absint', $media_ids ) ) ) ) : array();
 		$collection = absint( $_POST['collection'] ?? 0 );
 		$mode       = sanitize_key( wp_unslash( $_POST['mode'] ?? 'add' ) );
+		$source     = absint( $_POST['source_collection'] ?? 0 );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		if ( ! $media_ids || ! in_array( $mode, array( 'add', 'remove', 'clear' ), true ) ) {
+		if ( ! $media_ids || ! in_array( $mode, array( 'add', 'remove', 'clear', 'move' ), true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Choose at least one media item.', 'media-bridge-for-etch' ) ), 400 );
 		}
 		if ( 'clear' !== $mode && ( ! $collection || ! $this->etch->get_term( $collection ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Choose a valid collection.', 'media-bridge-for-etch' ) ), 400 );
 		}
 
-		$errors = $this->assign_media_items( $media_ids, $collection, $mode );
+		if ( 'move' === $mode && $source && ! $this->etch->get_term( $source ) ) {
+			wp_send_json_error( array( 'message' => __( 'Choose a valid source collection.', 'media-bridge-for-etch' ) ), 400 );
+		}
+		$errors = 'move' === $mode
+			? $this->move_media_items( $media_ids, $source, $collection )
+			: $this->assign_media_items( $media_ids, $collection, $mode );
 
 		if ( $errors ) {
 			wp_send_json_error(
@@ -2779,6 +2796,32 @@ final class Native_Media_Library {
 			'_total_original_size' => $original_size,
 			'_total_optimized_size' => $optimized_size,
 		);
+	}
+
+	/** Move out of the viewed collection branch while preserving unrelated memberships. */
+	private function move_media_items( array $media_ids, int $source, int $destination ): array {
+		$taxonomy = $this->etch->taxonomy();
+		$source_ids = $source ? get_term_children( $source, $taxonomy ) : array();
+		if ( is_wp_error( $source_ids ) ) return $media_ids;
+		if ( $source ) $source_ids[] = $source;
+		$source_ids = array_map( 'intval', $source_ids );
+		$assignments = array();
+		$errors = array();
+		// Validate the complete selection before changing any relationship.
+		foreach ( $media_ids as $id ) {
+			if ( 'attachment' !== get_post_type( $id ) || ! current_user_can( 'edit_post', $id ) ) { $errors[] = $id; continue; }
+			$existing = wp_get_object_terms( $id, $taxonomy, array( 'fields' => 'ids' ) );
+			if ( is_wp_error( $existing ) ) { $errors[] = $id; continue; }
+			$existing = array_map( 'intval', $existing );
+			if ( $source && ! array_intersect( $existing, $source_ids ) ) { $errors[] = $id; continue; }
+			$assignments[ $id ] = $source === $destination ? $existing : array_values( array_unique( array_merge( array_diff( $existing, $source_ids ), array( $destination ) ) ) );
+		}
+		if ( $errors ) return $errors;
+		foreach ( $assignments as $id => $terms ) {
+			if ( is_wp_error( wp_set_object_terms( $id, $terms, $taxonomy, false ) ) ) $errors[] = $id;
+		}
+		if ( ! $errors ) do_action( 'uplink_mbe_media_collections_changed', $media_ids, $destination, 'move' );
+		return $errors;
 	}
 
 	private function assign_media_items( array $media_ids, int $collection, string $mode, bool $trusted_command = false ): array {

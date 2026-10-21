@@ -135,7 +135,7 @@ wa-card.uplink-mbe-conversion-card::part(footer) {background:color-mix(in srgb,v
 .uplink-mbe-format-quality {border-color:var(--optimization-line);margin-block-end:0}
 .uplink-mbe-size-panel {border-color:var(--optimization-line);background:var(--optimization-raised);padding:var(--wa-space-m);gap:var(--wa-space-s);margin-block-end:var(--wa-space-l)}
 .uplink-mbe-size-panel wa-radio-group::part(form-control-label) {display:none}
-.uplink-mbe-size-panel wa-radio-group::part(form-control-input) {flex-wrap:wrap;gap:var(--wa-space-xs)}
+.uplink-mbe-size-panel wa-radio-group::part(form-control-input) {flex-wrap:wrap;gap:0}
 .uplink-mbe-size-panel wa-radio::part(control) {font-family:inherit}
 .uplink-mbe-optimization-theme wa-badge::part(badge) {color:var(--conversion-muted);border-color:var(--optimization-line);background:transparent;font-weight:var(--wa-font-weight-normal)}
 .uplink-mbe-size-hint {line-height:1.5}
@@ -159,3 +159,24 @@ wa-card.uplink-mbe-conversion-card::part(footer) {background:color-mix(in srgb,v
 
 /* Keep the optimizer flush with the shared tab content, including on mobile. */
 .uplink-mbe-native-wrap #uplink-mbe-conversion-controls {padding:0;margin:0;background:transparent}
+
+/* Overview previews leave room for scope, quality and apply controls. Inspect is separate. */
+@media(min-width:901px) {
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-cards > .uplink-mbe-conversion-card:only-child::part(body) {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:var(--wa-space-l,24px);align-items:center}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-preview {grid-column:1;grid-row:1 / span 2}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-stats {grid-column:2;align-self:end;margin-block:0 var(--wa-space-s,8px)}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-quality {grid-column:2;align-self:start;margin-block:0}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview {display:grid;place-items:center}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview > .uplink-mbe-image-comparison {width:min(100%,40vw,calc(clamp(120px,calc(100dvh - 600px),40dvh) * var(--mbe-comparison-ratio,1.5)));height:auto;aspect-ratio:var(--mbe-comparison-ratio,1.5)!important;max-height:none;margin-inline:auto}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview > .uplink-mbe-preview-placeholder {max-width:min(100%,40vw);height:clamp(120px,calc(100dvh - 600px),40dvh);object-fit:contain}
+}
+
+@media(min-width:901px) {
+ #uplink-mbe-conversion-controls.is-comparing:has(.uplink-mbe-conversion-card:only-child)>h4 {font-size:var(--wa-font-size-l,20px);line-height:1.25}
+ .uplink-mbe-conversion-cards > wa-card.uplink-mbe-conversion-card:only-child {--spacing:var(--wa-space-s,8px)}
+ #uplink-mbe-conversion-controls:has(.uplink-mbe-conversion-card:only-child) .uplink-mbe-conversion-source {margin-block-end:var(--wa-space-s,8px)}
+ #uplink-mbe-conversion-controls:has(.uplink-mbe-conversion-card:only-child) .uplink-mbe-size-panel {margin-block:var(--wa-space-s,8px);padding:var(--wa-space-s,8px);row-gap:var(--wa-space-s,8px)}
+}
+
+/* Separate optimization actions/previews from the saved Current file details. */
+.uplink-mbe-native-wrap #uplink-mbe-conversion-controls:not([hidden]) + .uplink-mbe-optimization-groups:not(:empty) {margin-block-start:var(--wa-space-l,24px)}

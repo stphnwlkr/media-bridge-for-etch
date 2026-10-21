@@ -151,7 +151,7 @@ function openComparison(format,trigger){
  const result=results[format];if(!result)return;
  closeInfo();closeComparison();
  const dialog=el('dialog','','uplink-mbe-comparison-dialog uplink-mbe-optimization-theme wa-theme-default');comparisonDialog=dialog;
- const header=el('header'),title=el('h2',label(format)+' · '+text.compareTitle),close=el('button',text.close,'button');close.type='button';
+ const header=el('header'),title=el('h2',label(format)+' · '+text.compareTitle),close=el('button','','button uplink-mbe-ui-close');close.type='button';close.setAttribute('aria-label',text.close);
  const titleId='uplink-mbe-comparison-title';title.id=titleId;dialog.setAttribute('aria-labelledby',titleId);
  close.addEventListener('click',()=>dialog.close());header.append(title,close);
  const preview=el('div','','uplink-mbe-large-preview'),controls=el('div','','uplink-mbe-large-controls'),stats=el('p','','uplink-mbe-format-stats');stats.setAttribute('role','status');
@@ -166,6 +166,18 @@ function openComparison(format,trigger){
  apply.addEventListener('click',()=>{if(busy||!results[format])return;closeComparison();action(()=>save(format));});
  controls.append(stats,field,apply);dialog.append(header,preview,controls,el('p',text.compareHelp));
  largeControls={format,preview,input,output,stats,apply};updateLargeComparison(format);syncControls();
+ // Require both ends outside so dragging the comparison past the edge stays open.
+ let backdropPointerDown=false;
+ const outsideDialog=event=>{
+  const bounds=dialog.getBoundingClientRect();
+  return event.target===dialog&&(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom);
+ };
+ dialog.addEventListener('pointerdown',event=>{backdropPointerDown=event.button===0&&outsideDialog(event);});
+ dialog.addEventListener('pointercancel',()=>{backdropPointerDown=false;});
+ dialog.addEventListener('click',event=>{
+  const dismiss=backdropPointerDown&&outsideDialog(event);backdropPointerDown=false;
+  if(dismiss){event.stopPropagation();dialog.close();}
+ });
  dialog.addEventListener('keydown',event=>event.stopPropagation());
  dialog.addEventListener('close',()=>{dialog.remove();if(comparisonDialog===dialog){comparisonDialog=null;largeControls=null;}if(trigger.isConnected)trigger.focus({preventScroll:true});});
  document.body.append(dialog);applyContrastColors(dialog);dialog.showModal();

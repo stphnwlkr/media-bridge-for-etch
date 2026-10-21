@@ -17,3 +17,4 @@ import './vendor/webawesome/components/tab-panel/tab-panel.js';
 import './vendor/webawesome/components/tag/tag.js';
 import './vendor/webawesome/components/callout/callout.js';
 import './vendor/webawesome/components/tooltip/tooltip.js';
+import './vendor/webawesome/components/popover/popover.js';

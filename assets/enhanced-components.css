@@ -11,7 +11,9 @@
 .uplink-mbe-native-wrap [hidden] {display:none!important}
 .uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea) {width:100%;min-width:0}
 .uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea)::part(form-control-label) {color:var(--mbe-text)}
-.uplink-mbe-native-wrap wa-input::part(input),.uplink-mbe-native-wrap wa-textarea::part(textarea),.uplink-mbe-native-wrap wa-select::part(combobox) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-input::part(input-wrapper) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-textarea::part(textarea-wrapper),.uplink-mbe-native-wrap wa-select::part(combobox) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-input::part(input),.uplink-mbe-native-wrap wa-textarea::part(textarea) {background:transparent;color:var(--mbe-text)}
 .uplink-mbe-native-wrap wa-button:is(.button,.uplink-mbe-toolbar-button,.uplink-mbe-view-button,.uplink-mbe-attachment-header-nav,.uplink-mbe-icon-button) {padding:0!important;border:0!important;background:none!important;height:auto!important;box-shadow:none!important}
 .uplink-mbe-native-wrap wa-button::part(button) {font-family:inherit;background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
 .uplink-mbe-native-wrap wa-button:is([variant="brand"],[aria-pressed="true"],[aria-expanded="true"])::part(button) {background:var(--mbe-accent);color:var(--mbe-accent-icon);border-color:var(--mbe-accent)}
@@ -58,3 +60,21 @@
 .uplink-mbe-native-wrap #uplink-mbe-detail-tabs > wa-tab-panel.uplink-mbe-attachment-metadata-panel {--padding:var(--wa-space-m) 0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions {align-items:center;gap:var(--wa-space-s)}
 .uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions wa-button.uplink-mbe-attachment-header-nav::part(button) {width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));min-width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));height:calc(var(--wa-space-m) * 2 + var(--wa-space-s));padding:0}
+
+/* Search action belongs to the input's end slot, inside its shared outline. */
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(input-wrapper) {padding-inline-end:0;height:40px}
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(end) {display:flex;align-items:stretch;margin:0}
+.uplink-mbe-native-wrap #uplink-mbe-media-search #uplink-mbe-search-input .uplink-mbe-toolbar-button {height:100%;min-height:0;width:40px;flex:0 0 40px;margin:0;padding:0;border:0;border-radius:0 5px 5px 0;background:transparent;color:var(--mbe-text)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input .uplink-mbe-toolbar-button:hover {background:var(--mbe-accent-soft);color:var(--mbe-accent)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input .uplink-mbe-toolbar-button:focus-visible {outline:2px solid var(--mbe-accent);outline-offset:-3px}
+
+/* Match complete field surfaces and placeholder contrast across components. */
+.uplink-mbe-native-wrap wa-input::part(input-wrapper),.uplink-mbe-native-wrap wa-select::part(combobox) {min-height:var(--mbe-ui-control-size);box-sizing:border-box}
+.uplink-mbe-native-wrap wa-input::part(input-wrapper) {height:var(--mbe-ui-control-size)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(input-wrapper),.uplink-mbe-native-wrap .uplink-mbe-library-controls wa-select::part(combobox) {min-height:40px;height:40px}
+.uplink-mbe-native-wrap wa-input::part(input)::placeholder,.uplink-mbe-native-wrap wa-textarea::part(textarea)::placeholder {color:var(--mbe-muted);opacity:1}
+.uplink-mbe-native-wrap .uplink-mbe-popover-heading-actions wa-button::part(button) {min-height:var(--mbe-ui-control-size)}
+
+/* Count badges must inherit the selected row's foreground pairing. */
+.uplink-mbe-native-wrap wa-badge.uplink-mbe-health-count {padding:0;background:transparent}
+.uplink-mbe-native-wrap .uplink-mbe-health-filter.is-active wa-badge::part(badge) {background:color-mix(in srgb,var(--mbe-accent-icon) 15%,transparent);color:var(--mbe-accent-icon);border-color:transparent}

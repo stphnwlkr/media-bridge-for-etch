@@ -24,6 +24,7 @@ final class Image_Conversion {
 		wp_enqueue_script_module( 'uplink-mbe-optimization-components', UPLINK_MBE_URL . 'assets/optimization-components.js', array(), UPLINK_MBE_ASSET_VERSION );
 		wp_enqueue_style( 'uplink-mbe-optimization-theme', UPLINK_MBE_URL . 'assets/vendor/webawesome/theme.css', array(), UPLINK_MBE_ASSET_VERSION );
 		wp_enqueue_style( 'uplink-mbe-image-conversion', UPLINK_MBE_URL . 'assets/image-conversion.css', array( 'uplink-mbe-native-media' ), UPLINK_MBE_ASSET_VERSION );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-image-conversion' ) );
 		wp_enqueue_script( 'uplink-mbe-image-conversion', UPLINK_MBE_URL . 'assets/image-conversion.js', array( 'uplink-mbe-native-media' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script( 'uplink-mbe-image-conversion', 'uplinkMbeConversion', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'uplink_mbe_image_conversion' ), 'enabled' => ! empty( Plugin::settings()['image_conversion'] ), 'formats' => self::enabled_formats(), 'settingsUrl' => admin_url( 'upload.php?page=media-bridge-for-etch&tab=compression#uplink-mbe-compression-settings' ), 'worker' => UPLINK_MBE_URL . 'assets/image-encode-worker.js?v=' . UPLINK_MBE_ASSET_VERSION,

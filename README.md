@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.7.0 =
+Adds image-size optimization choices, compression exclusions, a unified Enhanced Manager UI, and drag-to-move collection assignments.
+
 = 2.5.7 =
 Preserves safe HTML, including attribution links, when captions are saved in Media Bridge.
 
@@ -379,6 +382,9 @@ Adds a responsive, pinnable media-library drawer and clearer attachment informat
 * Adds a dedicated Compression admin tab for formats, size exclusions and separate compression/restoration permissions.
 * Adds administrator size exclusions honored by All sizes, with explicit per-image overrides in Selected sizes. Shared-file aliases are handled together.
 * Groups related toolbar actions with Web Awesome button groups and restores a visible, labeled Upload media action.
+* Adds drag-to-move collection assignments while preserving unrelated collection memberships.
+* Refines inspector scrolling, compact previews, search, popup dismissal, button alignment and keyboard focus.
+* Uses locally bundled open-source Lucide outline icons for collection and delete actions.
 * Allows a scaled main image to be optimized when its unselected original upload exceeds the encoding limit.
 
 
@@ -874,3 +880,7 @@ OpenStreetMap terms: https://osmfoundation.org/wiki/Terms_of_Use
 OpenStreetMap privacy: https://osmfoundation.org/wiki/Privacy_Policy
 
 Bundled image encoders run locally. Codec source, build and license references are in assets/vendor/jsquash/SOURCES.md. Leaflet source and license are in assets/vendor/leaflet. This release uses GPL-3.0-or-later for compatibility with the bundled Apache-2.0 codec wrappers. Third-party libraries retain their own licenses.
+
+== Third-party licenses ==
+
+Lucide outline icons: ISC/MIT. Sources and full notices are in assets/vendor/lucide/.

@@ -785,3 +785,7 @@ body.uplink-mbe-resizing-collections * {
 .uplink-mbe-native-collections-collapsed .uplink-mbe-native-panel-resizer {
 	display: none;
 }
+
+/* Use the same centered Lucide trash icon wherever deletion is offered. */
+.uplink-mbe-trash-icon {display:inline-flex;align-items:center;justify-content:center}
+.uplink-mbe-trash-icon::before {content:"";display:block;width:18px;height:18px;background:currentColor;mask:url("vendor/lucide/trash.svg") center/contain no-repeat}

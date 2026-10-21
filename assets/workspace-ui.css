@@ -1,0 +1,151 @@
+/* Shared dimensions and rhythm across the Enhanced Manager and its media dialogs. */
+:is(.uplink-mbe-native-wrap,.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog,.uplink-mbe-comparison-dialog,.uplink-mbe-format-info-popup,#uplink-mbe-loop-dialog) {
+ --mbe-ui-space:var(--wa-space-m,16px);
+ --mbe-ui-gap:var(--wa-space-s,8px);
+ --mbe-ui-control-size:44px;
+ --mbe-ui-radius:var(--wa-border-radius-m,6px);
+ --mbe-ui-close-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 6 12 12M18 6 6 18' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+/* A bounded tab body is the sole scrolling area. Titles, tabs and actions stay outside it. */
+.uplink-mbe-native-wrap .uplink-mbe-attachment-info {min-height:0}
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs {min-height:0;overflow:hidden;flex:1 1 auto}
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs::part(tab-group) {height:100%;min-height:0;flex-direction:column}
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs::part(nav) {flex:0 0 auto}
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs::part(body) {flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs > wa-tab-panel.uplink-mbe-attachment-metadata-panel {overflow:visible;min-height:0;flex:none;--padding:var(--mbe-ui-space) 0}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-field-stack {display:grid;gap:var(--mbe-ui-space);min-width:0}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-field-stack > :is(wa-input,wa-textarea,fieldset) {min-width:0;margin:0}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-collection-assignment {padding:var(--mbe-ui-space);gap:var(--mbe-ui-gap)}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions {position:relative;z-index:1;flex:0 0 auto;align-items:center;gap:var(--mbe-ui-gap);padding-block-start:var(--mbe-ui-space);background:var(--mbe-surface-muted)}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions > a.button {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:var(--mbe-ui-control-size);min-height:var(--mbe-ui-control-size);padding:0 var(--mbe-ui-space)}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions wa-button::part(button),
+.uplink-mbe-native-wrap .uplink-mbe-selection-tools wa-button::part(button),
+.uplink-mbe-optimization-theme .uplink-mbe-format-actions wa-button::part(button),
+.uplink-mbe-optimization-theme .uplink-mbe-large-controls wa-button::part(button),
+#uplink-mbe-conversion-controls > wa-button::part(button) {box-sizing:border-box;min-height:var(--mbe-ui-control-size);padding-inline:var(--mbe-ui-space)}
+/* Metadata and EXIF use the same row spacing and typography. */
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) {margin:0;gap:0}
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) > div {gap:var(--mbe-ui-gap);padding-block:var(--mbe-ui-gap);border-block-end:1px solid var(--mbe-soft-border)}
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) > div:first-child {padding-block-start:0}
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) > div:last-child {border:0}
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) dt {color:var(--mbe-muted);font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.uplink-mbe-native-wrap :is(.uplink-mbe-attachment-data-list,.uplink-mbe-attachment-exif dl) dd {min-width:0;overflow-wrap:anywhere}
+/* Upload is one workspace, with the same inset at its header, body and footer. */
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace {inset:0;border:0;border-radius:0;box-shadow:none}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) :is(.uplink-mbe-upload-header,.uplink-mbe-upload-body,.uplink-mbe-upload-footer) {padding:var(--mbe-ui-space);gap:var(--mbe-ui-gap)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-body {min-height:0;overscroll-behavior:contain}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-dropzone {margin-block-start:var(--mbe-ui-space);gap:var(--mbe-ui-gap);padding:var(--mbe-ui-space)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace :is(.button,.uplink-mbe-upload-new-collection,.uplink-mbe-upload-clear) {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:var(--mbe-ui-control-size);height:auto;padding:0 var(--mbe-ui-space);line-height:1.35;border-radius:var(--mbe-ui-radius)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace :is(select,input[type="text"]) {box-sizing:border-box;min-height:var(--mbe-ui-control-size)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-actions {align-items:center;gap:var(--mbe-ui-gap)}
+/* Identical X shape and hit area for all dialog and popover close actions. */
+.uplink-mbe-close-icon,
+:is(.uplink-mbe-native-wrap .uplink-mbe-modal-close,.uplink-mbe-native-wrap .uplink-mbe-popover-close,.media-modal.uplink-mbe-frame .media-modal-close,.uplink-mbe-ui-close,#uplink-mbe-loop-dialog .uplink-mbe-loop-close,.uplink-mbe-format-info-popup .uplink-mbe-info-close)::before {content:"";display:block;flex:0 0 20px;width:20px;height:20px;background:currentColor;mask:var(--mbe-ui-close-mask) center/contain no-repeat}
+:is(.uplink-mbe-native-wrap .uplink-mbe-modal-close,.uplink-mbe-native-wrap .uplink-mbe-popover-close,.media-modal.uplink-mbe-frame .media-modal-close,.uplink-mbe-ui-close,#uplink-mbe-loop-dialog .uplink-mbe-loop-close,.uplink-mbe-format-info-popup .uplink-mbe-info-close) {display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:var(--mbe-ui-control-size)!important;min-width:var(--mbe-ui-control-size)!important;height:var(--mbe-ui-control-size)!important;min-height:var(--mbe-ui-control-size)!important;padding:0!important;border:1px solid var(--mbe-control-border,var(--mbe-modal-border,var(--conversion-border)))!important;border-radius:var(--mbe-ui-radius)!important;background:var(--mbe-control,var(--mbe-modal-control,var(--conversion-surface)))!important;color:var(--mbe-text,var(--mbe-modal-text,var(--conversion-text)))!important;font-size:0!important;line-height:1}
+.media-modal.uplink-mbe-frame .media-modal-close {top:var(--mbe-ui-space);right:var(--mbe-ui-space);z-index:1001}
+.media-modal.uplink-mbe-frame .media-modal-close .media-modal-icon {display:none}
+.uplink-mbe-replace-dialog .uplink-mbe-replace-close {position:absolute;inset-block-start:var(--mbe-ui-space);inset-inline-end:var(--mbe-ui-space)}
+.uplink-mbe-replace-dialog > h2 {padding-inline-end:calc(var(--mbe-ui-control-size) + var(--mbe-ui-gap))}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-close,.uplink-mbe-popover-close):focus-visible,
+.media-modal.uplink-mbe-frame .media-modal-close:focus-visible,
+.uplink-mbe-ui-close:focus-visible {outline:2px solid var(--mbe-accent,var(--mbe-modal-accent,var(--conversion-accent)));outline-offset:2px}
+
+/* Footer icons use separate component slots and share a centered 20px box. */
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions wa-button::part(start) {display:inline-flex;align-items:center;justify-content:center}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions .uplink-mbe-footer-icon {display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;line-height:0}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions .uplink-mbe-footer-icon svg {display:block;width:20px;height:20px;margin:0;vertical-align:middle}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-actions > a.button {gap:8px}
+.uplink-mbe-native-wrap #uplink-mbe-attachment-edit .dashicons {display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:20px;font-size:20px;line-height:1;margin:0}
+
+/* Native controls follow the same palette as adjacent Web Awesome fields. */
+.uplink-mbe-native-wrap.uplink-mbe-theme-dark {color-scheme:dark}
+.uplink-mbe-native-wrap.uplink-mbe-theme-light {color-scheme:light}
+@media(prefers-color-scheme:dark) {.uplink-mbe-native-wrap.uplink-mbe-theme-auto {color-scheme:dark}}
+.uplink-mbe-native-wrap :is(.uplink-mbe-toolbar-popover,.uplink-mbe-modal-dialog,.uplink-mbe-appearance-panel) :is(input[type="text"],input[type="number"],input[type="date"],textarea,select),
+#uplink-mbe-loop-dialog :is(input[type="text"],input[type="number"],select) {box-sizing:border-box;min-height:var(--mbe-ui-control-size);max-width:100%;margin-inline:0;padding-inline:var(--mbe-ui-gap);border:1px solid var(--mbe-control-border);border-radius:var(--mbe-ui-radius);background-color:var(--mbe-control);color:var(--mbe-text);font:inherit}
+.uplink-mbe-native-wrap .uplink-mbe-library-controls :is(input[type="date"],input[type="number"]) {min-height:40px;height:40px;background:var(--mbe-control);border-radius:var(--mbe-ui-radius)}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-panel) textarea {padding-block:var(--mbe-ui-gap)}
+.uplink-mbe-native-wrap :is(input,textarea)::placeholder {color:var(--mbe-muted);opacity:1}
+.uplink-mbe-native-wrap input:is([type="checkbox"],[type="radio"]),#uplink-mbe-loop-dialog input:is([type="checkbox"],[type="radio"]) {accent-color:var(--mbe-accent)}
+.uplink-mbe-native-wrap :is(.uplink-mbe-toolbar-popover,.uplink-mbe-modal-dialog,.uplink-mbe-appearance-panel) :is(input,textarea,select):focus-visible,
+#uplink-mbe-loop-dialog :is(input,select):focus-visible {outline:2px solid var(--mbe-accent);outline-offset:2px;box-shadow:none}
+.uplink-mbe-native-wrap .uplink-mbe-filter-range legend {color:var(--mbe-text);font-size:13px;margin-block-end:8px}
+.uplink-mbe-native-wrap .uplink-mbe-filter-toggle {background:var(--mbe-control);border-radius:var(--mbe-ui-radius)}
+/* Keep native dialog actions on the same rhythm and palette as component actions. */
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-actions) button.button,
+#uplink-mbe-loop-dialog button.button {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:var(--mbe-ui-control-size);padding:0 var(--mbe-ui-space);border:1px solid var(--mbe-control-border);border-radius:var(--mbe-ui-radius);background:var(--mbe-control)!important;color:var(--mbe-text)!important;box-shadow:none;font-weight:600;line-height:1.35}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-actions) button.button-primary,
+#uplink-mbe-loop-dialog button.button-primary {background:var(--mbe-accent)!important;color:var(--mbe-accent-icon)!important;border-color:var(--mbe-accent)}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-actions) button.button:hover:not(:disabled),
+#uplink-mbe-loop-dialog button.button:hover:not(:disabled) {border-color:var(--mbe-accent);text-decoration:underline;text-underline-offset:3px}
+.uplink-mbe-native-wrap .uplink-mbe-modal-dialog button:is(.button-link-delete,#uplink-mbe-bulk-delete-collections):not(:disabled) {color:var(--mbe-danger)!important;border-color:var(--mbe-danger)}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-actions) button.button:disabled,
+#uplink-mbe-loop-dialog button.button:disabled {background:var(--mbe-surface-muted)!important;color:var(--mbe-muted)!important;border-color:var(--mbe-control-border);border-style:dashed;cursor:default}
+.uplink-mbe-native-wrap :is(.uplink-mbe-modal-dialog,.uplink-mbe-appearance-actions) button.button:focus-visible,
+#uplink-mbe-loop-dialog button.button:focus-visible {outline:2px solid var(--mbe-accent);outline-offset:2px;box-shadow:none}
+.uplink-mbe-native-wrap .uplink-mbe-modal-close {top:calc(var(--mbe-ui-space) + var(--mbe-ui-gap));right:calc(var(--mbe-ui-space) + var(--mbe-ui-gap))}
+.uplink-mbe-native-wrap .uplink-mbe-modal-dialog > h2 {min-height:var(--mbe-ui-control-size);display:flex;align-items:center;margin-inline-end:calc(var(--mbe-ui-control-size) + var(--mbe-ui-gap));margin-block-end:var(--mbe-ui-space)}
+.uplink-mbe-native-wrap .uplink-mbe-modal-actions {gap:var(--mbe-ui-gap);flex-wrap:wrap}
+
+/* Native checkbox marks follow the palette instead of the WordPress blue sprite. */
+.uplink-mbe-native-wrap input:is([type="checkbox"],[type="radio"]),
+#uplink-mbe-loop-dialog input:is([type="checkbox"],[type="radio"]) {appearance:auto;accent-color:var(--mbe-accent);box-shadow:none;padding:0}
+.uplink-mbe-native-wrap input:is([type="checkbox"],[type="radio"])::before,
+#uplink-mbe-loop-dialog input:is([type="checkbox"],[type="radio"])::before {content:none}
+
+/* The destination and its icon share one fill; the empty upload fits its body. */
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-destination-control {box-sizing:border-box;min-height:var(--mbe-ui-control-size)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace select.uplink-mbe-upload-destination {min-height:calc(var(--mbe-ui-control-size) - 2px);height:calc(var(--mbe-ui-control-size) - 2px);background-color:transparent!important}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace:not(.has-files) .uplink-mbe-upload-dropzone {min-height:0}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace:not(.has-files) .uplink-mbe-upload-drop-icon {width:40px;height:40px;flex-shrink:0}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace:not(.has-files) .uplink-mbe-upload-choose {margin-block-start:0}
+
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace .button {background:var(--mbe-modal-control)!important;color:var(--mbe-modal-text)!important;border-color:var(--mbe-modal-border)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace .button-primary:not(:disabled) {background:var(--mbe-modal-accent)!important;color:var(--mbe-modal-accent-icon)!important;border-color:var(--mbe-modal-accent)}
+:is(.media-modal.uplink-mbe-frame,.uplink-mbe-replace-dialog) .uplink-mbe-upload-workspace .button:disabled {background:var(--mbe-modal-control)!important;color:var(--mbe-modal-muted)!important;border-style:dashed;opacity:1}
+
+/* Align collection actions with the bottom edge of their labeled picker. */
+.uplink-mbe-native-wrap .uplink-mbe-selection-tools {align-items:flex-end}
+.uplink-mbe-native-wrap .uplink-mbe-selection-tools :is(#uplink-mbe-selection-count,.uplink-mbe-selection-help) {align-self:center}
+/* Keep all selection actions joined, with identical icon hit areas. */
+.uplink-mbe-native-wrap .uplink-mbe-selection-actions {display:inline-flex;flex:0 0 auto;gap:0;margin:0;padding:0;border:0;background:transparent;white-space:nowrap}
+.uplink-mbe-native-wrap .uplink-mbe-selection-actions wa-button {margin:0;border:0;padding:0;background:transparent}
+.uplink-mbe-native-wrap .uplink-mbe-selection-actions wa-button::part(button) {box-sizing:border-box;width:var(--mbe-ui-control-size);min-width:var(--mbe-ui-control-size);height:var(--mbe-ui-control-size);padding:0}
+.uplink-mbe-native-wrap .uplink-mbe-selection-icon-art {display:flex;align-items:center;justify-content:center;width:20px;height:20px}
+.uplink-mbe-native-wrap .uplink-mbe-selection-icon-art svg {display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+.uplink-mbe-native-wrap .uplink-mbe-selection-actions #uplink-mbe-bulk-delete {margin:0;background:transparent}
+
+/* Selection count, destination and actions form one compact toolbar. */
+.uplink-mbe-native-wrap #uplink-mbe-selection-count {flex:1 0 auto;align-self:center;font-size:1rem;font-weight:400}
+.uplink-mbe-native-wrap #uplink-mbe-selection-count::part(base) {font-size:inherit;border:0;background:transparent;padding:0;line-height:1.4}
+.uplink-mbe-native-wrap .uplink-mbe-selection-picker {flex:1 1 230px;max-width:330px;min-width:min(100%,210px)}
+.uplink-mbe-native-wrap .uplink-mbe-selection-picker-label {display:flex;align-items:center;gap:4px;margin-block-end:6px;font-size:14px;font-weight:600;line-height:1.3}
+.uplink-mbe-native-wrap #uplink-mbe-selection-help-toggle::part(button) {width:28px;height:28px;min-height:28px;padding:0}
+.uplink-mbe-native-wrap #uplink-mbe-selection-help-toggle svg {display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.uplink-mbe-native-wrap .uplink-mbe-selection-picker #uplink-mbe-bulk-collection {display:block;max-width:none;min-width:0;width:100%}
+.uplink-mbe-native-wrap #uplink-mbe-bulk-collection::part(form-control-label) {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.uplink-mbe-native-wrap #uplink-mbe-selection-help {--max-width:320px;color:var(--mbe-text)}
+.uplink-mbe-native-wrap #uplink-mbe-selection-help::part(body) {background:var(--mbe-surface);color:var(--mbe-text);border:1px solid var(--mbe-control-border);border-radius:var(--mbe-ui-radius);font-size:14px;line-height:1.5;padding:16px}
+.uplink-mbe-native-wrap #uplink-mbe-selection-help p {margin:0}
+
+@media (min-width:1024px) {
+ .uplink-mbe-native-wrap .uplink-mbe-selection-tools {display:grid;grid-template-columns:minmax(0,330px) max-content minmax(max-content,1fr);gap:var(--mbe-ui-space);align-items:end}
+ .uplink-mbe-native-wrap .uplink-mbe-selection-tools[hidden] {display:none}
+ .uplink-mbe-native-wrap .uplink-mbe-selection-tools #uplink-mbe-selection-count {display:flex;align-items:center;align-self:end;min-height:var(--mbe-ui-control-size);white-space:nowrap}
+ .uplink-mbe-native-wrap .uplink-mbe-selection-picker {min-width:0;max-width:none;width:100%}
+}
+@media (max-width:1023px) {
+ .uplink-mbe-native-wrap .uplink-mbe-selection-picker {flex:1 1 auto}
+}
+
+.uplink-mbe-native-wrap #uplink-mbe-selection-count {margin-inline-start:auto;text-align:end}
+
+/* Disabled actions retain the continuous outline of their button group. */
+.uplink-mbe-native-wrap wa-button-group wa-button[disabled]::part(button) {border-style:solid;border-color:var(--mbe-control-border);opacity:1}
+
+/* Use the same centered Lucide trash icon wherever deletion is offered. */
+.uplink-mbe-trash-icon {display:inline-flex;align-items:center;justify-content:center}
+.uplink-mbe-trash-icon::before {content:"";display:block;width:18px;height:18px;background:currentColor;mask:url("vendor/lucide/trash.svg") center/contain no-repeat}
+
+/* Reserve space inside the scrollport for the first control's focus outline. */
+.uplink-mbe-native-wrap .uplink-mbe-appearance-scroll {padding-block-start:var(--mbe-ui-gap)}

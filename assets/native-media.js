@@ -7,9 +7,9 @@
 		return;
 	}
 
-	await Promise.all( ['wa-button','wa-button-group','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout'].map( tag => customElements.whenDefined( tag ) ) );
+	await Promise.all( ['wa-button','wa-button-group','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout','wa-popover'].map( tag => customElements.whenDefined( tag ) ) );
 
-	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button[id][aria-label]' ).forEach( control => {
+	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button[id][aria-label]:not(#uplink-mbe-selection-help-toggle)' ).forEach( control => {
 		const tooltip = document.createElement( 'wa-tooltip' ); tooltip.setAttribute( 'for', control.id ); tooltip.textContent = control.getAttribute( 'title' ) || control.getAttribute( 'aria-label' ); control.removeAttribute( 'title' ); library.closest( '.uplink-mbe-native-wrap' ).append( tooltip );
 	} );
 
@@ -172,6 +172,7 @@
 	};
 	let attachmentTrigger = null;
 	let currentAttachment = null;
+	let activeDetailTab = null;
 	let currentCompatSnapshot = '';
 	let attachmentSaving = false;
 	let attachmentCompatGeneration = 0;
@@ -1282,29 +1283,23 @@
 		return button;
 	}
 
-	function addDropTarget( element, collection, mode = 'add' ) {
+	function addDropTarget( element, collection, mode = 'move' ) {
+		const canDrop = () => Boolean( config.canAssign && draggedMedia && ! draggedCollection && ! state.reorderMode && ! mediaOrderSaving );
 		element.addEventListener( 'dragover', ( event ) => {
-			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
-				return;
-			}
-			event.preventDefault();
-			if ( event.dataTransfer ) {
-				event.dataTransfer.dropEffect = 'move';
-			}
+			if ( ! canDrop() ) return;
+			event.preventDefault(); event.stopPropagation();
+			event.dataTransfer.dropEffect = 'move';
 			element.classList.add( 'is-drop-target' );
 		} );
-		element.addEventListener( 'dragleave', () => element.classList.remove( 'is-drop-target' ) );
+		element.addEventListener( 'dragleave', event => { if ( ! element.contains( event.relatedTarget ) ) element.classList.remove( 'is-drop-target' ); } );
 		element.addEventListener( 'drop', async ( event ) => {
-			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
-				return;
-			}
-			event.preventDefault();
 			element.classList.remove( 'is-drop-target' );
-			const transferred = event.dataTransfer.getData( 'text/plain' ).split( ',' ).map( Number ).filter( Boolean );
-			const ids = transferred.length ? transferred : Array.from( state.selected );
-			if ( ids.length ) {
-				await assignMedia( ids, collection, mode );
-			}
+			if ( ! canDrop() ) return;
+			event.preventDefault(); event.stopPropagation();
+			const ids = [ ...draggedMedia.ids ], source = draggedMedia.collection;
+			if ( mode === 'move' && source === Number( collection ) ) return;
+			finishMediaDrag();
+			await assignMedia( ids, collection, mode, source, true );
 		} );
 	}
 
@@ -1707,7 +1702,7 @@
 			edit.setAttribute( 'aria-label', `${ config.strings.editCollection }: ${ collection.name }` );
 			edit.addEventListener( 'click', () => openCollectionModal( collection ) );
 
-			const remove = createElement( 'button', 'button-link dashicons dashicons-trash' );
+			const remove = createElement( 'button', 'button-link uplink-mbe-trash-icon' );
 			remove.type = 'button';
 			remove.title = config.strings.deleteCollection;
 			remove.setAttribute( 'aria-label', `${ config.strings.deleteCollection }: ${ collection.name }` );
@@ -1797,11 +1792,14 @@
 	}
 
 	function finishMediaDrag() {
+		const wasDragging = Boolean( draggedMedia );
 		draggedMedia = null;
 		clearMediaDropMarkers();
 		mediaDragGhost?.remove();
 		mediaDragGhost = null;
 		elements.grid.querySelectorAll( '.is-dragging' ).forEach( ( card ) => card.classList.remove( 'is-dragging' ) );
+		elements.tree.querySelectorAll( '.is-drop-target' ).forEach( node => node.classList.remove( 'is-drop-target' ) );
+		if ( wasDragging ) updateSelectionTools();
 	}
 
 	function mediaDropAt( x, y ) {
@@ -1997,7 +1995,7 @@
 			selectLabel.append( checkbox, createElement( 'span', 'uplink-mbe-media-select-text', config.strings.selectMedia ) );
 			let removeMedia = null;
 			if ( media.canDelete ) {
-				removeMedia = createElement( 'button', 'uplink-mbe-media-delete dashicons dashicons-trash' );
+				removeMedia = createElement( 'button', 'uplink-mbe-media-delete uplink-mbe-trash-icon' );
 				removeMedia.type = 'button';
 				removeMedia.title = config.strings.deleteMedia;
 				removeMedia.setAttribute( 'aria-label', `${ config.strings.deleteMedia }: ${ media.title }` );
@@ -2129,7 +2127,7 @@
 
 			bindMediaReordering( card, media );
 			card.addEventListener( 'dragstart', ( event ) => {
-				if ( mediaOrderSaving ) {
+				if ( mediaOrderSaving || ! config.canAssign || ! media.canEdit ) {
 					event.preventDefault();
 					return;
 				}
@@ -2140,9 +2138,9 @@
 					document.querySelectorAll( '.uplink-mbe-media-select input' ).forEach( ( input ) => {
 						input.checked = Number( input.value ) === media.id;
 					} );
-					updateSelectionTools();
+					// Keep the grid still while the pointer is dragging.
 				}
-				draggedMedia = { collection: state.collection, ids: state.media.filter( ( item ) => state.selected.has( item.id ) ).map( ( item ) => item.id ) };
+				draggedMedia = { collection: state.mode === 'library' && state.filter === 'collection' ? Number( state.collection ) : 0, ids: state.reorderMode ? state.media.filter( ( item ) => state.selected.has( item.id ) ).map( item => item.id ) : [ ...state.selected ] };
 				event.dataTransfer.effectAllowed = 'move';
 				event.dataTransfer.setData( 'text/plain', Array.from( state.selected ).join( ',' ) );
 				if ( state.reorderMode ) {
@@ -2272,15 +2270,17 @@
 		}
 	}
 
-	async function assignMedia( ids, collection, mode ) {
+	async function assignMedia( ids, collection, mode, source = 0, fromDrag = false ) {
 		try {
 			await request( 'uplink_mbe_assign_media', {
 				media_ids: JSON.stringify( ids ),
 				collection,
 				mode,
+				source_collection: source,
 			} );
+			if ( fromDrag ) ids.forEach( id => state.selected.delete( id ) );
 			const name = state.collections.find( ( item ) => item.id === Number( collection ) )?.name || config.strings.uncategorized;
-			showNotice( 'clear' === mode ? config.strings.clear : `${ 'remove' === mode ? config.strings.remove : config.strings.add }: ${ name }` );
+			showNotice( 'clear' === mode ? config.strings.clear : `${ mode === 'move' ? config.strings.movedTo : mode === 'remove' ? config.strings.remove : config.strings.add }: ${ name }` );
 			await loadState();
 		} catch ( error ) {
 			showNotice( error.message, 'error' );
@@ -2514,6 +2514,13 @@
 		}
 	}
 
+	function resetAttachmentTabScroll() {
+		requestAnimationFrame( () => {
+			const body = document.getElementById( 'uplink-mbe-detail-tabs' ).shadowRoot?.querySelector( '[part="body"]' );
+			if ( body ) body.scrollTop = 0;
+		} );
+	}
+
 	function setAttachmentMetadataTab( requestedTab, moveFocus = false ) {
 		if ( requestedTab === 'exif' ) requestAnimationFrame( () => window.uplinkMbeExifMap?.refresh( elements.attachmentExif ) );
 		const exifAvailable = ! elements.attachmentExifTab.hidden;
@@ -2523,6 +2530,8 @@
 			|| ( 'optimization' === requestedTab && optimizationAvailable )
 			? requestedTab
 			: 'main';
+		if ( activeDetailTab !== activeTab ) resetAttachmentTabScroll();
+		activeDetailTab = activeTab;
 		document.getElementById( 'uplink-mbe-detail-tabs' ).active = activeTab;
 		const tabs = [
 			[ 'main', elements.attachmentMainTab, elements.attachmentMainPanel ],
@@ -2553,6 +2562,7 @@
 	} );
 
 	function showAttachment( media ) {
+		if ( currentAttachment?.id !== media.id ) resetAttachmentTabScroll();
 		currentAttachment = media;
 		clearAttachmentNotice();
 		elements.attachmentPreview.replaceChildren();

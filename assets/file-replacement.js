@@ -43,7 +43,11 @@
 		const workspace = element( 'div', '', 'media-frame-content' );
 		workspace.append( element( 'div', '', 'uploader-inline' ) );
 		dialog.append( title, element( 'p', media.filename || media.title || '' ), form, workspace );
-		let saving = false;
+		const closeButton = element( 'button', '×', 'uplink-mbe-ui-close uplink-mbe-replace-close' );
+		closeButton.type = 'button'; closeButton.setAttribute( 'aria-label', strings.close );
+		closeButton.addEventListener( 'click', () => { if ( ! saving ) dialog.close(); } );
+		dialog.prepend( closeButton );
+		let saving = false; closeButton.disabled = false;
 		let saved = null;
 		dialog.addEventListener( 'cancel', ( event ) => { if ( saving ) event.preventDefault(); } );
 		dialog.addEventListener( 'close', () => {
@@ -66,7 +70,7 @@
 			data.set( 'action', 'uplink_mbe_replace_file' );
 			data.set( 'nonce', config.nonce );
 			data.set( 'attachment_id', String( media.id ) );
-			saving = true;
+			saving = true; closeButton.disabled = true;
 			form.querySelectorAll( 'input, button' ).forEach( ( node ) => { node.disabled = true; } );
 
 			try {
@@ -83,7 +87,7 @@
 				errorNotice.focus();
 				errorNotice.scrollIntoView( { block: 'nearest' } );
 			} finally {
-				saving = false;
+				saving = false; closeButton.disabled = false;
 				form.querySelectorAll( 'input, button' ).forEach( ( node ) => { node.disabled = false; } );
 
 			}
