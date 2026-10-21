@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.6.4
+Stable tag: 2.7.0
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -370,6 +370,14 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.7.0 =
+
+* Adds All sizes, Main image only and Selected sizes for image optimization, with existing custom-size coverage and a file inventory.
+* Preserves unselected files, updates references for selected files only and restores mixed-format metadata correctly.
+* Uses locally bundled Web Awesome controls for optimization actions and size selection. Adds selected-file totals and save progress.
+* Allows a scaled main image to be optimized when its unselected original upload exceeds the encoding limit.
+
 
 = 2.6.5 =
 
@@ -853,7 +861,7 @@ Pills and dots can be clicked or activated with the keyboard to jump to their im
 
 == Image compression and photo maps ==
 
-Under Media > Uplink Media Bridge > Settings > Compression, use the master switch and choose WebP, AVIF, JPEG XL or JPG to let permitted users compare the enabled formats in the Enhanced editor's Optimization tab. Quality controls and full-size previews help compare results before saving. Every stored image size is converted, with original files retained for restoration. JPEG XL adds responsive picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep the original format. Current-site content, metadata and options referencing converted WebP, AVIF or JPG files are updated. Custom tables and external sites are outside this workflow. Module workers, WebAssembly and OffscreenCanvas are required. Animated source images are left unchanged. Compression settings provide separate role selections for compression and restoration. Both default to administrators only. Users must also have permission to upload files and edit the specific image. Restoration remains available to permitted users when compression is disabled.
+Under Media > Uplink Media Bridge > Settings > Compression, use the master switch and choose WebP, AVIF, JPEG XL or JPG to let permitted users compare the enabled formats in the Enhanced editor's Optimization tab. Quality controls and full-size previews help compare results before saving. By default, all recorded image sizes are converted, including custom sizes. Choose Main image only or Selected sizes to limit processing. Unselected files remain unchanged, with original files retained for restoration. JPEG XL adds responsive picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep the original format. Current-site content, metadata and options referencing converted WebP, AVIF or JPG files are updated. Custom tables and external sites are outside this workflow. Module workers, WebAssembly and OffscreenCanvas are required. Animated source images are left unchanged. Compression settings provide separate role selections for compression and restoration. Both default to administrators only. Users must also have permission to upload files and edit the specific image. Restoration remains available to permitted users when compression is disabled.
 
 GPS exposure and photo maps are off by default and require separate opt-ins under EXIF. The EXIF display option in the Enhanced Manager must also be on. Maps use bundled Leaflet 1.9.4. Opening a photo's EXIF map requests tiles from Esri World Imagery or OpenStreetMap and sends the displayed location, IP address and browser information to that provider. No map tiles are requested when mapping or GPS exposure is disabled.
 

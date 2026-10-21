@@ -102,3 +102,22 @@
 .uplink-mbe-comparison-dialog .button:disabled {color:var(--conversion-muted)!important;background:var(--conversion-surface)!important;border-style:dashed;cursor:wait}
 .uplink-mbe-comparison-dialog input[type="range"]:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
 @media(max-width:640px) {.uplink-mbe-large-controls {grid-template-columns:minmax(0,1fr)}.uplink-mbe-large-controls>.button {width:100%}}
+/* Embedded Web Awesome controls inherit the manager's verified palette. */
+.uplink-mbe-optimization-theme {
+ --wa-color-text-normal:var(--conversion-text);--wa-color-text-quiet:var(--conversion-muted);
+ --wa-color-surface-default:var(--conversion-surface);--wa-color-surface-raised:var(--conversion-surface);
+ --wa-color-surface-border:var(--conversion-border);--wa-font-family-body:inherit;
+ --wa-color-brand-fill-loud:var(--conversion-accent);--wa-color-brand-on-loud:var(--conversion-on-accent);
+ --wa-focus-ring-color:var(--conversion-accent);
+}
+.uplink-mbe-optimization-theme wa-button.button {background:none!important;border:0!important;padding:0!important;height:auto!important;box-shadow:none!important;color:inherit;vertical-align:middle}
+.uplink-mbe-optimization-theme wa-button::part(button) {font-family:inherit;border-radius:var(--wa-border-radius-m)}
+.uplink-mbe-optimization-theme wa-button[variant="brand"]::part(button) {background:var(--conversion-accent);color:var(--conversion-on-accent);border-color:var(--conversion-accent)}
+.uplink-mbe-optimization-theme wa-button[variant="neutral"]::part(button) {background:var(--conversion-surface);color:var(--conversion-text);border-color:var(--conversion-border)}
+.uplink-mbe-size-panel {margin-block-start:var(--wa-space-l);padding:var(--wa-space-l);border:var(--wa-border-width-s) solid var(--conversion-border);border-radius:var(--wa-border-radius-l);background:var(--conversion-surface);color:var(--conversion-text)}
+.uplink-mbe-size-panel h4 {margin:0!important;font-size:var(--wa-font-size-m)!important}
+.uplink-mbe-size-panel .uplink-mbe-size-hint {margin:0;color:var(--conversion-muted);font-size:var(--wa-font-size-s)}
+.uplink-mbe-size-summary {font-size:var(--wa-font-size-s);font-weight:var(--wa-font-weight-semibold);font-variant-numeric:tabular-nums}
+.uplink-mbe-size-list {--min-column-size:15rem;padding-block:var(--wa-space-m)}
+.uplink-mbe-size-panel {margin-block-end:var(--wa-space-l)}
+.uplink-mbe-size-panel wa-checkbox {min-width:0}
