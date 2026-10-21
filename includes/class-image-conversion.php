@@ -30,6 +30,8 @@ final class Image_Conversion {
 			'strings' => array(
 				'sizesTitle' => __( 'Image sizes', 'media-bridge-for-etch' ),
 				'allSizes' => __( 'All sizes', 'media-bridge-for-etch' ), 'mainOnly' => __( 'Main image only', 'media-bridge-for-etch' ), 'chooseSizes' => __( 'Selected sizes', 'media-bridge-for-etch' ),
+				'excludedSize' => __( 'Excluded in Settings. Check to include for this image.', 'media-bridge-for-etch' ),
+				'exclusionsHint' => __( 'All sizes honors Settings exclusions. Choose Selected sizes to override them for this image.', 'media-bridge-for-etch' ),
 				'sizeHint' => __( 'Includes existing WordPress and custom sizes. Sizes that share a file are processed together once. Unselected files keep their current format.', 'media-bridge-for-etch' ),
 				'scopeLabel' => __( 'Optimize', 'media-bridge-for-etch' ), 'tooLarge' => __( 'A file exceeds the 40-megapixel limit. Choose the main image or select smaller sizes.', 'media-bridge-for-etch' ),
 				'sizeInventory' => __( 'Available image files', 'media-bridge-for-etch' ), 'originalUpload' => __( 'Original upload', 'media-bridge-for-etch' ), 'selectionEmpty' => __( 'Select at least one image size before applying compression.', 'media-bridge-for-etch' ),
@@ -165,6 +167,7 @@ final class Image_Conversion {
 			$files[ $key ] = array( 'available' => $info[0] * $info[1] <= 40000000, 'path' => $file, 'name' => $name, 'url' => trailingslashit( dirname( wp_get_attachment_url( $id ) ) ) . rawurlencode( $name ), 'width' => $info[0], 'height' => $info[1], 'bytes' => filesize( $file ), 'hash' => hash_file( 'sha256', $file ) );
 		}
 		if ( count( $files ) > 100 ) self::fail( __( 'This attachment exceeds the 100-file conversion limit.', 'media-bridge-for-etch' ) );
+		foreach ( self::excluded_keys( $files, $aliases ) as $key ) $files[ $key ]['excluded'] = true;
 		$token = wp_generate_uuid4();
 		$job = array( 'owner' => get_current_user_id(), 'id' => $id, 'old' => $old, 'files' => $files, 'aliases' => $aliases, 'staged' => array(), 'format' => '', 'quality' => null, 'expires' => time() + 7200 );
 		add_option( 'uplink_mbe_conversion_' . $token, $job, '', false );
@@ -172,12 +175,21 @@ final class Image_Conversion {
 		foreach ( $files as &$file ) unset( $file['path'], $file['hash'] ); unset( $file );
 		return array( 'token' => $token, 'files' => $files, 'aliases' => $aliases, 'restore' => false, 'mime' => $old['mime'], 'canCompress' => empty( $meta['cimo'] ) && empty( $meta['mbe_optimization'] ) && ! get_post_meta( $id, '_uplink_mbe_etch_optimization', true ) );
 	}
+	/** An excluded alias excludes its shared physical file as well. */
+	private static function excluded_keys( array $files, array $aliases ): array {
+		$excluded = array();
+		foreach ( (array) Plugin::settings()['compression_excluded_sizes'] as $name ) {
+			$key = $aliases[ $name ] ?? $name;
+			if ( isset( $files[ $key ] ) ) $excluded[] = $key;
+		}
+		return array_values( array_unique( $excluded ) );
+	}
 	/** Select only files from the server-created manifest, before staging starts. */
 	public static function select_sizes( string $token, string $scope, array $sizes = array() ): array {
 		$job = self::job( $token );
 		if ( ! in_array( $scope, array( 'all', 'main', 'selected' ), true ) ) self::fail( __( 'Choose a valid image-size option.', 'media-bridge-for-etch' ) );
 		$all = $job['all_files'] ?? $job['files'];
-		$keys = 'all' === $scope ? array_keys( $all ) : ( 'main' === $scope ? array( 'full' ) : $sizes );
+		$keys = 'all' === $scope ? array_values( array_diff( array_keys( $all ), self::excluded_keys( $all, $job['aliases'] ) ) ) : ( 'main' === $scope ? array( 'full' ) : $sizes );
 		if ( ! $keys ) self::fail( __( 'Select at least one image size.', 'media-bridge-for-etch' ) );
 		$selected = array();
 		foreach ( $keys as $key ) {
@@ -200,6 +212,7 @@ final class Image_Conversion {
 	}
 	public static function stage( string $token, string $key, string $format, array $upload, int $quality = 75 ): array {
 		$job = self::job( $token );
+		if ( ! isset( $job['scope'] ) ) self::fail( __( 'Choose image sizes before encoding.', 'media-bridge-for-etch' ) );
 		if ( isset( $job['files'][ $key ]['available'] ) && ! $job['files'][ $key ]['available'] ) self::fail( __( 'This file exceeds the 40-megapixel conversion limit.', 'media-bridge-for-etch' ) );
 		if ( empty( Plugin::settings()['image_conversion'] ) || ! in_array( $format, self::enabled_formats(), true ) ) self::fail( __( 'This compression format is disabled in settings.', 'media-bridge-for-etch' ) );
 		if ( ! isset( self::FORMATS[ $format ], $job['files'][ $key ] ) || ( $job['format'] && $job['format'] !== $format ) ) self::fail( __( 'Invalid image size or conversion format.', 'media-bridge-for-etch' ) );

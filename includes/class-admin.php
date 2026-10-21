@@ -91,6 +91,7 @@ final class Admin {
 			'exif_gps'         => $flag( 'exif_gps' ),
 			'exif_map'         => $flag( 'exif_map' ),
 			'image_conversion' => $flag( 'image_conversion' ),
+			'compression_excluded_sizes' => array_values( array_unique( array_filter( array_map( 'sanitize_key', array_filter( (array) ( $input['compression_excluded_sizes'] ?? $current['compression_excluded_sizes'] ), 'is_string' ) ) ) ) ),
 			'compression_roles' => $role_list( 'compression_roles' ),
 			'restoration_roles' => $role_list( 'restoration_roles' ),
 			'compression_webp' => $flag( 'compression_webp' ),
@@ -311,6 +312,18 @@ final class Admin {
 								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="1" <?php checked( $settings[ 'compression_' . $format ] ); ?>><span><?php echo esc_html( $format_label ); ?></span></label>
 							<?php endforeach; ?>
 							<p id="uplink-mbe-compression-formats-help" class="description"><?php esc_html_e( 'WebP and AVIF are on by default. JPEG XL and JPG are off by default. Only selected formats appear in the preview workspace. JPG does not support transparency.', 'media-bridge-for-etch' ); ?></p>
+						</fieldset>
+						<fieldset class="uplink-mbe-compression-exclusions">
+							<legend><strong><?php esc_html_e( 'Exclude image sizes from compression', 'media-bridge-for-etch' ); ?></strong></legend>
+							<p class="description"><?php esc_html_e( 'All sizes skips these sizes. To override for one image, choose Selected sizes in its optimization panel and check an excluded size. Sizes sharing the same file are excluded and overridden together.', 'media-bridge-for-etch' ); ?></p>
+							<input type="hidden" name="uplink_mbe_settings[compression_excluded_sizes][]" value="">
+							<?php
+							$registered_sizes = wp_get_registered_image_subsizes();
+							foreach ( array_unique( array_merge( array_keys( $registered_sizes ), $settings['compression_excluded_sizes'] ) ) as $size_name ) :
+								$dimensions = $registered_sizes[ $size_name ] ?? null;
+								?>
+								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_excluded_sizes][]" value="<?php echo esc_attr( $size_name ); ?>" <?php checked( in_array( $size_name, $settings['compression_excluded_sizes'], true ) ); ?>><span><?php echo esc_html( $size_name . ( $dimensions ? ' · ' . ( $dimensions['width'] ?: __( 'auto', 'media-bridge-for-etch' ) ) . ' × ' . ( $dimensions['height'] ?: __( 'auto', 'media-bridge-for-etch' ) ) : '' ) ); ?></span></label>
+							<?php endforeach; ?>
 						</fieldset>
 						<h3><?php esc_html_e( 'Compression and restoration permissions', 'media-bridge-for-etch' ); ?></h3>
 						<p class="description"><?php esc_html_e( 'Choose roles separately for each action. Users must also have permission to upload files and edit the specific image. Both actions default to administrators only. Restoration remains available to permitted users when compression is turned off.', 'media-bridge-for-etch' ); ?></p>

@@ -215,6 +215,7 @@ final class Plugin {
 			'exif_gps'         => 0,
 			'exif_map'         => 0,
 			'image_conversion' => 1,
+			'compression_excluded_sizes' => array(),
 			'compression_roles' => array( 'administrator' ),
 			'restoration_roles' => array( 'administrator' ),
 			'compression_webp' => 1,

@@ -52,7 +52,7 @@ function progressOverlay(value){
  }
 }
 function syncControls(){
- root.querySelectorAll('button,input,wa-button,wa-radio-group,wa-checkbox').forEach(node=>{if(!node.classList.contains('uplink-mbe-comparison-range'))node.disabled=busy;});
+ root.querySelectorAll('button,input,wa-button,wa-radio-group,wa-checkbox,wa-slider').forEach(node=>{if(!node.classList.contains('uplink-mbe-comparison-range'))node.disabled=busy;});
  if(largeControls){largeControls.input.disabled=busy;largeControls.apply.disabled=busy||!results[largeControls.format]||!selectionValid();}
  for(const [format,panel]of formatPanels){
   panel.apply.disabled=busy||!results[format]||!selectionValid();
@@ -145,7 +145,7 @@ function updateLargeComparison(format){
  if(!largeControls||largeControls.format!==format||!results[format])return;
  const result=results[format],split=largeControls.preview.querySelector('input')?.value||50;
  largeControls.preview.replaceChildren(comparison(originalUrl,result.previewUrl,format,job.files.full,split));
- largeControls.input.value=String(result.quality);largeControls.output.value=String(result.quality);showStatistics(largeControls.stats,result);
+ largeControls.input.value=Number(result.quality);largeControls.output.value=String(result.quality);showStatistics(largeControls.stats,result);
 }
 function openComparison(format,trigger){
  const result=results[format];if(!result)return;
@@ -155,8 +155,8 @@ function openComparison(format,trigger){
  const titleId='uplink-mbe-comparison-title';title.id=titleId;dialog.setAttribute('aria-labelledby',titleId);
  close.addEventListener('click',()=>dialog.close());header.append(title,close);
  const preview=el('div','','uplink-mbe-large-preview'),controls=el('div','','uplink-mbe-large-controls'),stats=el('p','','uplink-mbe-format-stats');stats.setAttribute('role','status');
- const field=el('label','','uplink-mbe-format-quality'),caption=el('span',text.quality),output=el('output',String(result.quality)),input=el('input');
- input.type='range';input.min='1';input.max='100';input.step='1';input.value=String(result.quality);input.setAttribute('aria-label',label(format)+' '+text.quality);
+ const field=el('label','','uplink-mbe-format-quality'),caption=el('span',text.quality),output=el('output',String(result.quality)),input=el('wa-slider');
+ input.min=1;input.max=100;input.step=1;input.value=Number(result.quality);input.label=label(format)+' '+text.quality;input.classList.add('wa-visually-hidden-label');
  field.append(caption,output,input);
  const apply=button(text.applyCompression,'button button-primary');apply.type='button';
  input.addEventListener('input',()=>{
@@ -205,8 +205,8 @@ function createFormatCard(format,value){
  const preview=el('div','','uplink-mbe-format-preview');
  const original=el('img');original.src=current.url;original.alt=text.original;original.className='uplink-mbe-preview-placeholder';original.style.aspectRatio=job.files.full.width+'/'+job.files.full.height;preview.append(original);
  const stats=el('p',text.preparingPreview,'uplink-mbe-format-stats');stats.setAttribute('role','status');
- const field=el('label','','uplink-mbe-format-quality'),caption=el('span',text.quality),output=el('output',String(value)),input=el('input');
- field.hidden=true;input.type='range';input.min='1';input.max='100';input.step='1';input.value=String(value);input.dataset.format=format;input.setAttribute('aria-label',label(format)+' '+text.quality);
+ const field=el('label','','uplink-mbe-format-quality'),caption=el('span',text.quality),output=el('output',String(value)),input=el('wa-slider');
+ field.hidden=true;input.min=1;input.max=100;input.step=1;input.value=Number(value);input.dataset.format=format;input.label=label(format)+' '+text.quality;input.classList.add('wa-visually-hidden-label');
  field.append(caption,output,input);
  const hints=el('span','','uplink-mbe-quality-hints');hints.append(el('span',text.smallerFile),el('span',text.moreDetail));field.append(hints);
  const refresh=button(text.retryPreview,'button'),expand=button(text.inspectShort.replace('%s',label(format)),'button uplink-mbe-inspect'),apply=button(text.useFormat.replace('%s',label(format)),'button button-primary');
@@ -259,7 +259,7 @@ async function compareFormats(formats){
 function selectionValid(){const keys=selectedSizeKeys();return !!keys.length&&keys.every(key=>job.files[key].available!==false);}
 function selectedSizeKeys(){
  if(!job)return [];
- if(sizeScope==='all')return Object.keys(job.files);
+ if(sizeScope==='all')return Object.keys(job.files).filter(key=>!job.files[key].excluded);
  if(sizeScope==='main')return ['full'];
  return sizeChecks.filter(control=>control.checked).map(control=>control.value);
 }
@@ -270,13 +270,14 @@ function createSizePanel(){
  scopeGroup=el('wa-radio-group');scopeGroup.setAttribute('label',text.scopeLabel);scopeGroup.setAttribute('orientation','horizontal');scopeGroup.value='all';scopeGroup.setAttribute('size','s');
  for(const [value,label]of [['all',text.allSizes],['main',text.mainOnly],['selected',text.chooseSizes]]){const choice=el('wa-radio',label);choice.value=value;choice.setAttribute('appearance','button');scopeGroup.append(choice);}
  sizePanel.append(scopeGroup,el('p',text.sizeHint,'uplink-mbe-size-hint'));
+ if(Object.values(job.files).some(file=>file.excluded))sizePanel.append(el('p',text.exclusionsHint,'uplink-mbe-exclusions-hint'));
  if(Object.values(job.files).some(file=>file.available===false))sizePanel.append(el('p',text.tooLarge,'uplink-mbe-size-hint'));
  const list=el('div','','uplink-mbe-size-list wa-grid wa-gap-m');list.setAttribute('role','group');list.setAttribute('aria-label',text.sizeInventory);
  for(const [key,file]of Object.entries(job.files)){
   const aliases=Object.entries(job.aliases||{}).filter(([,canonical])=>canonical===key).map(([name])=>name);
   const label=key==='full'?text.mainOnly:key==='original_image'?text.originalUpload:key;
-  const check=el('wa-checkbox',label+(aliases.length?' / '+aliases.join(', '):''));check.value=key;check.checked=file.available!==false;check.dataset.unavailable=String(file.available===false);
-  check.setAttribute('hint',file.width+' × '+file.height+' · '+bytes(file.bytes)+(file.available===false?' · '+text.tooLarge:''));
+  const check=el('wa-checkbox',label+(aliases.length?' / '+aliases.join(', '):''));check.value=key;check.checked=file.available!==false&&!file.excluded;check.dataset.unavailable=String(file.available===false);
+  check.setAttribute('hint',file.width+' × '+file.height+' · '+bytes(file.bytes)+(file.available===false?' · '+text.tooLarge:'')+(file.excluded?' · '+text.excludedSize:''));
   check.addEventListener('change',updateSizeSelection);sizeChecks.push(check);list.append(check);
  }
  sizePanel.append(list);

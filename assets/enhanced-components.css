@@ -1,0 +1,37 @@
+/* Web Awesome stays inside the Enhanced Manager and follows its saved palette. */
+.uplink-mbe-native-wrap.uplink-mbe-optimization-theme {
+ --wa-color-text-normal:var(--mbe-text);--wa-color-text-quiet:var(--mbe-muted);
+ --wa-color-surface-default:var(--mbe-surface);--wa-color-surface-raised:var(--mbe-card);
+ --wa-color-surface-lowered:var(--mbe-control);--wa-color-surface-border:var(--mbe-control-border);
+ --wa-color-brand-fill-loud:var(--mbe-accent);--wa-color-brand-on-loud:var(--mbe-accent-icon);
+ --wa-color-neutral-fill-normal:var(--mbe-control);--wa-color-neutral-on-normal:var(--mbe-text);
+ --wa-color-neutral-border-normal:var(--mbe-control-border);--wa-focus-ring-color:var(--mbe-accent);
+ --wa-font-family-body:inherit;
+}
+.uplink-mbe-native-wrap [hidden] {display:none!important}
+.uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea) {width:100%;min-width:0}
+.uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea)::part(form-control-label) {color:var(--mbe-text)}
+.uplink-mbe-native-wrap wa-input::part(input),.uplink-mbe-native-wrap wa-textarea::part(textarea),.uplink-mbe-native-wrap wa-select::part(combobox) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-button:is(.button,.uplink-mbe-toolbar-button,.uplink-mbe-view-button,.uplink-mbe-attachment-header-nav,.uplink-mbe-icon-button) {padding:0!important;border:0!important;background:none!important;height:auto!important;box-shadow:none!important}
+.uplink-mbe-native-wrap wa-button::part(button) {font-family:inherit;background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-button:is([variant="brand"],[aria-pressed="true"],[aria-expanded="true"])::part(button) {background:var(--mbe-accent);color:var(--mbe-accent-icon);border-color:var(--mbe-accent)}
+.uplink-mbe-native-wrap wa-button[variant="danger"]::part(button) {color:var(--mbe-danger);border-color:var(--mbe-danger)}
+.uplink-mbe-native-wrap wa-button[disabled]::part(button) {background:var(--mbe-surface-muted);color:var(--mbe-muted);border-style:dashed;opacity:1}
+.uplink-mbe-native-wrap wa-button svg {width:var(--wa-font-size-l);height:var(--wa-font-size-l);flex-shrink:0}
+.uplink-mbe-native-wrap wa-button[aria-label]::part(label) {gap:var(--wa-space-xs)}
+#uplink-mbe-media-search {align-items:end}
+#uplink-mbe-search-input {min-width:16ch}
+.uplink-mbe-library-drawer-bar {align-items:end}
+.uplink-mbe-native-wrap wa-tab::part(tab) {color:var(--mbe-muted);font-size:var(--wa-font-size-s);padding:var(--wa-space-m)}
+.uplink-mbe-native-wrap wa-tab[active]::part(tab) {color:var(--mbe-text)}
+.uplink-mbe-native-wrap wa-tab-panel {padding-block:var(--wa-space-m)}
+.uplink-mbe-native-wrap wa-tab-group::part(nav) {border-color:var(--mbe-border)}
+.uplink-mbe-native-wrap wa-callout {color:var(--mbe-text);background:var(--mbe-surface-muted);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-badge::part(badge),.uplink-mbe-native-wrap wa-tag::part(tag) {background:var(--mbe-badge);color:var(--mbe-badge-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-active-filters {margin-block:var(--wa-space-s)}
+.uplink-mbe-native-wrap .uplink-mbe-selection-tools {padding:var(--wa-space-m);border-radius:var(--wa-border-radius-m)}
+.uplink-mbe-native-wrap {--wa-opacity-disabled:1}
+.uplink-mbe-native-wrap .uplink-mbe-library-drawer-bar {align-items:center}
+.uplink-mbe-native-wrap #uplink-mbe-search-input {padding:0;border:0;background:transparent;border-radius:0;min-height:0}
+.uplink-mbe-native-wrap #uplink-mbe-media-search {gap:var(--wa-space-xs);align-items:center}
+.uplink-mbe-native-wrap wa-progress-bar {width:100%;--track-height:var(--wa-space-xs);--indicator-color:var(--mbe-accent)}

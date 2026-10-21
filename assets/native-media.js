@@ -1,4 +1,4 @@
-( function () {
+( async function () {
 	'use strict';
 
 	const config = window.uplinkMbeNativeMedia;
@@ -6,6 +6,12 @@
 	if ( ! config || ! library ) {
 		return;
 	}
+
+	await Promise.all( ['wa-button','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout'].map( tag => customElements.whenDefined( tag ) ) );
+
+	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button[id][aria-label]' ).forEach( control => {
+		const tooltip = document.createElement( 'wa-tooltip' ); tooltip.setAttribute( 'for', control.id ); tooltip.textContent = control.getAttribute( 'title' ) || control.getAttribute( 'aria-label' ); control.removeAttribute( 'title' ); control.after( tooltip );
+	} );
 
 	const elements = {
 		wrap: document.querySelector( '.uplink-mbe-native-wrap' ),
@@ -381,7 +387,9 @@
 	};
 
 	function createElement( tag, className, text ) {
-		const element = document.createElement( tag );
+		const useButton = tag === 'button' && /(?:^| )button(?: |$)/.test( className || '' );
+		const element = document.createElement( useButton ? 'wa-button' : tag );
+		if ( useButton ) { element.setAttribute( 'size', 'small' ); element.setAttribute( 'variant', className.includes( 'button-link-delete' ) ? 'danger' : 'neutral' ); element.setAttribute( 'appearance', 'outlined' ); }
 		if ( className ) {
 			element.className = className;
 		}
@@ -503,6 +511,8 @@
 	}
 
 	function applyPalette( palette ) {
+		elements.wrap.classList.toggle( 'wa-dark', colorLuminance( palette.surface || '#ffffff' ) < 0.35 );
+		elements.wrap.classList.toggle( 'wa-light', colorLuminance( palette.surface || '#ffffff' ) >= 0.35 );
 		Object.entries( palette || {} ).forEach( ( [ name, value ] ) => {
 			if ( paletteVariableNames[ name ] ) {
 				elements.wrap.style.setProperty( `--mbe-${ paletteVariableNames[ name ] }`, value );
@@ -1130,11 +1140,11 @@
 
 		const selectedMime = state.mimeSubtype;
 		elements.mimeFilter.replaceChildren();
-		const allMimeTypes = createElement( 'option', '', elements.mimeFilter.dataset.allMimeTypes || 'All' );
+		const allMimeTypes = createElement( 'wa-option', '', elements.mimeFilter.dataset.allMimeTypes || 'All' );
 		allMimeTypes.value = '';
 		elements.mimeFilter.append( allMimeTypes );
 		state.mimeTypes.filter( ( mime ) => ! state.type || mime.type === state.type ).forEach( ( mime ) => {
-			const option = createElement( 'option', '', mime.label );
+			const option = createElement( 'wa-option', '', mime.label );
 			option.value = mime.value;
 			elements.mimeFilter.append( option );
 		} );
@@ -1142,11 +1152,11 @@
 
 		const selectedUploader = String( state.uploadedBy );
 		elements.uploaderFilter.replaceChildren();
-		const allUploaders = createElement( 'option', '', elements.uploaderFilter.dataset.allUploaders || 'All' );
+		const allUploaders = createElement( 'wa-option', '', elements.uploaderFilter.dataset.allUploaders || 'All' );
 		allUploaders.value = '';
 		elements.uploaderFilter.append( allUploaders );
 		state.uploaders.forEach( ( uploader ) => {
-			const option = createElement( 'option', '', uploader.label );
+			const option = createElement( 'wa-option', '', uploader.label );
 			option.value = String( uploader.value );
 			elements.uploaderFilter.append( option );
 		} );
@@ -1167,6 +1177,23 @@
 		elements.clearFilters.disabled = ! hasActiveFilters;
 		elements.clearFilters.classList.toggle( 'is-active', hasActiveFilters );
 		updateDrawerSummary();
+		renderActiveFilters();
+	}
+
+	function renderActiveFilters() {
+		let row = document.getElementById( 'uplink-mbe-active-filters' );
+		if ( ! row ) { row = createElement( 'div', 'uplink-mbe-active-filters wa-cluster wa-gap-s' ); row.id = 'uplink-mbe-active-filters'; elements.searchStatus.before( row ); }
+		row.replaceChildren();
+		const filters = [ [ 'search', elements.searchInput ], [ 'type', elements.typeFilter ], [ 'mimeSubtype', elements.mimeFilter ], [ 'uploadedBy', elements.uploaderFilter ], [ 'attachmentStatus', elements.attachmentStatusFilter ], [ 'optimizationStatus', elements.optimizationStatusFilter ], [ 'uploadedFrom', elements.uploadedFromFilter ], [ 'uploadedTo', elements.uploadedToFilter ], [ 'widthMin', elements.widthMinFilter ], [ 'widthMax', elements.widthMaxFilter ], [ 'heightMin', elements.heightMinFilter ], [ 'heightMax', elements.heightMaxFilter ], [ 'fileSizeMin', elements.fileSizeMinFilter ], [ 'fileSizeMax', elements.fileSizeMaxFilter ], [ 'missingAlt', elements.missingAltFilter ] ];
+		for ( const [ key, control ] of filters ) {
+			if ( ! state[ key ] ) continue;
+			const label = control.getAttribute( 'label' ) || control.getAttribute( 'aria-label' ) || control.labels?.[ 0 ]?.textContent?.trim() || key;
+			const option = Array.from( control.children ).find( item => item.value === String( state[ key ] ) );
+			const tag = createElement( 'wa-tag', '', label + ( state[ key ] === true ? '' : ': ' + ( option?.textContent || state[ key ] ) ) );
+			tag.setAttribute( 'with-remove', '' ); tag.setAttribute( 'size', 's' );
+			tag.addEventListener( 'wa-remove', () => { state[ key ] = key === 'missingAlt' ? false : ''; if ( key === 'type' ) state.mimeSubtype = ''; state.page = 1; loadState(); } ); row.append( tag );
+		}
+		row.hidden = ! row.childElementCount;
 	}
 
 	function setDrawerOpen( open ) {
@@ -1533,7 +1560,7 @@
 			button.type = 'button';
 			const labelElement = createElement( 'span', 'uplink-mbe-health-label', label );
 			button.classList.toggle( 'is-active', state.healthFilter === key );
-			button.append( labelElement, createElement( 'span', 'uplink-mbe-health-count', String( state.health.counts?.[ key ] || 0 ) ) );
+			button.append( labelElement, createElement( 'wa-badge', 'uplink-mbe-health-count', String( state.health.counts?.[ key ] || 0 ) ) );
 			button.addEventListener( 'click', () => {
 				state.healthFilter = key;
 				state.page = 1;
@@ -1549,7 +1576,7 @@
 		elements.healthTabCount.textContent = String( issueCount );
 		const total = Number( state.health.total || 0 );
 		const healthy = Number( state.health.counts?.healthy || 0 );
-		elements.healthProgress.style.width = `${ total ? Math.round( ( healthy / total ) * 100 ) : 100 }%`;
+		elements.healthProgress.value = total ? Math.round( ( healthy / total ) * 100 ) : 100;
 		elements.healthStatus.textContent = `${ healthy } of ${ total } ${ config.strings.healthy } · ${ config.strings.scannedNow }`;
 	}
 
@@ -1699,11 +1726,11 @@
 
 	function renderBulkCollections() {
 		elements.bulkCollection.replaceChildren();
-		const placeholder = createElement( 'option', '', config.strings.chooseCollection );
+		const placeholder = createElement( 'wa-option', '', config.strings.chooseCollection );
 		placeholder.value = '';
 		elements.bulkCollection.append( placeholder );
 		state.collections.forEach( ( collection ) => {
-			const option = createElement( 'option', '', collectionOptionLabel( collection ) );
+			const option = createElement( 'wa-option', '', collectionOptionLabel( collection ) );
 			option.value = String( collection.id );
 			elements.bulkCollection.append( option );
 		} );
@@ -2480,6 +2507,7 @@
 			|| ( 'optimization' === requestedTab && optimizationAvailable )
 			? requestedTab
 			: 'main';
+		document.getElementById( 'uplink-mbe-detail-tabs' ).active = activeTab;
 		const tabs = [
 			[ 'main', elements.attachmentMainTab, elements.attachmentMainPanel ],
 			[ 'file', elements.attachmentFileTab, elements.attachmentFilePanel ],
@@ -2557,7 +2585,7 @@
 		} );
 		window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
 		const hasExif = Boolean( state.display.exif && ( exifList.childElementCount || media.location ) );
-		elements.attachmentExifTab.hidden = ! hasExif;
+		elements.attachmentExifTab.hidden = ! hasExif; elements.attachmentExifTab.disabled = elements.attachmentExifTab.hidden;
 		if ( ! hasExif && 'true' === elements.attachmentExifTab.getAttribute( 'aria-selected' ) ) {
 			setAttachmentMetadataTab( 'main' );
 		}
@@ -2615,7 +2643,7 @@
 				optimizationList.append( row );
 			} );
 			const hasOptimization = Boolean( elements.attachmentOptimizationList.childElementCount || media.conversion || ( media.canConvert && window.uplinkMbeConversion ) );
-			elements.attachmentOptimizationTab.hidden = ! hasOptimization;
+			elements.attachmentOptimizationTab.hidden = ! hasOptimization; elements.attachmentOptimizationTab.disabled = elements.attachmentOptimizationTab.hidden;
 			if ( ! hasOptimization && 'true' === elements.attachmentOptimizationTab.getAttribute( 'aria-selected' ) ) {
 				setAttachmentMetadataTab( 'main' );
 			}
@@ -3028,7 +3056,7 @@
 			if ( 'exif' === toggle.dataset.displayField && currentAttachment ) {
 				window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
 		const hasExif = Boolean( toggle.checked && elements.attachmentExif.querySelector( 'dl' )?.childElementCount );
-				elements.attachmentExifTab.hidden = ! hasExif;
+				elements.attachmentExifTab.hidden = ! hasExif; elements.attachmentExifTab.disabled = elements.attachmentExifTab.hidden;
 				if ( ! hasExif ) {
 					setAttachmentMetadataTab( 'main' );
 				}
@@ -3166,13 +3194,14 @@
 	const conversionDisabledState = new WeakMap();
 	document.addEventListener( 'uplink-mbe-conversion-busy', event => {
 		window.uplinkMbeConversionBusy = event.detail;
-		elements.attachmentModal.querySelectorAll( '[data-attachment-close], input, textarea, #uplink-mbe-attachment-previous, #uplink-mbe-attachment-next, #uplink-mbe-attachment-replace, #uplink-mbe-attachment-delete' ).forEach( node => {
+		elements.attachmentModal.querySelectorAll( '[data-attachment-close], input, textarea, wa-input, wa-textarea, #uplink-mbe-attachment-previous, #uplink-mbe-attachment-next, #uplink-mbe-attachment-replace, #uplink-mbe-attachment-delete' ).forEach( node => {
 			if ( node.closest( '#uplink-mbe-conversion-controls' ) ) return;
 			if ( event.detail ) { conversionDisabledState.set( node, node.disabled ); node.disabled = true; }
 			else if ( conversionDisabledState.has( node ) ) { node.disabled = conversionDisabledState.get( node ); conversionDisabledState.delete( node ); }
 		} );
 		if ( ! event.detail ) { updateAttachmentNavigation(); updateAttachmentSaveState(); }
 	} );
+	document.getElementById( 'uplink-mbe-detail-tabs' ).addEventListener( 'wa-tab-show', event => setAttachmentMetadataTab( event.detail.name ) );
 	elements.attachmentModal.addEventListener( 'input', updateAttachmentSaveState );
 	elements.attachmentModal.addEventListener( 'change', updateAttachmentSaveState );
 	elements.attachmentDecorative.addEventListener( 'change', () => {
@@ -3212,20 +3241,7 @@
 	elements.attachmentNext.addEventListener( 'click', () => navigateAttachment( 1 ) );
 	[ elements.attachmentMainTab, elements.attachmentFileTab, elements.attachmentExifTab, elements.attachmentOptimizationTab ].forEach( ( tab ) => {
 		tab.addEventListener( 'click', () => setAttachmentMetadataTab( tab.id.replace( 'uplink-mbe-attachment-', '' ).replace( '-tab', '' ) ) );
-		tab.addEventListener( 'keydown', ( event ) => {
-			if ( ! [ 'ArrowLeft', 'ArrowRight', 'Home', 'End' ].includes( event.key ) ) {
-				return;
-			}
-			event.preventDefault();
-			const tabs = [ elements.attachmentMainTab, elements.attachmentFileTab, elements.attachmentExifTab, elements.attachmentOptimizationTab ].filter( ( item ) => ! item.hidden );
-			const current = tabs.indexOf( tab );
-			let next = current;
-			if ( 'Home' === event.key ) next = 0;
-			if ( 'End' === event.key ) next = tabs.length - 1;
-			if ( 'ArrowLeft' === event.key ) next = ( current - 1 + tabs.length ) % tabs.length;
-			if ( 'ArrowRight' === event.key ) next = ( current + 1 ) % tabs.length;
-			setAttachmentMetadataTab( tabs[ next ].id.replace( 'uplink-mbe-attachment-', '' ).replace( '-tab', '' ), true );
-		} );
+
 	} );
 	elements.modal.querySelectorAll( '[data-modal-close]' ).forEach( ( button ) => button.addEventListener( 'click', closeCollectionModal ) );
 	elements.attachmentModal.querySelectorAll( '[data-attachment-close]' ).forEach( ( button ) => button.addEventListener( 'click', handleAttachmentClose ) );
@@ -3246,7 +3262,8 @@
 			closeInfoPopup( true );
 			return;
 		}
-		const editing = event.target.matches?.( 'input, textarea, select, [contenteditable="true"]' );
+		const editing = event.composedPath().some( node => node.matches?.( 'input, textarea, select, wa-input, wa-textarea, wa-select, wa-slider, wa-tab, [contenteditable="true"]' ) );
+		if ( event.defaultPrevented ) return;
 		if ( ! elements.attachmentModal.hidden && ! editing && ( 'ArrowLeft' === event.key || 'ArrowRight' === event.key ) ) {
 			event.preventDefault();
 			navigateAttachment( 'ArrowLeft' === event.key ? -1 : 1 );
