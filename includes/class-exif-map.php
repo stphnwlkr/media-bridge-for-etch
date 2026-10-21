@@ -28,8 +28,9 @@ final class Exif_Map {
 			'location' => __( 'Photo location', 'media-bridge-for-etch' ),
 			'satellite' => __( 'Satellite', 'media-bridge-for-etch' ),
 			'streets' => __( 'OpenStreetMap', 'media-bridge-for-etch' ),
-			'open' => __( 'Open in OpenStreetMap', 'media-bridge-for-etch' ),
-			'error' => __( 'Map imagery could not be loaded. You can still open the location in OpenStreetMap.', 'media-bridge-for-etch' ),
+			'openGoogle' => __( 'Open in Google Maps', 'media-bridge-for-etch' ),
+			'openApple' => __( 'Open in Apple Maps', 'media-bridge-for-etch' ),
+			'error' => __( 'Map imagery could not be loaded. Use the links below to open the location in Google Maps or Apple Maps.', 'media-bridge-for-etch' ),
 		) );
 	}
 }

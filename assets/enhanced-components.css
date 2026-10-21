@@ -1,0 +1,80 @@
+/* Web Awesome stays inside the Enhanced Manager and follows its saved palette. */
+.uplink-mbe-native-wrap.uplink-mbe-optimization-theme {
+ --wa-color-text-normal:var(--mbe-text);--wa-color-text-quiet:var(--mbe-muted);
+ --wa-color-surface-default:var(--mbe-surface);--wa-color-surface-raised:var(--mbe-card);
+ --wa-color-surface-lowered:var(--mbe-control);--wa-color-surface-border:var(--mbe-control-border);
+ --wa-color-brand-fill-loud:var(--mbe-accent);--wa-color-brand-on-loud:var(--mbe-accent-icon);
+ --wa-color-neutral-fill-normal:var(--mbe-control);--wa-color-neutral-on-normal:var(--mbe-text);
+ --wa-color-neutral-border-normal:var(--mbe-control-border);--wa-focus-ring-color:var(--mbe-accent);
+ --wa-font-family-body:inherit;
+}
+.uplink-mbe-native-wrap [hidden] {display:none!important}
+.uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea) {width:100%;min-width:0}
+.uplink-mbe-native-wrap :is(wa-input,wa-select,wa-textarea)::part(form-control-label) {color:var(--mbe-text)}
+.uplink-mbe-native-wrap wa-input::part(input-wrapper) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-textarea::part(textarea-wrapper),.uplink-mbe-native-wrap wa-select::part(combobox) {background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-input::part(input),.uplink-mbe-native-wrap wa-textarea::part(textarea) {background:transparent;color:var(--mbe-text)}
+.uplink-mbe-native-wrap wa-button:is(.button,.uplink-mbe-toolbar-button,.uplink-mbe-view-button,.uplink-mbe-attachment-header-nav,.uplink-mbe-icon-button) {padding:0!important;border:0!important;background:none!important;height:auto!important;box-shadow:none!important}
+.uplink-mbe-native-wrap wa-button::part(button) {font-family:inherit;background:var(--mbe-control);color:var(--mbe-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-button:is([variant="brand"],[aria-pressed="true"],[aria-expanded="true"])::part(button) {background:var(--mbe-accent);color:var(--mbe-accent-icon);border-color:var(--mbe-accent)}
+.uplink-mbe-native-wrap wa-button[variant="danger"]::part(button) {color:var(--mbe-danger);border-color:var(--mbe-danger)}
+.uplink-mbe-native-wrap wa-button[disabled]::part(button) {background:var(--mbe-surface-muted);color:var(--mbe-muted);border-style:dashed;opacity:1}
+.uplink-mbe-native-wrap wa-button svg {width:var(--wa-font-size-l);height:var(--wa-font-size-l);flex-shrink:0}
+.uplink-mbe-native-wrap wa-button[aria-label]::part(label) {gap:var(--wa-space-xs)}
+#uplink-mbe-media-search {align-items:end}
+#uplink-mbe-search-input {min-width:16ch}
+.uplink-mbe-library-drawer-bar {align-items:end}
+.uplink-mbe-native-wrap wa-tab::part(tab) {color:var(--mbe-muted);font-size:var(--wa-font-size-s);padding:var(--wa-space-m)}
+.uplink-mbe-native-wrap wa-tab[active]::part(tab) {color:var(--mbe-text)}
+.uplink-mbe-native-wrap wa-tab-panel {padding:0;--padding:0}
+.uplink-mbe-native-wrap wa-tab-group::part(nav) {border-color:var(--mbe-border)}
+.uplink-mbe-native-wrap wa-callout {color:var(--mbe-text);background:var(--mbe-surface-muted);border-color:var(--mbe-control-border)}
+.uplink-mbe-native-wrap wa-badge::part(badge),.uplink-mbe-native-wrap wa-tag::part(tag) {background:var(--mbe-badge);color:var(--mbe-badge-text);border-color:var(--mbe-control-border)}
+.uplink-mbe-active-filters {margin-block:var(--wa-space-s)}
+.uplink-mbe-native-wrap .uplink-mbe-selection-tools {padding:var(--wa-space-m);border-radius:var(--wa-border-radius-m)}
+.uplink-mbe-native-wrap {--wa-opacity-disabled:1}
+.uplink-mbe-native-wrap .uplink-mbe-library-drawer-bar {align-items:center}
+.uplink-mbe-native-wrap #uplink-mbe-search-input {padding:0;border:0;background:transparent;border-radius:0;min-height:0}
+.uplink-mbe-native-wrap #uplink-mbe-media-search {gap:var(--wa-space-xs);align-items:center}
+.uplink-mbe-native-wrap wa-progress-bar {width:100%;--track-height:var(--wa-space-xs);--indicator-color:var(--mbe-accent)}
+/* A Web Awesome button owns its border and dimensions inside its shadow tree.
+   Legacy native icon-button widths must not clip or overlap that button. */
+.uplink-mbe-native-wrap wa-button:is(.button,.uplink-mbe-icon-button,.uplink-mbe-view-button,.uplink-mbe-toolbar-button,.uplink-mbe-attachment-header-nav) {display:inline-flex;place-items:normal;width:auto!important;min-width:0;max-width:none;line-height:normal;color:var(--mbe-text)!important;outline:none!important}
+.uplink-mbe-native-wrap wa-button:is([variant="brand"],[aria-pressed="true"],[aria-expanded="true"]) {color:var(--mbe-accent-icon)!important}
+.uplink-mbe-native-wrap wa-button[variant="danger"] {color:var(--mbe-danger)!important}
+.uplink-mbe-native-wrap wa-button:is(.uplink-mbe-icon-button,.uplink-mbe-view-button,.uplink-mbe-toolbar-button,.uplink-mbe-attachment-header-nav)::part(button) {box-sizing:border-box;min-width:calc(var(--wa-space-l) + var(--wa-space-m));height:calc(var(--wa-space-l) + var(--wa-space-m));padding-inline:var(--wa-space-s)}
+.uplink-mbe-native-wrap wa-button::part(button):focus-visible {outline:var(--wa-focus-ring);outline-offset:var(--wa-focus-ring-offset)}
+.uplink-mbe-native-wrap wa-button svg,.uplink-mbe-native-wrap wa-button .uplink-mbe-palette-icon {color:inherit}
+.uplink-mbe-native-wrap wa-button.uplink-mbe-upload-action::part(button) {min-height:calc(var(--wa-space-l) + var(--wa-space-m))}
+.uplink-mbe-native-wrap wa-button.uplink-mbe-upload-action svg {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-view-switch,.uplink-mbe-native-wrap wa-button-group.uplink-mbe-collection-heading-actions,.uplink-mbe-native-wrap wa-button-group.uplink-mbe-grid-ratio-options {gap:0;padding:0;border:0;background:transparent;flex:0 0 auto}
+.uplink-mbe-native-wrap .uplink-mbe-native-heading-actions {align-items:center;gap:var(--wa-space-m)}
+
+.uplink-mbe-native-wrap.uplink-mbe-optimization-theme {--conversion-text:var(--mbe-text);--conversion-muted:var(--mbe-muted);--conversion-surface:var(--mbe-surface);--conversion-border:var(--mbe-control-border);--conversion-accent:var(--mbe-accent);--conversion-on-accent:var(--mbe-accent-icon)}
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-grid-ratio-options {display:inline-flex;grid-template-columns:none;overflow:visible}
+.uplink-mbe-native-wrap wa-button[aria-pressed="true"]::part(button),.uplink-mbe-native-wrap wa-button[aria-expanded="true"]::part(button) {background:var(--mbe-accent)!important;color:var(--mbe-accent-icon)!important;border-color:var(--mbe-accent)!important}
+/* Four collection tools fit together even at the minimum sidebar width. */
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-collection-heading-actions wa-button::part(button) {min-width:calc(var(--wa-space-m) * 2);height:calc(var(--wa-space-m) * 2);padding:0}
+
+/* The inspector has one content surface. Tab panels provide structure, not frames. */
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs > wa-tab-panel.uplink-mbe-attachment-metadata-panel {--padding:var(--wa-space-m) 0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions {align-items:center;gap:var(--wa-space-s)}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions wa-button.uplink-mbe-attachment-header-nav::part(button) {width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));min-width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));height:calc(var(--wa-space-m) * 2 + var(--wa-space-s));padding:0}
+
+/* Search action belongs to the input's end slot, inside its shared outline. */
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(input-wrapper) {padding-inline-end:0;height:40px}
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(end) {display:flex;align-items:stretch;margin:0}
+.uplink-mbe-native-wrap #uplink-mbe-media-search #uplink-mbe-search-input .uplink-mbe-toolbar-button {height:100%;min-height:0;width:40px;flex:0 0 40px;margin:0;padding:0;border:0;border-radius:0 5px 5px 0;background:transparent;color:var(--mbe-text)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input .uplink-mbe-toolbar-button:hover {background:var(--mbe-accent-soft);color:var(--mbe-accent)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input .uplink-mbe-toolbar-button:focus-visible {outline:2px solid var(--mbe-accent);outline-offset:-3px}
+
+/* Match complete field surfaces and placeholder contrast across components. */
+.uplink-mbe-native-wrap wa-input::part(input-wrapper),.uplink-mbe-native-wrap wa-select::part(combobox) {min-height:var(--mbe-ui-control-size);box-sizing:border-box}
+.uplink-mbe-native-wrap wa-input::part(input-wrapper) {height:var(--mbe-ui-control-size)}
+.uplink-mbe-native-wrap #uplink-mbe-search-input::part(input-wrapper),.uplink-mbe-native-wrap .uplink-mbe-library-controls wa-select::part(combobox) {min-height:40px;height:40px}
+.uplink-mbe-native-wrap wa-input::part(input)::placeholder,.uplink-mbe-native-wrap wa-textarea::part(textarea)::placeholder {color:var(--mbe-muted);opacity:1}
+.uplink-mbe-native-wrap .uplink-mbe-popover-heading-actions wa-button::part(button) {min-height:var(--mbe-ui-control-size)}
+
+/* Count badges must inherit the selected row's foreground pairing. */
+.uplink-mbe-native-wrap wa-badge.uplink-mbe-health-count {padding:0;background:transparent}
+.uplink-mbe-native-wrap .uplink-mbe-health-filter.is-active wa-badge::part(badge) {background:color-mix(in srgb,var(--mbe-accent-icon) 15%,transparent);color:var(--mbe-accent-icon);border-color:transparent}

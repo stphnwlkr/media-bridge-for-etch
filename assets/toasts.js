@@ -15,8 +15,14 @@
 			region.setAttribute( 'popover', 'manual' );
 		}
 		placeRegion();
-		const toast = document.createElement( 'div' );
-		toast.className = `uplink-mbe-toast is-${ [ 'success', 'error', 'warning' ].includes( type ) ? type : 'success' }`;
+		const enhanced = document.querySelector( '.uplink-mbe-native-wrap' );
+		const toast = document.createElement( enhanced && customElements.get( 'wa-callout' ) ? 'wa-callout' : 'div' );
+		if ( toast.localName === 'wa-callout' ) {
+			toast.setAttribute( 'variant', type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'success' );
+			toast.setAttribute( 'appearance', 'outlined' );
+			toast.classList.add( 'uplink-mbe-optimization-theme' );
+		}
+		toast.className += ` uplink-mbe-toast is-${ [ 'success', 'error', 'warning' ].includes( type ) ? type : 'success' }`;
 		const text = document.createElement( 'span' );
 		text.setAttribute( 'role', type === 'error' ? 'alert' : 'status' );
 		const close = document.createElement( 'button' );
@@ -34,7 +40,7 @@
 		toast.append( text, close );
 		region.append( toast );
 		text.textContent = message;
-		timers.set( toast, window.setTimeout( dismiss, 5000 ) );
+		if ( type !== 'error' ) timers.set( toast, window.setTimeout( dismiss, 5000 ) );
 	};
 	// A toast triggered inside a modal must remain clickable above that modal.
 	document.addEventListener( 'close', () => { if ( region?.childElementCount ) placeRegion(); }, true );

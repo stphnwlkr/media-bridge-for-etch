@@ -1,4 +1,4 @@
-( function () {
+( async function () {
 	'use strict';
 
 	const config = window.uplinkMbeNativeMedia;
@@ -6,6 +6,28 @@
 	if ( ! config || ! library ) {
 		return;
 	}
+
+	await Promise.all( ['wa-button','wa-button-group','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout','wa-popover'].map( tag => customElements.whenDefined( tag ) ) );
+
+	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button[id][aria-label]:not(#uplink-mbe-selection-help-toggle)' ).forEach( control => {
+		const tooltip = document.createElement( 'wa-tooltip' ); tooltip.setAttribute( 'for', control.id ); tooltip.textContent = control.getAttribute( 'title' ) || control.getAttribute( 'aria-label' ); control.removeAttribute( 'title' ); library.closest( '.uplink-mbe-native-wrap' ).append( tooltip );
+	} );
+
+	// Keep the state announced by the focusable shadow button in sync with its host.
+	async function mirrorButtonState( control ) {
+		await control.updateComplete;
+		const button = control.shadowRoot?.querySelector( 'button, a' );
+		if ( ! button ) return;
+		for ( const name of [ 'aria-pressed', 'aria-expanded', 'aria-controls' ] ) {
+			if ( control.hasAttribute( name ) ) button.setAttribute( name, control.getAttribute( name ) );
+			else button.removeAttribute( name );
+		}
+		if ( 'ariaControlsElements' in button ) button.ariaControlsElements = ( control.getAttribute( 'aria-controls' ) || '' ).split( /\s+/ ).map( id => document.getElementById( id ) ).filter( Boolean );
+	}
+	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button' ).forEach( mirrorButtonState );
+	new MutationObserver( changes => {
+		for ( const change of changes ) if ( change.target.matches( 'wa-button' ) ) mirrorButtonState( change.target );
+	} ).observe( library.closest( '.uplink-mbe-native-wrap' ), { subtree: true, attributes: true, attributeFilter: [ 'aria-pressed', 'aria-expanded', 'aria-controls' ] } );
 
 	const elements = {
 		wrap: document.querySelector( '.uplink-mbe-native-wrap' ),
@@ -150,6 +172,7 @@
 	};
 	let attachmentTrigger = null;
 	let currentAttachment = null;
+	let activeDetailTab = null;
 	let currentCompatSnapshot = '';
 	let attachmentSaving = false;
 	let attachmentCompatGeneration = 0;
@@ -381,7 +404,9 @@
 	};
 
 	function createElement( tag, className, text ) {
-		const element = document.createElement( tag );
+		const useButton = tag === 'button' && /(?:^| )button(?: |$)/.test( className || '' );
+		const element = document.createElement( useButton ? 'wa-button' : tag );
+		if ( useButton ) { element.setAttribute( 'size', 'small' ); element.setAttribute( 'variant', className.includes( 'button-link-delete' ) ? 'danger' : 'neutral' ); element.setAttribute( 'appearance', 'outlined' ); }
 		if ( className ) {
 			element.className = className;
 		}
@@ -503,6 +528,8 @@
 	}
 
 	function applyPalette( palette ) {
+		elements.wrap.classList.toggle( 'wa-dark', colorLuminance( palette.surface || '#ffffff' ) < 0.35 );
+		elements.wrap.classList.toggle( 'wa-light', colorLuminance( palette.surface || '#ffffff' ) >= 0.35 );
 		Object.entries( palette || {} ).forEach( ( [ name, value ] ) => {
 			if ( paletteVariableNames[ name ] ) {
 				elements.wrap.style.setProperty( `--mbe-${ paletteVariableNames[ name ] }`, value );
@@ -1130,11 +1157,11 @@
 
 		const selectedMime = state.mimeSubtype;
 		elements.mimeFilter.replaceChildren();
-		const allMimeTypes = createElement( 'option', '', elements.mimeFilter.dataset.allMimeTypes || 'All' );
+		const allMimeTypes = createElement( 'wa-option', '', elements.mimeFilter.dataset.allMimeTypes || 'All' );
 		allMimeTypes.value = '';
 		elements.mimeFilter.append( allMimeTypes );
 		state.mimeTypes.filter( ( mime ) => ! state.type || mime.type === state.type ).forEach( ( mime ) => {
-			const option = createElement( 'option', '', mime.label );
+			const option = createElement( 'wa-option', '', mime.label );
 			option.value = mime.value;
 			elements.mimeFilter.append( option );
 		} );
@@ -1142,11 +1169,11 @@
 
 		const selectedUploader = String( state.uploadedBy );
 		elements.uploaderFilter.replaceChildren();
-		const allUploaders = createElement( 'option', '', elements.uploaderFilter.dataset.allUploaders || 'All' );
+		const allUploaders = createElement( 'wa-option', '', elements.uploaderFilter.dataset.allUploaders || 'All' );
 		allUploaders.value = '';
 		elements.uploaderFilter.append( allUploaders );
 		state.uploaders.forEach( ( uploader ) => {
-			const option = createElement( 'option', '', uploader.label );
+			const option = createElement( 'wa-option', '', uploader.label );
 			option.value = String( uploader.value );
 			elements.uploaderFilter.append( option );
 		} );
@@ -1167,6 +1194,23 @@
 		elements.clearFilters.disabled = ! hasActiveFilters;
 		elements.clearFilters.classList.toggle( 'is-active', hasActiveFilters );
 		updateDrawerSummary();
+		renderActiveFilters();
+	}
+
+	function renderActiveFilters() {
+		let row = document.getElementById( 'uplink-mbe-active-filters' );
+		if ( ! row ) { row = createElement( 'div', 'uplink-mbe-active-filters wa-cluster wa-gap-s' ); row.id = 'uplink-mbe-active-filters'; elements.searchStatus.before( row ); }
+		row.replaceChildren();
+		const filters = [ [ 'search', elements.searchInput ], [ 'type', elements.typeFilter ], [ 'mimeSubtype', elements.mimeFilter ], [ 'uploadedBy', elements.uploaderFilter ], [ 'attachmentStatus', elements.attachmentStatusFilter ], [ 'optimizationStatus', elements.optimizationStatusFilter ], [ 'uploadedFrom', elements.uploadedFromFilter ], [ 'uploadedTo', elements.uploadedToFilter ], [ 'widthMin', elements.widthMinFilter ], [ 'widthMax', elements.widthMaxFilter ], [ 'heightMin', elements.heightMinFilter ], [ 'heightMax', elements.heightMaxFilter ], [ 'fileSizeMin', elements.fileSizeMinFilter ], [ 'fileSizeMax', elements.fileSizeMaxFilter ], [ 'missingAlt', elements.missingAltFilter ] ];
+		for ( const [ key, control ] of filters ) {
+			if ( ! state[ key ] ) continue;
+			const label = control.getAttribute( 'label' ) || control.getAttribute( 'aria-label' ) || control.labels?.[ 0 ]?.textContent?.trim() || key;
+			const option = Array.from( control.children ).find( item => item.value === String( state[ key ] ) );
+			const tag = createElement( 'wa-tag', '', label + ( state[ key ] === true ? '' : ': ' + ( option?.textContent || state[ key ] ) ) );
+			tag.setAttribute( 'with-remove', '' ); tag.setAttribute( 'size', 's' );
+			tag.addEventListener( 'wa-remove', () => { state[ key ] = key === 'missingAlt' ? false : ''; if ( key === 'type' ) state.mimeSubtype = ''; state.page = 1; loadState(); } ); row.append( tag );
+		}
+		row.hidden = ! row.childElementCount;
 	}
 
 	function setDrawerOpen( open ) {
@@ -1239,29 +1283,23 @@
 		return button;
 	}
 
-	function addDropTarget( element, collection, mode = 'add' ) {
+	function addDropTarget( element, collection, mode = 'move' ) {
+		const canDrop = () => Boolean( config.canAssign && draggedMedia && ! draggedCollection && ! state.reorderMode && ! mediaOrderSaving );
 		element.addEventListener( 'dragover', ( event ) => {
-			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
-				return;
-			}
-			event.preventDefault();
-			if ( event.dataTransfer ) {
-				event.dataTransfer.dropEffect = 'move';
-			}
+			if ( ! canDrop() ) return;
+			event.preventDefault(); event.stopPropagation();
+			event.dataTransfer.dropEffect = 'move';
 			element.classList.add( 'is-drop-target' );
 		} );
-		element.addEventListener( 'dragleave', () => element.classList.remove( 'is-drop-target' ) );
+		element.addEventListener( 'dragleave', event => { if ( ! element.contains( event.relatedTarget ) ) element.classList.remove( 'is-drop-target' ); } );
 		element.addEventListener( 'drop', async ( event ) => {
-			if ( draggedCollection || state.reorderMode || mediaOrderSaving ) {
-				return;
-			}
-			event.preventDefault();
 			element.classList.remove( 'is-drop-target' );
-			const transferred = event.dataTransfer.getData( 'text/plain' ).split( ',' ).map( Number ).filter( Boolean );
-			const ids = transferred.length ? transferred : Array.from( state.selected );
-			if ( ids.length ) {
-				await assignMedia( ids, collection, mode );
-			}
+			if ( ! canDrop() ) return;
+			event.preventDefault(); event.stopPropagation();
+			const ids = [ ...draggedMedia.ids ], source = draggedMedia.collection;
+			if ( mode === 'move' && source === Number( collection ) ) return;
+			finishMediaDrag();
+			await assignMedia( ids, collection, mode, source, true );
 		} );
 	}
 
@@ -1533,7 +1571,7 @@
 			button.type = 'button';
 			const labelElement = createElement( 'span', 'uplink-mbe-health-label', label );
 			button.classList.toggle( 'is-active', state.healthFilter === key );
-			button.append( labelElement, createElement( 'span', 'uplink-mbe-health-count', String( state.health.counts?.[ key ] || 0 ) ) );
+			button.append( labelElement, createElement( 'wa-badge', 'uplink-mbe-health-count', String( state.health.counts?.[ key ] || 0 ) ) );
 			button.addEventListener( 'click', () => {
 				state.healthFilter = key;
 				state.page = 1;
@@ -1549,7 +1587,7 @@
 		elements.healthTabCount.textContent = String( issueCount );
 		const total = Number( state.health.total || 0 );
 		const healthy = Number( state.health.counts?.healthy || 0 );
-		elements.healthProgress.style.width = `${ total ? Math.round( ( healthy / total ) * 100 ) : 100 }%`;
+		elements.healthProgress.value = total ? Math.round( ( healthy / total ) * 100 ) : 100;
 		elements.healthStatus.textContent = `${ healthy } of ${ total } ${ config.strings.healthy } · ${ config.strings.scannedNow }`;
 	}
 
@@ -1664,7 +1702,7 @@
 			edit.setAttribute( 'aria-label', `${ config.strings.editCollection }: ${ collection.name }` );
 			edit.addEventListener( 'click', () => openCollectionModal( collection ) );
 
-			const remove = createElement( 'button', 'button-link dashicons dashicons-trash' );
+			const remove = createElement( 'button', 'button-link uplink-mbe-trash-icon' );
 			remove.type = 'button';
 			remove.title = config.strings.deleteCollection;
 			remove.setAttribute( 'aria-label', `${ config.strings.deleteCollection }: ${ collection.name }` );
@@ -1699,11 +1737,11 @@
 
 	function renderBulkCollections() {
 		elements.bulkCollection.replaceChildren();
-		const placeholder = createElement( 'option', '', config.strings.chooseCollection );
+		const placeholder = createElement( 'wa-option', '', config.strings.chooseCollection );
 		placeholder.value = '';
 		elements.bulkCollection.append( placeholder );
 		state.collections.forEach( ( collection ) => {
-			const option = createElement( 'option', '', collectionOptionLabel( collection ) );
+			const option = createElement( 'wa-option', '', collectionOptionLabel( collection ) );
 			option.value = String( collection.id );
 			elements.bulkCollection.append( option );
 		} );
@@ -1754,11 +1792,14 @@
 	}
 
 	function finishMediaDrag() {
+		const wasDragging = Boolean( draggedMedia );
 		draggedMedia = null;
 		clearMediaDropMarkers();
 		mediaDragGhost?.remove();
 		mediaDragGhost = null;
 		elements.grid.querySelectorAll( '.is-dragging' ).forEach( ( card ) => card.classList.remove( 'is-dragging' ) );
+		elements.tree.querySelectorAll( '.is-drop-target' ).forEach( node => node.classList.remove( 'is-drop-target' ) );
+		if ( wasDragging ) updateSelectionTools();
 	}
 
 	function mediaDropAt( x, y ) {
@@ -1954,7 +1995,7 @@
 			selectLabel.append( checkbox, createElement( 'span', 'uplink-mbe-media-select-text', config.strings.selectMedia ) );
 			let removeMedia = null;
 			if ( media.canDelete ) {
-				removeMedia = createElement( 'button', 'uplink-mbe-media-delete dashicons dashicons-trash' );
+				removeMedia = createElement( 'button', 'uplink-mbe-media-delete uplink-mbe-trash-icon' );
 				removeMedia.type = 'button';
 				removeMedia.title = config.strings.deleteMedia;
 				removeMedia.setAttribute( 'aria-label', `${ config.strings.deleteMedia }: ${ media.title }` );
@@ -2086,7 +2127,7 @@
 
 			bindMediaReordering( card, media );
 			card.addEventListener( 'dragstart', ( event ) => {
-				if ( mediaOrderSaving ) {
+				if ( mediaOrderSaving || ! config.canAssign || ! media.canEdit ) {
 					event.preventDefault();
 					return;
 				}
@@ -2097,9 +2138,9 @@
 					document.querySelectorAll( '.uplink-mbe-media-select input' ).forEach( ( input ) => {
 						input.checked = Number( input.value ) === media.id;
 					} );
-					updateSelectionTools();
+					// Keep the grid still while the pointer is dragging.
 				}
-				draggedMedia = { collection: state.collection, ids: state.media.filter( ( item ) => state.selected.has( item.id ) ).map( ( item ) => item.id ) };
+				draggedMedia = { collection: state.mode === 'library' && state.filter === 'collection' ? Number( state.collection ) : 0, ids: state.reorderMode ? state.media.filter( ( item ) => state.selected.has( item.id ) ).map( item => item.id ) : [ ...state.selected ] };
 				event.dataTransfer.effectAllowed = 'move';
 				event.dataTransfer.setData( 'text/plain', Array.from( state.selected ).join( ',' ) );
 				if ( state.reorderMode ) {
@@ -2229,15 +2270,17 @@
 		}
 	}
 
-	async function assignMedia( ids, collection, mode ) {
+	async function assignMedia( ids, collection, mode, source = 0, fromDrag = false ) {
 		try {
 			await request( 'uplink_mbe_assign_media', {
 				media_ids: JSON.stringify( ids ),
 				collection,
 				mode,
+				source_collection: source,
 			} );
+			if ( fromDrag ) ids.forEach( id => state.selected.delete( id ) );
 			const name = state.collections.find( ( item ) => item.id === Number( collection ) )?.name || config.strings.uncategorized;
-			showNotice( 'clear' === mode ? config.strings.clear : `${ 'remove' === mode ? config.strings.remove : config.strings.add }: ${ name }` );
+			showNotice( 'clear' === mode ? config.strings.clear : `${ mode === 'move' ? config.strings.movedTo : mode === 'remove' ? config.strings.remove : config.strings.add }: ${ name }` );
 			await loadState();
 		} catch ( error ) {
 			showNotice( error.message, 'error' );
@@ -2471,6 +2514,13 @@
 		}
 	}
 
+	function resetAttachmentTabScroll() {
+		requestAnimationFrame( () => {
+			const body = document.getElementById( 'uplink-mbe-detail-tabs' ).shadowRoot?.querySelector( '[part="body"]' );
+			if ( body ) body.scrollTop = 0;
+		} );
+	}
+
 	function setAttachmentMetadataTab( requestedTab, moveFocus = false ) {
 		if ( requestedTab === 'exif' ) requestAnimationFrame( () => window.uplinkMbeExifMap?.refresh( elements.attachmentExif ) );
 		const exifAvailable = ! elements.attachmentExifTab.hidden;
@@ -2480,6 +2530,9 @@
 			|| ( 'optimization' === requestedTab && optimizationAvailable )
 			? requestedTab
 			: 'main';
+		if ( activeDetailTab !== activeTab ) resetAttachmentTabScroll();
+		activeDetailTab = activeTab;
+		document.getElementById( 'uplink-mbe-detail-tabs' ).active = activeTab;
 		const tabs = [
 			[ 'main', elements.attachmentMainTab, elements.attachmentMainPanel ],
 			[ 'file', elements.attachmentFileTab, elements.attachmentFilePanel ],
@@ -2509,6 +2562,7 @@
 	} );
 
 	function showAttachment( media ) {
+		if ( currentAttachment?.id !== media.id ) resetAttachmentTabScroll();
 		currentAttachment = media;
 		clearAttachmentNotice();
 		elements.attachmentPreview.replaceChildren();
@@ -2557,7 +2611,7 @@
 		} );
 		window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
 		const hasExif = Boolean( state.display.exif && ( exifList.childElementCount || media.location ) );
-		elements.attachmentExifTab.hidden = ! hasExif;
+		elements.attachmentExifTab.hidden = ! hasExif; elements.attachmentExifTab.disabled = elements.attachmentExifTab.hidden;
 		if ( ! hasExif && 'true' === elements.attachmentExifTab.getAttribute( 'aria-selected' ) ) {
 			setAttachmentMetadataTab( 'main' );
 		}
@@ -2615,7 +2669,7 @@
 				optimizationList.append( row );
 			} );
 			const hasOptimization = Boolean( elements.attachmentOptimizationList.childElementCount || media.conversion || ( media.canConvert && window.uplinkMbeConversion ) );
-			elements.attachmentOptimizationTab.hidden = ! hasOptimization;
+			elements.attachmentOptimizationTab.hidden = ! hasOptimization; elements.attachmentOptimizationTab.disabled = elements.attachmentOptimizationTab.hidden;
 			if ( ! hasOptimization && 'true' === elements.attachmentOptimizationTab.getAttribute( 'aria-selected' ) ) {
 				setAttachmentMetadataTab( 'main' );
 			}
@@ -3028,7 +3082,7 @@
 			if ( 'exif' === toggle.dataset.displayField && currentAttachment ) {
 				window.uplinkMbeExifMap?.render( elements.attachmentExif, media.location );
 		const hasExif = Boolean( toggle.checked && elements.attachmentExif.querySelector( 'dl' )?.childElementCount );
-				elements.attachmentExifTab.hidden = ! hasExif;
+				elements.attachmentExifTab.hidden = ! hasExif; elements.attachmentExifTab.disabled = elements.attachmentExifTab.hidden;
 				if ( ! hasExif ) {
 					setAttachmentMetadataTab( 'main' );
 				}
@@ -3166,13 +3220,14 @@
 	const conversionDisabledState = new WeakMap();
 	document.addEventListener( 'uplink-mbe-conversion-busy', event => {
 		window.uplinkMbeConversionBusy = event.detail;
-		elements.attachmentModal.querySelectorAll( '[data-attachment-close], input, textarea, #uplink-mbe-attachment-previous, #uplink-mbe-attachment-next, #uplink-mbe-attachment-replace, #uplink-mbe-attachment-delete' ).forEach( node => {
+		elements.attachmentModal.querySelectorAll( '[data-attachment-close], input, textarea, wa-input, wa-textarea, #uplink-mbe-attachment-previous, #uplink-mbe-attachment-next, #uplink-mbe-attachment-replace, #uplink-mbe-attachment-delete' ).forEach( node => {
 			if ( node.closest( '#uplink-mbe-conversion-controls' ) ) return;
 			if ( event.detail ) { conversionDisabledState.set( node, node.disabled ); node.disabled = true; }
 			else if ( conversionDisabledState.has( node ) ) { node.disabled = conversionDisabledState.get( node ); conversionDisabledState.delete( node ); }
 		} );
 		if ( ! event.detail ) { updateAttachmentNavigation(); updateAttachmentSaveState(); }
 	} );
+	document.getElementById( 'uplink-mbe-detail-tabs' ).addEventListener( 'wa-tab-show', event => setAttachmentMetadataTab( event.detail.name ) );
 	elements.attachmentModal.addEventListener( 'input', updateAttachmentSaveState );
 	elements.attachmentModal.addEventListener( 'change', updateAttachmentSaveState );
 	elements.attachmentDecorative.addEventListener( 'change', () => {
@@ -3212,20 +3267,7 @@
 	elements.attachmentNext.addEventListener( 'click', () => navigateAttachment( 1 ) );
 	[ elements.attachmentMainTab, elements.attachmentFileTab, elements.attachmentExifTab, elements.attachmentOptimizationTab ].forEach( ( tab ) => {
 		tab.addEventListener( 'click', () => setAttachmentMetadataTab( tab.id.replace( 'uplink-mbe-attachment-', '' ).replace( '-tab', '' ) ) );
-		tab.addEventListener( 'keydown', ( event ) => {
-			if ( ! [ 'ArrowLeft', 'ArrowRight', 'Home', 'End' ].includes( event.key ) ) {
-				return;
-			}
-			event.preventDefault();
-			const tabs = [ elements.attachmentMainTab, elements.attachmentFileTab, elements.attachmentExifTab, elements.attachmentOptimizationTab ].filter( ( item ) => ! item.hidden );
-			const current = tabs.indexOf( tab );
-			let next = current;
-			if ( 'Home' === event.key ) next = 0;
-			if ( 'End' === event.key ) next = tabs.length - 1;
-			if ( 'ArrowLeft' === event.key ) next = ( current - 1 + tabs.length ) % tabs.length;
-			if ( 'ArrowRight' === event.key ) next = ( current + 1 ) % tabs.length;
-			setAttachmentMetadataTab( tabs[ next ].id.replace( 'uplink-mbe-attachment-', '' ).replace( '-tab', '' ), true );
-		} );
+
 	} );
 	elements.modal.querySelectorAll( '[data-modal-close]' ).forEach( ( button ) => button.addEventListener( 'click', closeCollectionModal ) );
 	elements.attachmentModal.querySelectorAll( '[data-attachment-close]' ).forEach( ( button ) => button.addEventListener( 'click', handleAttachmentClose ) );
@@ -3246,7 +3288,8 @@
 			closeInfoPopup( true );
 			return;
 		}
-		const editing = event.target.matches?.( 'input, textarea, select, [contenteditable="true"]' );
+		const editing = event.composedPath().some( node => node.matches?.( 'input, textarea, select, wa-input, wa-textarea, wa-select, wa-slider, wa-tab, [contenteditable="true"]' ) );
+		if ( event.defaultPrevented ) return;
 		if ( ! elements.attachmentModal.hidden && ! editing && ( 'ArrowLeft' === event.key || 'ArrowRight' === event.key ) ) {
 			event.preventDefault();
 			navigateAttachment( 'ArrowLeft' === event.key ? -1 : 1 );

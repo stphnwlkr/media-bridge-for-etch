@@ -102,3 +102,81 @@
 .uplink-mbe-comparison-dialog .button:disabled {color:var(--conversion-muted)!important;background:var(--conversion-surface)!important;border-style:dashed;cursor:wait}
 .uplink-mbe-comparison-dialog input[type="range"]:focus-visible {outline:3px solid var(--conversion-accent);outline-offset:3px}
 @media(max-width:640px) {.uplink-mbe-large-controls {grid-template-columns:minmax(0,1fr)}.uplink-mbe-large-controls>.button {width:100%}}
+/* Embedded Web Awesome controls inherit the manager's verified palette. */
+.uplink-mbe-optimization-theme {
+ --wa-color-text-normal:var(--conversion-text);--wa-color-text-quiet:var(--conversion-muted);
+ --wa-color-surface-default:var(--conversion-surface);--wa-color-surface-raised:var(--conversion-surface);
+ --wa-color-surface-border:var(--conversion-border);--wa-font-family-body:inherit;
+ --wa-color-brand-fill-loud:var(--conversion-accent);--wa-color-brand-on-loud:var(--conversion-on-accent);
+ --wa-focus-ring-color:var(--conversion-accent);
+}
+.uplink-mbe-optimization-theme wa-button.button {background:none!important;border:0!important;padding:0!important;height:auto!important;box-shadow:none!important;color:inherit;vertical-align:middle}
+.uplink-mbe-optimization-theme wa-button::part(button) {font-family:inherit}
+.uplink-mbe-optimization-theme wa-button[variant="brand"]::part(button) {background:var(--conversion-accent);color:var(--conversion-on-accent);border-color:var(--conversion-accent)}
+.uplink-mbe-optimization-theme wa-button[variant="neutral"]::part(button) {background:var(--conversion-surface);color:var(--conversion-text);border-color:var(--conversion-border)}
+.uplink-mbe-size-panel {margin-block-start:var(--wa-space-l);padding:var(--wa-space-l);border:var(--wa-border-width-s) solid var(--conversion-border);border-radius:var(--wa-border-radius-l);background:var(--conversion-surface);color:var(--conversion-text)}
+.uplink-mbe-size-panel h4 {margin:0!important;font-size:var(--wa-font-size-m)!important}
+.uplink-mbe-size-panel .uplink-mbe-size-hint {margin:0;color:var(--conversion-muted);font-size:var(--wa-font-size-s)}
+.uplink-mbe-size-summary {font-size:var(--wa-font-size-s);font-weight:var(--wa-font-weight-semibold);font-variant-numeric:tabular-nums}
+.uplink-mbe-size-list {--min-column-size:15rem;padding-block:var(--wa-space-m)}
+.uplink-mbe-size-panel {margin-block-end:var(--wa-space-l)}
+.uplink-mbe-size-panel wa-checkbox {min-width:0}
+/* Etch optimization refinement, based on the Web Awesome dark showcase. */
+#uplink-mbe-conversion-controls {--optimization-raised:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 3%);--optimization-line:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 17%)}
+#uplink-mbe-conversion-controls.is-comparing>h4 {display:block;font-size:var(--wa-font-size-xl);font-weight:var(--wa-font-weight-semibold);letter-spacing:-.025em;margin-block-end:var(--wa-space-xs)}
+.uplink-mbe-conversion-source {margin-block-end:var(--wa-space-l);font-size:var(--wa-font-size-s)}
+.uplink-mbe-conversion-cards {gap:var(--wa-space-l)}
+wa-card.uplink-mbe-conversion-card {--spacing:var(--wa-space-m);--wa-color-surface-default:var(--optimization-raised);--wa-color-surface-border:var(--optimization-line);display:block;padding:0;border-color:var(--optimization-line);background:var(--optimization-raised);box-shadow:var(--wa-shadow-s)}
+wa-card.uplink-mbe-conversion-card::part(header),wa-card.uplink-mbe-conversion-card::part(footer) {border-color:var(--optimization-line)}
+wa-card.uplink-mbe-conversion-card::part(footer) {background:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 1%)}
+.uplink-mbe-format-heading {justify-content:space-between;gap:var(--wa-space-s)}
+.uplink-mbe-format-heading h4 {margin:0!important;flex:1;font-size:var(--wa-font-size-m)!important;font-weight:var(--wa-font-weight-semibold)}
+.uplink-mbe-format-actions {margin:0;align-items:center}
+.uplink-mbe-format-quality {border-color:var(--optimization-line);margin-block-end:0}
+.uplink-mbe-size-panel {border-color:var(--optimization-line);background:var(--optimization-raised);padding:var(--wa-space-m);gap:var(--wa-space-s);margin-block-end:var(--wa-space-l)}
+.uplink-mbe-size-panel wa-radio-group::part(form-control-label) {display:none}
+.uplink-mbe-size-panel wa-radio-group::part(form-control-input) {flex-wrap:wrap;gap:0}
+.uplink-mbe-size-panel wa-radio::part(control) {font-family:inherit}
+.uplink-mbe-optimization-theme wa-badge::part(badge) {color:var(--conversion-muted);border-color:var(--optimization-line);background:transparent;font-weight:var(--wa-font-weight-normal)}
+.uplink-mbe-size-hint {line-height:1.5}
+#uplink-mbe-conversion-controls .uplink-mbe-size-panel .uplink-mbe-size-hint:last-of-type {margin-block-start:var(--wa-space-xs)}
+.uplink-mbe-conversion-card .uplink-mbe-format-stats strong {font-size:var(--wa-font-size-xl);letter-spacing:-.03em}
+.uplink-mbe-conversion-card .uplink-mbe-image-comparison {max-height:25vh}
+/* Keep the default scope compact so the comparison stays in view. */
+.uplink-mbe-size-panel {display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:var(--wa-space-l);row-gap:var(--wa-space-m)}
+.uplink-mbe-size-panel>.wa-split {display:contents}
+.uplink-mbe-size-panel>.wa-split>h4 {grid-column:1;grid-row:1}
+.uplink-mbe-size-panel>.wa-split>wa-badge {grid-column:3;grid-row:1}
+.uplink-mbe-size-panel>wa-radio-group {grid-column:2;grid-row:1}
+.uplink-mbe-size-panel>.uplink-mbe-size-list,.uplink-mbe-size-panel>.uplink-mbe-size-hint,.uplink-mbe-size-panel>.uplink-mbe-exclusions-hint,.uplink-mbe-size-panel>wa-progress-bar {grid-column:1/-1}
+@media(max-width:850px){.uplink-mbe-size-panel {grid-template-columns:1fr auto}.uplink-mbe-size-panel>.wa-split>wa-badge {grid-column:2}.uplink-mbe-size-panel>wa-radio-group {grid-column:1/-1;grid-row:2}}
+.uplink-mbe-conversion-card .uplink-mbe-format-preview>.uplink-mbe-image-comparison {height:auto;aspect-ratio:3/2!important;max-height:none}
+.uplink-mbe-format-quality wa-slider {grid-column:1/-1;width:100%;--track-color-active:var(--conversion-accent);--thumb-color:var(--conversion-accent)}
+.uplink-mbe-exclusions-hint {margin:0;color:var(--conversion-muted);font-size:var(--wa-font-size-s)}
+
+.uplink-mbe-size-panel {--wa-color-brand-fill-quiet:color-mix(in srgb,var(--conversion-accent) 18%,var(--conversion-surface));--wa-form-control-activated-color:var(--conversion-accent)}
+.uplink-mbe-size-panel>wa-radio-group {min-width:0}
+
+/* Keep the optimizer flush with the shared tab content, including on mobile. */
+.uplink-mbe-native-wrap #uplink-mbe-conversion-controls {padding:0;margin:0;background:transparent}
+
+/* Overview previews leave room for scope, quality and apply controls. Inspect is separate. */
+@media(min-width:901px) {
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-cards > .uplink-mbe-conversion-card:only-child::part(body) {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:var(--wa-space-l,24px);align-items:center}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-preview {grid-column:1;grid-row:1 / span 2}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-stats {grid-column:2;align-self:end;margin-block:0 var(--wa-space-s,8px)}
+ .uplink-mbe-attachment-inspector.is-expanded .uplink-mbe-conversion-card:only-child .uplink-mbe-format-quality {grid-column:2;align-self:start;margin-block:0}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview {display:grid;place-items:center}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview > .uplink-mbe-image-comparison {width:min(100%,40vw,calc(clamp(120px,calc(100dvh - 600px),40dvh) * var(--mbe-comparison-ratio,1.5)));height:auto;aspect-ratio:var(--mbe-comparison-ratio,1.5)!important;max-height:none;margin-inline:auto}
+ .uplink-mbe-conversion-card .uplink-mbe-format-preview > .uplink-mbe-preview-placeholder {max-width:min(100%,40vw);height:clamp(120px,calc(100dvh - 600px),40dvh);object-fit:contain}
+}
+
+@media(min-width:901px) {
+ #uplink-mbe-conversion-controls.is-comparing:has(.uplink-mbe-conversion-card:only-child)>h4 {font-size:var(--wa-font-size-l,20px);line-height:1.25}
+ .uplink-mbe-conversion-cards > wa-card.uplink-mbe-conversion-card:only-child {--spacing:var(--wa-space-s,8px)}
+ #uplink-mbe-conversion-controls:has(.uplink-mbe-conversion-card:only-child) .uplink-mbe-conversion-source {margin-block-end:var(--wa-space-s,8px)}
+ #uplink-mbe-conversion-controls:has(.uplink-mbe-conversion-card:only-child) .uplink-mbe-size-panel {margin-block:var(--wa-space-s,8px);padding:var(--wa-space-s,8px);row-gap:var(--wa-space-s,8px)}
+}
+
+/* Separate optimization actions/previews from the saved Current file details. */
+.uplink-mbe-native-wrap #uplink-mbe-conversion-controls:not([hidden]) + .uplink-mbe-optimization-groups:not(:empty) {margin-block-start:var(--wa-space-l,24px)}

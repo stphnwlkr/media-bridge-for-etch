@@ -91,6 +91,7 @@ final class Admin {
 			'exif_gps'         => $flag( 'exif_gps' ),
 			'exif_map'         => $flag( 'exif_map' ),
 			'image_conversion' => $flag( 'image_conversion' ),
+			'compression_excluded_sizes' => array_values( array_unique( array_filter( array_map( 'sanitize_key', array_filter( (array) ( $input['compression_excluded_sizes'] ?? $current['compression_excluded_sizes'] ), 'is_string' ) ) ) ) ),
 			'compression_roles' => $role_list( 'compression_roles' ),
 			'restoration_roles' => $role_list( 'restoration_roles' ),
 			'compression_webp' => $flag( 'compression_webp' ),
@@ -176,7 +177,7 @@ final class Admin {
 		if ( 'optimization' === $active_tab ) {
 			$active_tab = 'about';
 		}
-		$allowed_tabs = array( 'settings', 'exif', 'gallery', 'loops', 'about' );
+		$allowed_tabs = array( 'settings', 'compression', 'exif', 'gallery', 'loops', 'about' );
 		if ( ! in_array( $active_tab, $allowed_tabs, true ) ) {
 			$active_tab = 'settings';
 		}
@@ -200,6 +201,7 @@ final class Admin {
 			<?php $this->notices(); ?>
 			<nav class="nav-tab-wrapper uplink-mbe-tabs" aria-label="<?php esc_attr_e( 'Media Bridge sections', 'media-bridge-for-etch' ); ?>">
 				<a class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'settings', $this->page_url() ) ); ?>" <?php echo 'settings' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Settings', 'media-bridge-for-etch' ); ?></a>
+				<a class="nav-tab <?php echo 'compression' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'compression', $this->page_url() ) ); ?>" <?php echo 'compression' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Compression', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'exif' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'exif', $this->page_url() ) ); ?>" <?php echo 'exif' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch EXIF', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'gallery' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'gallery', $this->page_url() ) ); ?>" <?php echo 'gallery' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Gallery & shortcode', 'media-bridge-for-etch' ); ?></a>
 				<a class="nav-tab <?php echo 'loops' === $active_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'tab', 'loops', $this->page_url() ) ); ?>" <?php echo 'loops' === $active_tab ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Etch loops', 'media-bridge-for-etch' ); ?></a>
@@ -299,36 +301,7 @@ final class Admin {
 						</section>
 					<?php endif; ?>
 
-					<section class="uplink-mbe-card" id="uplink-mbe-compression-settings">
-						<h2><?php esc_html_e( 'Compression', 'media-bridge-for-etch' ); ?></h2>
-						<input type="hidden" name="uplink_mbe_settings[image_conversion]" value="0">
-						<label class="uplink-mbe-toggle"><input id="uplink-mbe-use-compression" type="checkbox" name="uplink_mbe_settings[image_conversion]" value="1" <?php checked( $settings['image_conversion'] ); ?>><span><?php esc_html_e( 'Use compression', 'media-bridge-for-etch' ); ?></span></label>
-						<p class="description"><?php esc_html_e( 'On by default. Lets permitted users preview and compress images in the Enhanced Manager. Turn it off to disable new compression; existing originals can still be restored.', 'media-bridge-for-etch' ); ?></p>
-						<fieldset class="uplink-mbe-compression-formats" aria-describedby="uplink-mbe-compression-formats-help">
-							<legend><?php esc_html_e( 'Output formats', 'media-bridge-for-etch' ); ?></legend>
-							<?php foreach ( array( 'webp' => 'WebP', 'avif' => 'AVIF', 'jxl' => 'JPEG XL', 'jpg' => 'JPG' ) as $format => $format_label ) : ?>
-								<input type="hidden" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="0">
-								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="1" <?php checked( $settings[ 'compression_' . $format ] ); ?>><span><?php echo esc_html( $format_label ); ?></span></label>
-							<?php endforeach; ?>
-							<p id="uplink-mbe-compression-formats-help" class="description"><?php esc_html_e( 'WebP and AVIF are on by default. JPEG XL and JPG are off by default. Only selected formats appear in the preview workspace. JPG does not support transparency.', 'media-bridge-for-etch' ); ?></p>
-						</fieldset>
-						<h3><?php esc_html_e( 'Compression and restoration permissions', 'media-bridge-for-etch' ); ?></h3>
-						<p class="description"><?php esc_html_e( 'Choose roles separately for each action. Users must also have permission to upload files and edit the specific image. Both actions default to administrators only. Restoration remains available to permitted users when compression is turned off.', 'media-bridge-for-etch' ); ?></p>
-						<table class="widefat striped">
-							<thead><tr><th scope="col"><?php esc_html_e( 'Role', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Compress images', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Restore originals', 'media-bridge-for-etch' ); ?></th></tr></thead>
-							<tbody>
-							<?php foreach ( wp_roles()->roles as $role_slug => $role_data ) : ?>
-								<tr><th scope="row"><?php echo esc_html( translate_user_role( $role_data['name'] ) ); ?></th>
-								<?php foreach ( array( 'compression_roles' => __( 'Compress images', 'media-bridge-for-etch' ), 'restoration_roles' => __( 'Restore originals', 'media-bridge-for-etch' ) ) as $permission_key => $permission_label ) : ?>
-									<td><label><input type="checkbox" name="uplink_mbe_settings[<?php echo esc_attr( $permission_key ); ?>][]" value="<?php echo esc_attr( $role_slug ); ?>" <?php checked( in_array( $role_slug, $settings[ $permission_key ], true ) ); ?>><span class="screen-reader-text"><?php echo esc_html( translate_user_role( $role_data['name'] ) . ': ' . $permission_label ); ?></span></label></td>
-								<?php endforeach; ?></tr>
-							<?php endforeach; ?>
-							</tbody>
-						</table>
-						<input type="hidden" name="uplink_mbe_settings[compression_roles][]" value="">
-						<input type="hidden" name="uplink_mbe_settings[restoration_roles][]" value="">
 
-					</section>
 
 					<section class="uplink-mbe-card">
 						<h2><?php esc_html_e( 'File replacement', 'media-bridge-for-etch' ); ?></h2>
@@ -378,6 +351,53 @@ final class Admin {
 				</tbody></table><?php endif; ?>
 			</section>
 			<?php endif; ?>
+			<?php elseif ( 'compression' === $active_tab ) : ?>
+			<form action="options.php" method="post" id="uplink-mbe-compression-form" class="uplink-mbe-settings-form">
+				<?php settings_fields( 'uplink_mbe_settings_group' ); ?>
+					<section class="uplink-mbe-card" id="uplink-mbe-compression-settings">
+						<h2><?php esc_html_e( 'Compression', 'media-bridge-for-etch' ); ?></h2>
+						<input type="hidden" name="uplink_mbe_settings[image_conversion]" value="0">
+						<label class="uplink-mbe-toggle"><input id="uplink-mbe-use-compression" type="checkbox" name="uplink_mbe_settings[image_conversion]" value="1" <?php checked( $settings['image_conversion'] ); ?>><span><?php esc_html_e( 'Use compression', 'media-bridge-for-etch' ); ?></span></label>
+						<p class="description"><?php esc_html_e( 'On by default. Lets permitted users preview and compress images in the Enhanced Manager. Turn it off to disable new compression; existing originals can still be restored.', 'media-bridge-for-etch' ); ?></p>
+						<fieldset class="uplink-mbe-compression-formats" aria-describedby="uplink-mbe-compression-formats-help">
+							<legend><?php esc_html_e( 'Output formats', 'media-bridge-for-etch' ); ?></legend>
+							<?php foreach ( array( 'webp' => 'WebP', 'avif' => 'AVIF', 'jxl' => 'JPEG XL', 'jpg' => 'JPG' ) as $format => $format_label ) : ?>
+								<input type="hidden" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="0">
+								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_<?php echo esc_attr( $format ); ?>]" value="1" <?php checked( $settings[ 'compression_' . $format ] ); ?>><span><?php echo esc_html( $format_label ); ?></span></label>
+							<?php endforeach; ?>
+							<p id="uplink-mbe-compression-formats-help" class="description"><?php esc_html_e( 'WebP and AVIF are on by default. JPEG XL and JPG are off by default. Only selected formats appear in the preview workspace. JPG does not support transparency.', 'media-bridge-for-etch' ); ?></p>
+						</fieldset>
+						<fieldset class="uplink-mbe-compression-exclusions">
+							<legend><strong><?php esc_html_e( 'Exclude image sizes from compression', 'media-bridge-for-etch' ); ?></strong></legend>
+							<p class="description"><?php esc_html_e( 'All sizes skips these sizes. To override for one image, choose Selected sizes in its optimization panel and check an excluded size. Sizes sharing the same file are excluded and overridden together.', 'media-bridge-for-etch' ); ?></p>
+							<input type="hidden" name="uplink_mbe_settings[compression_excluded_sizes][]" value="">
+							<?php
+							$registered_sizes = wp_get_registered_image_subsizes();
+							foreach ( array_unique( array_merge( array_keys( $registered_sizes ), $settings['compression_excluded_sizes'] ) ) as $size_name ) :
+								$dimensions = $registered_sizes[ $size_name ] ?? null;
+								?>
+								<label class="uplink-mbe-toggle"><input type="checkbox" name="uplink_mbe_settings[compression_excluded_sizes][]" value="<?php echo esc_attr( $size_name ); ?>" <?php checked( in_array( $size_name, $settings['compression_excluded_sizes'], true ) ); ?>><span><?php echo esc_html( $size_name . ( $dimensions ? ' · ' . ( $dimensions['width'] ?: __( 'auto', 'media-bridge-for-etch' ) ) . ' × ' . ( $dimensions['height'] ?: __( 'auto', 'media-bridge-for-etch' ) ) : '' ) ); ?></span></label>
+							<?php endforeach; ?>
+						</fieldset>
+						<h3><?php esc_html_e( 'Compression and restoration permissions', 'media-bridge-for-etch' ); ?></h3>
+						<p class="description"><?php esc_html_e( 'Choose roles separately for each action. Users must also have permission to upload files and edit the specific image. Both actions default to administrators only. Restoration remains available to permitted users when compression is turned off.', 'media-bridge-for-etch' ); ?></p>
+						<table class="widefat striped">
+							<thead><tr><th scope="col"><?php esc_html_e( 'Role', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Compress images', 'media-bridge-for-etch' ); ?></th><th scope="col"><?php esc_html_e( 'Restore originals', 'media-bridge-for-etch' ); ?></th></tr></thead>
+							<tbody>
+							<?php foreach ( wp_roles()->roles as $role_slug => $role_data ) : ?>
+								<tr><th scope="row"><?php echo esc_html( translate_user_role( $role_data['name'] ) ); ?></th>
+								<?php foreach ( array( 'compression_roles' => __( 'Compress images', 'media-bridge-for-etch' ), 'restoration_roles' => __( 'Restore originals', 'media-bridge-for-etch' ) ) as $permission_key => $permission_label ) : ?>
+									<td><label><input type="checkbox" name="uplink_mbe_settings[<?php echo esc_attr( $permission_key ); ?>][]" value="<?php echo esc_attr( $role_slug ); ?>" <?php checked( in_array( $role_slug, $settings[ $permission_key ], true ) ); ?>><span class="screen-reader-text"><?php echo esc_html( translate_user_role( $role_data['name'] ) . ': ' . $permission_label ); ?></span></label></td>
+								<?php endforeach; ?></tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+						<input type="hidden" name="uplink_mbe_settings[compression_roles][]" value="">
+						<input type="hidden" name="uplink_mbe_settings[restoration_roles][]" value="">
+
+					</section>
+				<?php submit_button( __( 'Save compression settings', 'media-bridge-for-etch' ) ); ?>
+			</form>
 			<?php elseif ( 'loops' === $active_tab ) : ?>
 				<?php $this->loop_generator->render(); ?>
 			<?php elseif ( 'exif' === $active_tab ) : ?>

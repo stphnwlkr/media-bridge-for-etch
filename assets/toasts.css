@@ -50,3 +50,6 @@
 .uplink-mbe-toasts .uplink-mbe-toast-dismiss:hover { background: #ffffff20; }
 .uplink-mbe-toasts .uplink-mbe-toast-dismiss:focus-visible { outline: 2px solid #93c5fd; outline-offset: -2px; }
 @media (max-width: 782px) { .uplink-mbe-toasts { top: 60px; } }
+
+wa-callout.uplink-mbe-toast {display:block;padding:0;--wa-color-text-normal:inherit}
+wa-callout.uplink-mbe-toast::part(message) {display:flex;align-items:start;gap:var(--wa-space-m)}

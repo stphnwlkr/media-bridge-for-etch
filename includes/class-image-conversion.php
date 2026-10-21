@@ -21,13 +21,26 @@ final class Image_Conversion {
 	}
 	public static function assets(): void {
 		if ( ! current_user_can( 'upload_files' ) || ( ! self::role_allowed( 'compress' ) && ! self::role_allowed( 'restore' ) ) ) return;
+		wp_enqueue_script_module( 'uplink-mbe-optimization-components', UPLINK_MBE_URL . 'assets/optimization-components.js', array(), UPLINK_MBE_ASSET_VERSION );
+		wp_enqueue_style( 'uplink-mbe-optimization-theme', UPLINK_MBE_URL . 'assets/vendor/webawesome/theme.css', array(), UPLINK_MBE_ASSET_VERSION );
 		wp_enqueue_style( 'uplink-mbe-image-conversion', UPLINK_MBE_URL . 'assets/image-conversion.css', array( 'uplink-mbe-native-media' ), UPLINK_MBE_ASSET_VERSION );
+		Upload_Workspace::ui_assets( array( 'uplink-mbe-image-conversion' ) );
 		wp_enqueue_script( 'uplink-mbe-image-conversion', UPLINK_MBE_URL . 'assets/image-conversion.js', array( 'uplink-mbe-native-media' ), UPLINK_MBE_ASSET_VERSION, true );
 		wp_localize_script( 'uplink-mbe-image-conversion', 'uplinkMbeConversion', array(
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'uplink_mbe_image_conversion' ), 'enabled' => ! empty( Plugin::settings()['image_conversion'] ), 'formats' => self::enabled_formats(), 'settingsUrl' => admin_url( 'upload.php?page=media-bridge-for-etch&tab=settings#uplink-mbe-compression-settings' ), 'worker' => UPLINK_MBE_URL . 'assets/image-encode-worker.js?v=' . UPLINK_MBE_ASSET_VERSION,
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'uplink_mbe_image_conversion' ), 'enabled' => ! empty( Plugin::settings()['image_conversion'] ), 'formats' => self::enabled_formats(), 'settingsUrl' => admin_url( 'upload.php?page=media-bridge-for-etch&tab=compression#uplink-mbe-compression-settings' ), 'worker' => UPLINK_MBE_URL . 'assets/image-encode-worker.js?v=' . UPLINK_MBE_ASSET_VERSION,
 			'strings' => array(
-				'title' => __( 'Image compression and formats', 'media-bridge-for-etch' ),
+				'sizesTitle' => __( 'Image sizes', 'media-bridge-for-etch' ),
+				'allSizes' => __( 'All sizes', 'media-bridge-for-etch' ), 'mainOnly' => __( 'Main image only', 'media-bridge-for-etch' ), 'chooseSizes' => __( 'Selected sizes', 'media-bridge-for-etch' ),
+				'excludedSize' => __( 'Excluded in Settings. Check to include for this image.', 'media-bridge-for-etch' ),
+				'exclusionsHint' => __( 'All sizes honors Settings exclusions. Choose Selected sizes to override them for this image.', 'media-bridge-for-etch' ),
+				'sizeHint' => __( 'Includes existing WordPress and custom sizes. Sizes that share a file are processed together once. Unselected files keep their current format.', 'media-bridge-for-etch' ),
+				'scopeLabel' => __( 'Optimize', 'media-bridge-for-etch' ), 'tooLarge' => __( 'A file exceeds the 40-megapixel limit. Choose the main image or select smaller sizes.', 'media-bridge-for-etch' ),
+				'sizeInventory' => __( 'Available image files', 'media-bridge-for-etch' ), 'originalUpload' => __( 'Original upload', 'media-bridge-for-etch' ), 'selectionEmpty' => __( 'Select at least one image size before applying compression.', 'media-bridge-for-etch' ),
+				'selectedFiles' => __( 'files selected', 'media-bridge-for-etch' ), 'totalFiles' => __( 'files available', 'media-bridge-for-etch' ),
+				'previewOnly' => __( 'Previews show the main image. Only your selected sizes will be saved.', 'media-bridge-for-etch' ),
+				'title' => __( 'Optimize image', 'media-bridge-for-etch' ),
 				'help' => __( 'Compare your enabled formats at suggested quality settings, then fine-tune the result you prefer. Your files change only when you choose a format. Originals are kept for restoration.', 'media-bridge-for-etch' ),
+				'mainPreview' => __( 'Main image preview', 'media-bridge-for-etch' ), 'previewBadge' => __( 'Preview', 'media-bridge-for-etch' ),
 				'qualityHelp' => __( 'Drag an image divider to compare. Adjust quality below the image.', 'media-bridge-for-etch' ),
 				'compare' => __( 'Generate format previews', 'media-bridge-for-etch' ),
 				'applyCompression' => __( 'Apply compression', 'media-bridge-for-etch' ),
@@ -38,7 +51,7 @@ final class Image_Conversion {
 				'processing' => __( 'Processing image', 'media-bridge-for-etch' ),
 				'keepOpen' => __( 'Keep this window open until processing finishes.', 'media-bridge-for-etch' ),
 				'preparing' => __( 'Checking original files and generated sizes…', 'media-bridge-for-etch' ),
-				'ready' => __( 'Full-image previews are ready. Other sizes are encoded only after you choose a result. Final savings for all sizes will be saved in this tab.', 'media-bridge-for-etch' ),
+				'ready' => __( 'Previews are ready. Choose image sizes and apply your preferred format. Savings for the selected files will be saved in this tab.', 'media-bridge-for-etch' ),
 				'restoreFirst' => __( 'Restore the original before making another conversion.', 'media-bridge-for-etch' ),
 				'compareFirst' => __( 'Compare the image before converting it.', 'media-bridge-for-etch' ),
 				'failed' => __( 'Image conversion failed.', 'media-bridge-for-etch' ),
@@ -59,7 +72,7 @@ final class Image_Conversion {
 				'currentOptimized' => __( 'This image is already optimized in the enabled format. Enable another output format to compare.', 'media-bridge-for-etch' ),
 				'jxlSummary' => __( 'Original-format fallback included', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
-				'useFormat' => __( 'Use %s', 'media-bridge-for-etch' ),
+				'useFormat' => __( 'Optimize to %s', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
 				'inspectFormat' => __( 'Inspect %s comparison', 'media-bridge-for-etch' ),
 				/* translators: %s: Percentage reduction in file size. */
@@ -77,6 +90,8 @@ final class Image_Conversion {
 				'compareImages' => __( '%s original and compressed comparison', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
 				'previewFormat' => __( 'Preview %s', 'media-bridge-for-etch' ),
+				/* translators: %s: Image format. */
+				'inspectShort' => __( 'Inspect %s', 'media-bridge-for-etch' ),
 				'openPreview' => __( 'Open full-size preview', 'media-bridge-for-etch' ),
 				'jxlHelp' => __( 'JPEG XL is served through picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep their original format.', 'media-bridge-for-etch' ),
 				'useJxl' => __( 'Use JPEG XL with fallback', 'media-bridge-for-etch' ),
@@ -112,7 +127,7 @@ final class Image_Conversion {
 		$backup = get_post_meta( $id, self::BACKUP, true );
 		if ( ! $backup ) return null;
 		$total = 0; foreach ( $backup['converted'] as $file ) if ( is_file( $file ) ) $total += filesize( $file );
-		return array( 'format' => $backup['format'], 'before' => array_sum( array_column( $backup['sources'], 'bytes' ) ), 'after' => $total, 'sizes' => count( $backup['converted'] ), 'references' => $backup['changed'], 'quality' => $backup['quality'] ?? null, 'date' => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $backup['created'] ), 'rows' => $backup['rows'] ?? array() );
+		return array( 'scope' => $backup['scope'] ?? 'all', 'format' => $backup['format'], 'before' => array_sum( array_column( $backup['sources'], 'bytes' ) ), 'after' => $total, 'sizes' => count( $backup['converted'] ), 'references' => $backup['changed'], 'quality' => $backup['quality'] ?? null, 'date' => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $backup['created'] ), 'rows' => $backup['rows'] ?? array() );
 	}
 	public static function delete_files( int $id ): void {
 		$files = get_post_meta( $id, '_uplink_mbe_conversion_files', true );
@@ -148,17 +163,47 @@ final class Image_Conversion {
 			$file = self::local( dirname( $path ) . '/' . $name );
 			if ( isset( $seen[ $file ] ) ) { $aliases[ $key ] = $seen[ $file ]; continue; }
 			$info = wp_getimagesize( $file );
-			if ( ! $info || $info[0] * $info[1] > 40000000 ) self::fail( __( 'An image size cannot be decoded or exceeds the 40-megapixel conversion limit.', 'media-bridge-for-etch' ) );
+			if ( ! $info ) self::fail( __( 'An image size cannot be decoded.', 'media-bridge-for-etch' ) );
 			$seen[ $file ] = $key;
-			$files[ $key ] = array( 'path' => $file, 'name' => $name, 'url' => trailingslashit( dirname( wp_get_attachment_url( $id ) ) ) . rawurlencode( $name ), 'width' => $info[0], 'height' => $info[1], 'bytes' => filesize( $file ), 'hash' => hash_file( 'sha256', $file ) );
+			$files[ $key ] = array( 'available' => $info[0] * $info[1] <= 40000000, 'path' => $file, 'name' => $name, 'url' => trailingslashit( dirname( wp_get_attachment_url( $id ) ) ) . rawurlencode( $name ), 'width' => $info[0], 'height' => $info[1], 'bytes' => filesize( $file ), 'hash' => hash_file( 'sha256', $file ) );
 		}
 		if ( count( $files ) > 100 ) self::fail( __( 'This attachment exceeds the 100-file conversion limit.', 'media-bridge-for-etch' ) );
+		foreach ( self::excluded_keys( $files, $aliases ) as $key ) $files[ $key ]['excluded'] = true;
 		$token = wp_generate_uuid4();
 		$job = array( 'owner' => get_current_user_id(), 'id' => $id, 'old' => $old, 'files' => $files, 'aliases' => $aliases, 'staged' => array(), 'format' => '', 'quality' => null, 'expires' => time() + 7200 );
 		add_option( 'uplink_mbe_conversion_' . $token, $job, '', false );
 		wp_schedule_single_event( time() + 7200, 'uplink_mbe_conversion_expire', array( $token ) );
 		foreach ( $files as &$file ) unset( $file['path'], $file['hash'] ); unset( $file );
-		return array( 'token' => $token, 'files' => $files, 'restore' => false, 'mime' => $old['mime'], 'canCompress' => empty( $meta['cimo'] ) && empty( $meta['mbe_optimization'] ) && ! get_post_meta( $id, '_uplink_mbe_etch_optimization', true ) );
+		return array( 'token' => $token, 'files' => $files, 'aliases' => $aliases, 'restore' => false, 'mime' => $old['mime'], 'canCompress' => empty( $meta['cimo'] ) && empty( $meta['mbe_optimization'] ) && ! get_post_meta( $id, '_uplink_mbe_etch_optimization', true ) );
+	}
+	/** An excluded alias excludes its shared physical file as well. */
+	private static function excluded_keys( array $files, array $aliases ): array {
+		$excluded = array();
+		foreach ( (array) Plugin::settings()['compression_excluded_sizes'] as $name ) {
+			$key = $aliases[ $name ] ?? $name;
+			if ( isset( $files[ $key ] ) ) $excluded[] = $key;
+		}
+		return array_values( array_unique( $excluded ) );
+	}
+	/** Select only files from the server-created manifest, before staging starts. */
+	public static function select_sizes( string $token, string $scope, array $sizes = array() ): array {
+		$job = self::job( $token );
+		if ( ! in_array( $scope, array( 'all', 'main', 'selected' ), true ) ) self::fail( __( 'Choose a valid image-size option.', 'media-bridge-for-etch' ) );
+		$all = $job['all_files'] ?? $job['files'];
+		$keys = 'all' === $scope ? array_values( array_diff( array_keys( $all ), self::excluded_keys( $all, $job['aliases'] ) ) ) : ( 'main' === $scope ? array( 'full' ) : $sizes );
+		if ( ! $keys ) self::fail( __( 'Select at least one image size.', 'media-bridge-for-etch' ) );
+		$selected = array();
+		foreach ( $keys as $key ) {
+			if ( ! is_string( $key ) ) self::fail( __( 'Invalid image size.', 'media-bridge-for-etch' ) );
+			$key = $job['aliases'][ $key ] ?? $key;
+			if ( ! isset( $all[ $key ] ) ) self::fail( __( 'This image size does not exist for the attachment.', 'media-bridge-for-etch' ) );
+			if ( isset( $all[ $key ]['available'] ) && ! $all[ $key ]['available'] ) self::fail( __( 'A selected file exceeds the 40-megapixel limit. Choose the main image or smaller sizes.', 'media-bridge-for-etch' ) );
+			$selected[ $key ] = $all[ $key ];
+		}
+		if ( $job['staged'] && array_keys( $selected ) !== array_keys( $job['files'] ) ) self::fail( __( 'Size selection cannot change after encoding has started.', 'media-bridge-for-etch' ) );
+		$job['all_files'] = $all; $job['files'] = $selected; $job['scope'] = $scope;
+		update_option( 'uplink_mbe_conversion_' . $token, $job, false );
+		return array( 'sizes' => array_keys( $selected ), 'count' => count( $selected ), 'scope' => $scope );
 	}
 	private static function job( string $token ): array {
 		if ( ! preg_match( '/^[a-f0-9-]{36}$/D', $token ) ) self::fail( __( 'Invalid conversion session.', 'media-bridge-for-etch' ) );
@@ -168,6 +213,8 @@ final class Image_Conversion {
 	}
 	public static function stage( string $token, string $key, string $format, array $upload, int $quality = 75 ): array {
 		$job = self::job( $token );
+		if ( ! isset( $job['scope'] ) ) self::fail( __( 'Choose image sizes before encoding.', 'media-bridge-for-etch' ) );
+		if ( isset( $job['files'][ $key ]['available'] ) && ! $job['files'][ $key ]['available'] ) self::fail( __( 'This file exceeds the 40-megapixel conversion limit.', 'media-bridge-for-etch' ) );
 		if ( empty( Plugin::settings()['image_conversion'] ) || ! in_array( $format, self::enabled_formats(), true ) ) self::fail( __( 'This compression format is disabled in settings.', 'media-bridge-for-etch' ) );
 		if ( ! isset( self::FORMATS[ $format ], $job['files'][ $key ] ) || ( $job['format'] && $job['format'] !== $format ) ) self::fail( __( 'Invalid image size or conversion format.', 'media-bridge-for-etch' ) );
 		if ( ! empty( $upload['error'] ) || empty( $upload['tmp_name'] ) || ! is_uploaded_file( $upload['tmp_name'] ) || filesize( $upload['tmp_name'] ) > wp_max_upload_size() ) self::fail( __( 'The converted file exceeds the upload limit or is not a valid upload.', 'media-bridge-for-etch' ) );
@@ -191,7 +238,7 @@ final class Image_Conversion {
 	}
 	private static function unchanged( array $job ): void {
 		if ( self::active( $job['id'] ) || self::snapshot( $job['id'] ) !== $job['old'] ) self::fail( __( 'This image changed after comparison. Compare it again before converting.', 'media-bridge-for-etch' ) );
-		foreach ( $job['files'] as $file ) if ( hash_file( 'sha256', self::local( $file['path'] ) ) !== $file['hash'] ) self::fail( __( 'An original file changed after comparison. Compare it again.', 'media-bridge-for-etch' ) );
+		foreach ( $job['all_files'] ?? $job['files'] as $file ) if ( hash_file( 'sha256', self::local( $file['path'] ) ) !== $file['hash'] ) self::fail( __( 'An original file changed after comparison. Compare it again.', 'media-bridge-for-etch' ) );
 	}
 	private static function save_attachment( int $id, array $data ): void {
 		$result = wp_update_post( array( 'ID' => $id, 'post_mime_type' => $data['mime'] ), true );
@@ -209,6 +256,7 @@ final class Image_Conversion {
 		$job = self::job( $token ); $id = $job['id'];
 		if ( empty( Plugin::settings()['image_conversion'] ) ) self::fail( __( 'Image compression is disabled in settings.', 'media-bridge-for-etch' ) );
 		self::unchanged( $job );
+		foreach ( $job['files'] as $file ) if ( isset( $file['available'] ) && ! $file['available'] ) self::fail( __( 'A selected file exceeds the conversion limit.', 'media-bridge-for-etch' ) );
 		if ( count( $job['staged'] ) !== count( $job['files'] ) ) self::fail( __( 'Every original and generated size must finish conversion before saving.', 'media-bridge-for-etch' ) );
 		$format = $job['format'];
 		if ( ! in_array( $format, self::enabled_formats(), true ) ) self::fail( __( 'This compression format is disabled in settings.', 'media-bridge-for-etch' ) );
@@ -228,13 +276,15 @@ final class Image_Conversion {
 			}
 			$new = $job['old'];
 			if ( 'jxl' !== $format ) {
-				$new['editor_backups'] = '';
-				$new['file'] = _wp_relative_upload_path( $destinations['full']['path'] ); $new['mime'] = $mime;
-				$new['metadata']['file'] = $new['file']; $new['metadata']['filesize'] = $destinations['full']['bytes'];
+				if ( isset( $destinations['full'] ) ) {
+					$new['editor_backups'] = '';
+					$new['file'] = _wp_relative_upload_path( $destinations['full']['path'] ); $new['mime'] = $mime;
+					$new['metadata']['file'] = $new['file']; $new['metadata']['filesize'] = $destinations['full']['bytes'];
+				}
 				unset( $new['metadata']['cimo'] );
 				$new['metadata']['mbe_optimization'] = array( 'format' => $format, 'sizes' => count( $written ) );
-				foreach ( $new['metadata']['sizes'] ?? array() as $key => $size ) { $target = $destinations[ $job['aliases'][ $key ] ?? $key ]; $size['file'] = $target['file']; $size['mime-type'] = $mime; $size['filesize'] = $target['bytes']; $new['metadata']['sizes'][ $key ] = $size; }
-				if ( isset( $new['metadata']['original_image'] ) ) $new['metadata']['original_image'] = $destinations[ $job['aliases']['original_image'] ?? 'original_image' ]['file'];
+				foreach ( $new['metadata']['sizes'] ?? array() as $key => $size ) { $target = $destinations[ $job['aliases'][ $key ] ?? $key ] ?? null; if ( ! $target ) continue; $size['file'] = $target['file']; $size['mime-type'] = $mime; $size['filesize'] = $target['bytes']; $new['metadata']['sizes'][ $key ] = $size; }
+				if ( isset( $new['metadata']['original_image'], $destinations[ $job['aliases']['original_image'] ?? 'original_image' ] ) ) $new['metadata']['original_image'] = $destinations[ $job['aliases']['original_image'] ?? 'original_image' ]['file'];
 			}
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current-site transaction groups reference and attachment changes.
 			$wpdb->query( 'START TRANSACTION' ); $started = true;
@@ -243,7 +293,7 @@ final class Image_Conversion {
 				$index = get_option( 'uplink_mbe_jxl_sources', array() ); $index[ $id ] = $urls; update_option( 'uplink_mbe_jxl_sources', $index, false );
 			} else { $changed = Image_References::update( $urls, $journal ); self::save_attachment( $id, $new ); }
 			$rows = array(); foreach ( $job['files'] as $key => $source ) $rows[] = array( 'size' => $key, 'width' => $source['width'], 'height' => $source['height'], 'before' => $source['bytes'], 'after' => $destinations[ $key ]['bytes'] );
-			$backup = array( 'etch_optimization' => get_post_meta( $id, '_uplink_mbe_etch_optimization', true ), 'quality' => $job['quality'], 'rows' => $rows, 'format' => $format, 'old' => $job['old'], 'new' => $new, 'sources' => $job['files'], 'urls' => $urls, 'converted' => $written, 'created' => time(), 'changed' => $changed );
+			$backup = array( 'scope' => $job['scope'] ?? 'all', 'etch_optimization' => get_post_meta( $id, '_uplink_mbe_etch_optimization', true ), 'quality' => $job['quality'], 'rows' => $rows, 'format' => $format, 'old' => $job['old'], 'new' => $new, 'sources' => $job['files'], 'urls' => $urls, 'converted' => $written, 'created' => time(), 'changed' => $changed );
 			$retained = get_post_meta( $id, '_uplink_mbe_conversion_files', true );
 				update_post_meta( $id, '_uplink_mbe_conversion_files', array_values( array_unique( array_merge( is_array( $retained ) ? $retained : array(), $written, array_column( $job['files'], 'path' ) ) ) ) );
 			if ( ! add_post_meta( $id, self::BACKUP, wp_slash( $backup ), true ) ) self::fail( __( 'Could not save the restoration record.', 'media-bridge-for-etch' ) );
@@ -301,8 +351,9 @@ final class Image_Conversion {
 		$lock_owner = time() . ':' . wp_generate_uuid4();
 		if ( ! add_option( $lock, $lock_owner, '', false ) ) wp_send_json_error( array( 'message' => __( 'This attachment is already being changed. Try again shortly.', 'media-bridge-for-etch' ) ), 409 );
 		try {
-			if ( in_array( $mode, array( 'stage', 'commit', 'cancel', 'validate' ), true ) && self::job( $token )['id'] !== $id ) self::fail( __( 'The conversion session does not match this attachment.', 'media-bridge-for-etch' ) );
+			if ( in_array( $mode, array( 'select', 'stage', 'commit', 'cancel', 'validate' ), true ) && self::job( $token )['id'] !== $id ) self::fail( __( 'The conversion session does not match this attachment.', 'media-bridge-for-etch' ) );
 			if ( 'begin' === $mode ) $result = self::begin( $id );
+			elseif ( 'select' === $mode ) $result = self::select_sizes( $token, sanitize_key( wp_unslash( $_POST['scope'] ?? '' ) ), isset( $_POST['sizes'] ) && is_array( $_POST['sizes'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sizes'] ) ) : array() );
 			elseif ( 'stage' === $mode ) $result = self::stage( $token, sanitize_text_field( wp_unslash( $_POST['size'] ?? '' ) ), sanitize_key( wp_unslash( $_POST['format'] ?? '' ) ), $_FILES['file'] ?? array(), absint( $_POST['quality'] ?? 0 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Upload provenance, size, actual MIME and dimensions are validated in stage().
 			elseif ( 'validate' === $mode ) { self::unchanged( self::job( $token ) ); $result = array( 'valid' => true ); }
 			elseif ( 'commit' === $mode ) $result = self::commit( $token );

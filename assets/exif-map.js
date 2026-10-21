@@ -45,17 +45,26 @@
 		canvas.className = 'uplink-mbe-exif-map-canvas';
 		canvas.setAttribute( 'role', 'region' );
 		canvas.setAttribute( 'aria-label', strings.location || 'Photo location' );
-		const link = document.createElement( 'a' );
-		link.textContent = strings.open || 'Open in OpenStreetMap';
+		const links = document.createElement( 'div' );
+		links.className = 'uplink-mbe-exif-map-links';
 		const latitude = Number( location.latitude.toFixed( 6 ) );
 		const longitude = Number( location.longitude.toFixed( 6 ) );
-		link.href = `https://www.openstreetmap.org/?mlat=${ latitude }&mlon=${ longitude }#map=16/${ latitude }/${ longitude }`;
-		link.target = '_blank'; link.rel = 'noopener noreferrer';
+		const coordinate = encodeURIComponent( `${ latitude },${ longitude }` );
+		const providers = [
+			[ strings.openGoogle || 'Open in Google Maps', `https://www.google.com/maps/search/?api=1&query=${ coordinate }` ],
+			[ strings.openApple || 'Open in Apple Maps', `https://maps.apple.com/place?coordinate=${ coordinate }&name=${ encodeURIComponent( strings.location || 'Photo location' ) }` ],
+		];
+		for ( const [ label, url ] of providers ) {
+			const link = document.createElement( 'a' );
+			link.textContent = label; link.href = url;
+			link.target = '_blank'; link.rel = 'noopener noreferrer';
+			links.append( link );
+		}
 		const status = document.createElement( 'p' );
 		status.className = 'uplink-mbe-exif-map-status';
 		status.setAttribute( 'role', 'status' );
 		status.hidden = true; status.textContent = strings.error || 'Map imagery could not be loaded.';
-		section.append( heading, canvas, status, link ); panel.append( section );
+		section.append( heading, canvas, status, links ); panel.append( section );
 		const state = { section, canvas, status, location, map: null };
 		instances.set( panel, state );
 		if ( window.IntersectionObserver ) {

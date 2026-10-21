@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.6.4
+Stable tag: 2.7.0
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -224,6 +224,9 @@ Deactivating or deleting Media Bridge stops Collection Gallery blocks, gallery s
 
 == Upgrade Notice ==
 
+= 2.7.0 =
+Adds image-size optimization choices, compression exclusions, a unified Enhanced Manager UI, and drag-to-move collection assignments.
+
 = 2.5.7 =
 Preserves safe HTML, including attribution links, when captions are saved in Media Bridge.
 
@@ -370,6 +373,20 @@ Adds opt-in cleanup on deactivation or deletion, parent collection count display
 Adds a responsive, pinnable media-library drawer and clearer attachment information. Etch must remain installed and active.
 
 == Changelog ==
+
+= 2.7.0 =
+
+* Adds All sizes, Main image only and Selected sizes for image optimization, with existing custom-size coverage and a file inventory.
+* Preserves unselected files, updates references for selected files only and restores mixed-format metadata correctly.
+* Uses locally bundled Web Awesome controls for search, filters, bulk actions, attachment tabs and fields, collection actions, health badges, feedback and optimization sliders. Adds removable active-filter tags.
+* Adds a dedicated Compression admin tab for formats, size exclusions and separate compression/restoration permissions.
+* Adds administrator size exclusions honored by All sizes, with explicit per-image overrides in Selected sizes. Shared-file aliases are handled together.
+* Groups related toolbar actions with Web Awesome button groups and restores a visible, labeled Upload media action.
+* Adds drag-to-move collection assignments while preserving unrelated collection memberships.
+* Refines inspector scrolling, compact previews, search, popup dismissal, button alignment and keyboard focus.
+* Uses locally bundled open-source Lucide outline icons for collection and delete actions.
+* Allows a scaled main image to be optimized when its unselected original upload exceeds the encoding limit.
+
 
 = 2.6.5 =
 
@@ -853,7 +870,7 @@ Pills and dots can be clicked or activated with the keyboard to jump to their im
 
 == Image compression and photo maps ==
 
-Under Media > Uplink Media Bridge > Settings > Compression, use the master switch and choose WebP, AVIF, JPEG XL or JPG to let permitted users compare the enabled formats in the Enhanced editor's Optimization tab. Quality controls and full-size previews help compare results before saving. Every stored image size is converted, with original files retained for restoration. JPEG XL adds responsive picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep the original format. Current-site content, metadata and options referencing converted WebP, AVIF or JPG files are updated. Custom tables and external sites are outside this workflow. Module workers, WebAssembly and OffscreenCanvas are required. Animated source images are left unchanged. Compression settings provide separate role selections for compression and restoration. Both default to administrators only. Users must also have permission to upload files and edit the specific image. Restoration remains available to permitted users when compression is disabled.
+Under Media > Uplink Media Bridge > Compression, use the master switch and choose WebP, AVIF, JPEG XL or JPG to let permitted users compare the enabled formats in the Enhanced editor's Optimization tab. Quality controls and full-size previews help compare results before saving. All sizes converts recorded WordPress and custom sizes except those excluded on the Compression tab. No sizes are excluded until an administrator selects them. For example, exclude thumbnail (150 × 150) to keep thumbnail files unchanged. Choose Selected sizes and check an excluded size to override it for one conversion. Size names sharing one physical file are excluded and overridden together. Choose Main image only or Selected sizes to limit processing. Unselected files remain unchanged, with original files retained for restoration. JPEG XL adds responsive picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep the original format. Current-site content, metadata and options referencing converted WebP, AVIF or JPG files are updated. Custom tables and external sites are outside this workflow. Module workers, WebAssembly and OffscreenCanvas are required. Animated source images are left unchanged. Compression settings provide separate role selections for compression and restoration. Both default to administrators only. Users must also have permission to upload files and edit the specific image. Restoration remains available to permitted users when compression is disabled.
 
 GPS exposure and photo maps are off by default and require separate opt-ins under EXIF. The EXIF display option in the Enhanced Manager must also be on. Maps use bundled Leaflet 1.9.4. Opening a photo's EXIF map requests tiles from Esri World Imagery or OpenStreetMap and sends the displayed location, IP address and browser information to that provider. No map tiles are requested when mapping or GPS exposure is disabled.
 
@@ -863,3 +880,7 @@ OpenStreetMap terms: https://osmfoundation.org/wiki/Terms_of_Use
 OpenStreetMap privacy: https://osmfoundation.org/wiki/Privacy_Policy
 
 Bundled image encoders run locally. Codec source, build and license references are in assets/vendor/jsquash/SOURCES.md. Leaflet source and license are in assets/vendor/leaflet. This release uses GPL-3.0-or-later for compatibility with the bundled Apache-2.0 codec wrappers. Third-party libraries retain their own licenses.
+
+== Third-party licenses ==
+
+Lucide outline icons: ISC/MIT. Sources and full notices are in assets/vendor/lucide/.
