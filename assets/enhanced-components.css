@@ -24,7 +24,7 @@
 .uplink-mbe-library-drawer-bar {align-items:end}
 .uplink-mbe-native-wrap wa-tab::part(tab) {color:var(--mbe-muted);font-size:var(--wa-font-size-s);padding:var(--wa-space-m)}
 .uplink-mbe-native-wrap wa-tab[active]::part(tab) {color:var(--mbe-text)}
-.uplink-mbe-native-wrap wa-tab-panel {padding-block:var(--wa-space-m)}
+.uplink-mbe-native-wrap wa-tab-panel {padding:0;--padding:0}
 .uplink-mbe-native-wrap wa-tab-group::part(nav) {border-color:var(--mbe-border)}
 .uplink-mbe-native-wrap wa-callout {color:var(--mbe-text);background:var(--mbe-surface-muted);border-color:var(--mbe-control-border)}
 .uplink-mbe-native-wrap wa-badge::part(badge),.uplink-mbe-native-wrap wa-tag::part(tag) {background:var(--mbe-badge);color:var(--mbe-badge-text);border-color:var(--mbe-control-border)}
@@ -53,3 +53,8 @@
 .uplink-mbe-native-wrap wa-button[aria-pressed="true"]::part(button),.uplink-mbe-native-wrap wa-button[aria-expanded="true"]::part(button) {background:var(--mbe-accent)!important;color:var(--mbe-accent-icon)!important;border-color:var(--mbe-accent)!important}
 /* Four collection tools fit together even at the minimum sidebar width. */
 .uplink-mbe-native-wrap wa-button-group.uplink-mbe-collection-heading-actions wa-button::part(button) {min-width:calc(var(--wa-space-m) * 2);height:calc(var(--wa-space-m) * 2);padding:0}
+
+/* The inspector has one content surface. Tab panels provide structure, not frames. */
+.uplink-mbe-native-wrap #uplink-mbe-detail-tabs > wa-tab-panel.uplink-mbe-attachment-metadata-panel {--padding:var(--wa-space-m) 0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions {align-items:center;gap:var(--wa-space-s)}
+.uplink-mbe-native-wrap .uplink-mbe-attachment-header-actions wa-button.uplink-mbe-attachment-header-nav::part(button) {width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));min-width:calc(var(--wa-space-m) * 2 + var(--wa-space-s));height:calc(var(--wa-space-m) * 2 + var(--wa-space-s));padding:0}

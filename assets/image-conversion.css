@@ -156,3 +156,6 @@ wa-card.uplink-mbe-conversion-card::part(footer) {background:color-mix(in srgb,v
 
 .uplink-mbe-size-panel {--wa-color-brand-fill-quiet:color-mix(in srgb,var(--conversion-accent) 18%,var(--conversion-surface));--wa-form-control-activated-color:var(--conversion-accent)}
 .uplink-mbe-size-panel>wa-radio-group {min-width:0}
+
+/* Keep the optimizer flush with the shared tab content, including on mobile. */
+.uplink-mbe-native-wrap #uplink-mbe-conversion-controls {padding:0;margin:0;background:transparent}

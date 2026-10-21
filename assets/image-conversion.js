@@ -112,7 +112,7 @@ function contrast(a,b){const first=luminance(a),second=luminance(b);return(Math.
 function applyContrastColors(target){
  const style=getComputedStyle(root);
  const token=(name,fallback)=>{const color=style.getPropertyValue('--mbe-'+name).trim();return /^#[a-f0-9]{6}$/i.test(color)?color:fallback;};
- const surface=token('card','#ffffff');
+ const surface=token('surface-muted',token('surface','#ffffff')); // Match the inspector rather than the media-card palette.
  const bestText=background=>{const candidate=contrast('#1d2327',background)>contrast('#ffffff',background)?'#1d2327':'#ffffff';return contrast(candidate,background)>=4.5?candidate:'#000000';};
  const readable=(color,minimum=4.5)=>contrast(color,surface)>=minimum?color:bestText(surface);
  const foreground=readable(token('text','#1d2327')),muted=readable(token('muted','#50575e'));
