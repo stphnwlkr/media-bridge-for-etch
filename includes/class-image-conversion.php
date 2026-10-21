@@ -28,15 +28,16 @@ final class Image_Conversion {
 		wp_localize_script( 'uplink-mbe-image-conversion', 'uplinkMbeConversion', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'uplink_mbe_image_conversion' ), 'enabled' => ! empty( Plugin::settings()['image_conversion'] ), 'formats' => self::enabled_formats(), 'settingsUrl' => admin_url( 'upload.php?page=media-bridge-for-etch&tab=settings#uplink-mbe-compression-settings' ), 'worker' => UPLINK_MBE_URL . 'assets/image-encode-worker.js?v=' . UPLINK_MBE_ASSET_VERSION,
 			'strings' => array(
-				'sizesTitle' => __( 'Choose image sizes', 'media-bridge-for-etch' ),
+				'sizesTitle' => __( 'Image sizes', 'media-bridge-for-etch' ),
 				'allSizes' => __( 'All sizes', 'media-bridge-for-etch' ), 'mainOnly' => __( 'Main image only', 'media-bridge-for-etch' ), 'chooseSizes' => __( 'Selected sizes', 'media-bridge-for-etch' ),
 				'sizeHint' => __( 'Includes existing WordPress and custom sizes. Sizes that share a file are processed together once. Unselected files keep their current format.', 'media-bridge-for-etch' ),
 				'scopeLabel' => __( 'Optimize', 'media-bridge-for-etch' ), 'tooLarge' => __( 'A file exceeds the 40-megapixel limit. Choose the main image or select smaller sizes.', 'media-bridge-for-etch' ),
 				'sizeInventory' => __( 'Available image files', 'media-bridge-for-etch' ), 'originalUpload' => __( 'Original upload', 'media-bridge-for-etch' ), 'selectionEmpty' => __( 'Select at least one image size before applying compression.', 'media-bridge-for-etch' ),
 				'selectedFiles' => __( 'files selected', 'media-bridge-for-etch' ), 'totalFiles' => __( 'files available', 'media-bridge-for-etch' ),
 				'previewOnly' => __( 'Previews show the main image. Only your selected sizes will be saved.', 'media-bridge-for-etch' ),
-				'title' => __( 'Image compression and formats', 'media-bridge-for-etch' ),
+				'title' => __( 'Optimize image', 'media-bridge-for-etch' ),
 				'help' => __( 'Compare your enabled formats at suggested quality settings, then fine-tune the result you prefer. Your files change only when you choose a format. Originals are kept for restoration.', 'media-bridge-for-etch' ),
+				'mainPreview' => __( 'Main image preview', 'media-bridge-for-etch' ), 'previewBadge' => __( 'Preview', 'media-bridge-for-etch' ),
 				'qualityHelp' => __( 'Drag an image divider to compare. Adjust quality below the image.', 'media-bridge-for-etch' ),
 				'compare' => __( 'Generate format previews', 'media-bridge-for-etch' ),
 				'applyCompression' => __( 'Apply compression', 'media-bridge-for-etch' ),
@@ -68,7 +69,7 @@ final class Image_Conversion {
 				'currentOptimized' => __( 'This image is already optimized in the enabled format. Enable another output format to compare.', 'media-bridge-for-etch' ),
 				'jxlSummary' => __( 'Original-format fallback included', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
-				'useFormat' => __( 'Use %s', 'media-bridge-for-etch' ),
+				'useFormat' => __( 'Optimize to %s', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
 				'inspectFormat' => __( 'Inspect %s comparison', 'media-bridge-for-etch' ),
 				/* translators: %s: Percentage reduction in file size. */
@@ -86,6 +87,8 @@ final class Image_Conversion {
 				'compareImages' => __( '%s original and compressed comparison', 'media-bridge-for-etch' ),
 				/* translators: %s: Image format. */
 				'previewFormat' => __( 'Preview %s', 'media-bridge-for-etch' ),
+				/* translators: %s: Image format. */
+				'inspectShort' => __( 'Inspect %s', 'media-bridge-for-etch' ),
 				'openPreview' => __( 'Open full-size preview', 'media-bridge-for-etch' ),
 				'jxlHelp' => __( 'JPEG XL is served through picture sources with the original image as fallback. Existing picture elements, CSS backgrounds and external links keep their original format.', 'media-bridge-for-etch' ),
 				'useJxl' => __( 'Use JPEG XL with fallback', 'media-bridge-for-etch' ),

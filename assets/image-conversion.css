@@ -121,3 +121,33 @@
 .uplink-mbe-size-list {--min-column-size:15rem;padding-block:var(--wa-space-m)}
 .uplink-mbe-size-panel {margin-block-end:var(--wa-space-l)}
 .uplink-mbe-size-panel wa-checkbox {min-width:0}
+/* Etch optimization refinement, based on the Web Awesome dark showcase. */
+#uplink-mbe-conversion-controls {--optimization-raised:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 3%);--optimization-line:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 17%)}
+#uplink-mbe-conversion-controls.is-comparing>h4 {display:block;font-size:var(--wa-font-size-xl);font-weight:var(--wa-font-weight-semibold);letter-spacing:-.025em;margin-block-end:var(--wa-space-xs)}
+.uplink-mbe-conversion-source {margin-block-end:var(--wa-space-l);font-size:var(--wa-font-size-s)}
+.uplink-mbe-conversion-cards {gap:var(--wa-space-l)}
+wa-card.uplink-mbe-conversion-card {--spacing:var(--wa-space-m);--wa-color-surface-default:var(--optimization-raised);--wa-color-surface-border:var(--optimization-line);display:block;padding:0;border-color:var(--optimization-line);background:var(--optimization-raised);box-shadow:var(--wa-shadow-s)}
+wa-card.uplink-mbe-conversion-card::part(header),wa-card.uplink-mbe-conversion-card::part(footer) {border-color:var(--optimization-line)}
+wa-card.uplink-mbe-conversion-card::part(footer) {background:color-mix(in srgb,var(--conversion-surface),var(--conversion-text) 1%)}
+.uplink-mbe-format-heading {justify-content:space-between;gap:var(--wa-space-s)}
+.uplink-mbe-format-heading h4 {margin:0!important;flex:1;font-size:var(--wa-font-size-m)!important;font-weight:var(--wa-font-weight-semibold)}
+.uplink-mbe-format-actions {margin:0;align-items:center}
+.uplink-mbe-format-quality {border-color:var(--optimization-line);margin-block-end:0}
+.uplink-mbe-size-panel {border-color:var(--optimization-line);background:var(--optimization-raised);padding:var(--wa-space-m);gap:var(--wa-space-s);margin-block-end:var(--wa-space-l)}
+.uplink-mbe-size-panel wa-radio-group::part(form-control-label) {display:none}
+.uplink-mbe-size-panel wa-radio-group::part(form-control-input) {flex-wrap:wrap;gap:var(--wa-space-xs)}
+.uplink-mbe-size-panel wa-radio::part(control) {font-family:inherit}
+.uplink-mbe-optimization-theme wa-badge::part(badge) {color:var(--conversion-muted);border-color:var(--optimization-line);background:transparent;font-weight:var(--wa-font-weight-normal)}
+.uplink-mbe-size-hint {line-height:1.5}
+#uplink-mbe-conversion-controls .uplink-mbe-size-panel .uplink-mbe-size-hint:last-of-type {margin-block-start:var(--wa-space-xs)}
+.uplink-mbe-conversion-card .uplink-mbe-format-stats strong {font-size:var(--wa-font-size-xl);letter-spacing:-.03em}
+.uplink-mbe-conversion-card .uplink-mbe-image-comparison {max-height:25vh}
+/* Keep the default scope compact so the comparison stays in view. */
+.uplink-mbe-size-panel {display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:var(--wa-space-l);row-gap:var(--wa-space-m)}
+.uplink-mbe-size-panel>.wa-split {display:contents}
+.uplink-mbe-size-panel>.wa-split>h4 {grid-column:1;grid-row:1}
+.uplink-mbe-size-panel>.wa-split>wa-badge {grid-column:3;grid-row:1}
+.uplink-mbe-size-panel>wa-radio-group {grid-column:2;grid-row:1}
+.uplink-mbe-size-panel>.uplink-mbe-size-list,.uplink-mbe-size-panel>.uplink-mbe-size-hint,.uplink-mbe-size-panel>wa-progress-bar {grid-column:1/-1}
+@media(max-width:850px){.uplink-mbe-size-panel {grid-template-columns:1fr auto}.uplink-mbe-size-panel>.wa-split>wa-badge {grid-column:2}.uplink-mbe-size-panel>wa-radio-group {grid-column:1/-1;grid-row:2}}
+.uplink-mbe-conversion-card .uplink-mbe-format-preview>.uplink-mbe-image-comparison {height:auto;aspect-ratio:3/2!important;max-height:none}

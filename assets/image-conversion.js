@@ -118,6 +118,7 @@ function applyContrastColors(target){
  const foreground=readable(token('text','#1d2327')),muted=readable(token('muted','#50575e'));
  const accent=readable(token('accent','#2271b1'),3),onAccent=bestText(accent);
  for(const [key,value]of Object.entries({surface,text:foreground,muted,accent,'on-accent':onAccent,border:muted}))target.style.setProperty('--conversion-'+key,value);
+ target.classList.toggle('wa-dark',luminance(surface)<0.2);target.classList.toggle('wa-light',luminance(surface)>=0.2);
 }
 const paletteSource=root.closest('.uplink-mbe-native-wrap');
 if(paletteSource)new MutationObserver(()=>{applyContrastColors(root);if(comparisonDialog)applyContrastColors(comparisonDialog);if(infoPopup)applyContrastColors(infoPopup.popup);}).observe(paletteSource,{attributes:true,attributeFilter:['style','class']});
@@ -198,8 +199,8 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&infoPopup){
 window.addEventListener('resize',()=>closeInfo());
 document.addEventListener('scroll',event=>{if(infoPopup&&!infoPopup.popup.contains(event.target))closeInfo();},true);
 function createFormatCard(format,value){
- const card=el('section','','uplink-mbe-conversion-card');card.dataset.format=format;
- const header=el('div','','uplink-mbe-format-heading'),heading=el('h4',label(format));header.append(heading);
+ const card=el('wa-card','','uplink-mbe-conversion-card');card.dataset.format=format;
+ const header=el('div','','uplink-mbe-format-heading'),heading=el('h4',label(format));header.slot='header';header.append(heading);const badge=el('wa-badge',text.previewBadge);badge.setAttribute('appearance','outlined');badge.setAttribute('variant','neutral');header.append(badge);
  if(format==='jxl')header.append(createJxlInfo());card.append(header);
  const preview=el('div','','uplink-mbe-format-preview');
  const original=el('img');original.src=current.url;original.alt=text.original;original.className='uplink-mbe-preview-placeholder';original.style.aspectRatio=job.files.full.width+'/'+job.files.full.height;preview.append(original);
@@ -208,13 +209,13 @@ function createFormatCard(format,value){
  field.hidden=true;input.type='range';input.min='1';input.max='100';input.step='1';input.value=String(value);input.dataset.format=format;input.setAttribute('aria-label',label(format)+' '+text.quality);
  field.append(caption,output,input);
  const hints=el('span','','uplink-mbe-quality-hints');hints.append(el('span',text.smallerFile),el('span',text.moreDetail));field.append(hints);
- const refresh=button(text.retryPreview,'button'),expand=button(text.openCompare,'button uplink-mbe-inspect'),apply=button(text.useFormat.replace('%s',label(format)),'button button-primary');
+ const refresh=button(text.retryPreview,'button'),expand=button(text.inspectShort.replace('%s',label(format)),'button uplink-mbe-inspect'),apply=button(text.useFormat.replace('%s',label(format)),'button button-primary');
  for(const button of [refresh,expand,apply])button.type='button';refresh.hidden=true;expand.hidden=true;apply.hidden=true;
  expand.setAttribute('aria-label',text.inspectFormat.replace('%s',label(format)));
  input.addEventListener('input',()=>{output.value=input.value;invalidate(format);});
  input.addEventListener('change',()=>action(()=>compareFormats([format]),true));
  refresh.addEventListener('click',()=>action(()=>compareFormats([format]),true));expand.addEventListener('click',()=>openComparison(format,expand));apply.addEventListener('click',()=>action(()=>save(format)));
- const actions=el('div','','uplink-mbe-format-actions');actions.append(expand,apply,refresh);
+ const actions=el('div','','uplink-mbe-format-actions');actions.slot='footer';actions.append(expand,apply,refresh);
  card.append(preview,stats,field,actions);
 
  cards.append(card);formatPanels.set(format,{card,input,output,field,preview,stats,refresh,expand,apply,previewUrl:null});
@@ -228,7 +229,7 @@ async function prepareSource(){
 }
 async function compareFormats(formats){
  await prepareSource();closeInfo();root.classList.add('is-comparing');intro.hidden=true;compare.hidden=true;cards.hidden=false;
- sourceSummary.hidden=false;sourceSummary.textContent=text.original+' · '+bytes(job.files.full.bytes)+' · '+text.qualityHelp;
+ sourceSummary.hidden=false;sourceSummary.textContent=text.mainPreview+' · '+job.files.full.width+' × '+job.files.full.height+' · '+bytes(job.files.full.bytes);
  let done=0;
  for(const format of formats){
   if(!formatPanels.has(format))createFormatCard(format,{webp:80,avif:50,jxl:75,jpg:80,png:80}[format]||80);
@@ -265,9 +266,9 @@ function selectedSizeKeys(){
 function createSizePanel(){
  sizePanel=el('section','','uplink-mbe-size-panel wa-stack wa-gap-m');
  const heading=el('div','','wa-split');heading.append(el('h4',text.sizesTitle));
- sizeSummary=el('strong','','uplink-mbe-size-summary');heading.append(sizeSummary);sizePanel.append(heading);
- scopeGroup=el('wa-radio-group');scopeGroup.setAttribute('label',text.scopeLabel);scopeGroup.setAttribute('orientation','horizontal');scopeGroup.value='all';
- for(const [value,label]of [['all',text.allSizes],['main',text.mainOnly],['selected',text.chooseSizes]]){const choice=el('wa-radio',label);choice.value=value;scopeGroup.append(choice);}
+ sizeSummary=el('wa-badge','','uplink-mbe-size-summary');sizeSummary.setAttribute('appearance','outlined');sizeSummary.setAttribute('variant','neutral');heading.append(sizeSummary);sizePanel.append(heading);
+ scopeGroup=el('wa-radio-group');scopeGroup.setAttribute('label',text.scopeLabel);scopeGroup.setAttribute('orientation','horizontal');scopeGroup.value='all';scopeGroup.setAttribute('size','s');
+ for(const [value,label]of [['all',text.allSizes],['main',text.mainOnly],['selected',text.chooseSizes]]){const choice=el('wa-radio',label);choice.value=value;choice.setAttribute('appearance','button');scopeGroup.append(choice);}
  sizePanel.append(scopeGroup,el('p',text.sizeHint,'uplink-mbe-size-hint'));
  if(Object.values(job.files).some(file=>file.available===false))sizePanel.append(el('p',text.tooLarge,'uplink-mbe-size-hint'));
  const list=el('div','','uplink-mbe-size-list wa-grid wa-gap-m');list.setAttribute('role','group');list.setAttribute('aria-label',text.sizeInventory);
@@ -278,7 +279,7 @@ function createSizePanel(){
   check.setAttribute('hint',file.width+' × '+file.height+' · '+bytes(file.bytes)+(file.available===false?' · '+text.tooLarge:''));
   check.addEventListener('change',updateSizeSelection);sizeChecks.push(check);list.append(check);
  }
- sizePanel.append(list,el('p',text.previewOnly,'uplink-mbe-size-hint'));
+ sizePanel.append(list);
  saveProgress=el('wa-progress-bar');saveProgress.setAttribute('label',text.processing);saveProgress.hidden=true;sizePanel.append(saveProgress);
  scopeGroup.addEventListener('change',()=>{sizeScope=scopeGroup.value;updateSizeSelection();});
  root.insertBefore(sizePanel,cards);updateSizeSelection();
@@ -288,6 +289,7 @@ function updateSizeSelection(){
  sizeSummary.textContent=keys.length+' / '+Object.keys(job.files).length+' '+text.selectedFiles+' · '+bytes(total);
  for(const check of sizeChecks){check.disabled=busy||sizeScope!=='selected'||check.dataset.unavailable==='true';check.hidden=sizeScope!=='selected';}
  sizePanel.querySelector('.uplink-mbe-size-list').hidden=sizeScope!=='selected';
+ sizePanel.querySelectorAll('.uplink-mbe-size-hint').forEach(note=>note.hidden=sizeScope!=='selected'&&Object.values(job.files).every(file=>file.available!==false));
  syncControls();for(const check of sizeChecks)check.disabled=busy||sizeScope!=='selected'||check.dataset.unavailable==='true';
 }
 
