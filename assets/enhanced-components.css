@@ -35,3 +35,19 @@
 .uplink-mbe-native-wrap #uplink-mbe-search-input {padding:0;border:0;background:transparent;border-radius:0;min-height:0}
 .uplink-mbe-native-wrap #uplink-mbe-media-search {gap:var(--wa-space-xs);align-items:center}
 .uplink-mbe-native-wrap wa-progress-bar {width:100%;--track-height:var(--wa-space-xs);--indicator-color:var(--mbe-accent)}
+/* A Web Awesome button owns its border and dimensions inside its shadow tree.
+   Legacy native icon-button widths must not clip or overlap that button. */
+.uplink-mbe-native-wrap wa-button:is(.button,.uplink-mbe-icon-button,.uplink-mbe-view-button,.uplink-mbe-toolbar-button,.uplink-mbe-attachment-header-nav) {display:inline-flex;place-items:normal;width:auto!important;min-width:0;max-width:none;line-height:normal;color:var(--mbe-text)!important;outline:none!important}
+.uplink-mbe-native-wrap wa-button:is([variant="brand"],[aria-pressed="true"],[aria-expanded="true"]) {color:var(--mbe-accent-icon)!important}
+.uplink-mbe-native-wrap wa-button[variant="danger"] {color:var(--mbe-danger)!important}
+.uplink-mbe-native-wrap wa-button:is(.uplink-mbe-icon-button,.uplink-mbe-view-button,.uplink-mbe-toolbar-button,.uplink-mbe-attachment-header-nav)::part(button) {box-sizing:border-box;min-width:calc(var(--wa-space-l) + var(--wa-space-m));height:calc(var(--wa-space-l) + var(--wa-space-m));padding-inline:var(--wa-space-s)}
+.uplink-mbe-native-wrap wa-button::part(button):focus-visible {outline:var(--wa-focus-ring);outline-offset:var(--wa-focus-ring-offset)}
+.uplink-mbe-native-wrap wa-button svg,.uplink-mbe-native-wrap wa-button .uplink-mbe-palette-icon {color:inherit}
+.uplink-mbe-native-wrap wa-button.uplink-mbe-upload-action::part(button) {min-height:calc(var(--wa-space-l) + var(--wa-space-m))}
+.uplink-mbe-native-wrap wa-button.uplink-mbe-upload-action svg {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-view-switch,.uplink-mbe-native-wrap wa-button-group.uplink-mbe-collection-heading-actions,.uplink-mbe-native-wrap wa-button-group.uplink-mbe-grid-ratio-options {gap:0;padding:0;border:0;background:transparent;flex:0 0 auto}
+.uplink-mbe-native-wrap .uplink-mbe-native-heading-actions {align-items:center;gap:var(--wa-space-m)}
+
+.uplink-mbe-native-wrap.uplink-mbe-optimization-theme {--conversion-text:var(--mbe-text);--conversion-muted:var(--mbe-muted);--conversion-surface:var(--mbe-surface);--conversion-border:var(--mbe-control-border);--conversion-accent:var(--mbe-accent);--conversion-on-accent:var(--mbe-accent-icon)}
+.uplink-mbe-native-wrap wa-button-group.uplink-mbe-grid-ratio-options {display:inline-flex;grid-template-columns:none;overflow:visible}
+.uplink-mbe-native-wrap wa-button[aria-pressed="true"]::part(button),.uplink-mbe-native-wrap wa-button[aria-expanded="true"]::part(button) {background:var(--mbe-accent)!important;color:var(--mbe-accent-icon)!important;border-color:var(--mbe-accent)!important}

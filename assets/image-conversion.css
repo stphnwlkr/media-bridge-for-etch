@@ -111,7 +111,7 @@
  --wa-focus-ring-color:var(--conversion-accent);
 }
 .uplink-mbe-optimization-theme wa-button.button {background:none!important;border:0!important;padding:0!important;height:auto!important;box-shadow:none!important;color:inherit;vertical-align:middle}
-.uplink-mbe-optimization-theme wa-button::part(button) {font-family:inherit;border-radius:var(--wa-border-radius-m)}
+.uplink-mbe-optimization-theme wa-button::part(button) {font-family:inherit}
 .uplink-mbe-optimization-theme wa-button[variant="brand"]::part(button) {background:var(--conversion-accent);color:var(--conversion-on-accent);border-color:var(--conversion-accent)}
 .uplink-mbe-optimization-theme wa-button[variant="neutral"]::part(button) {background:var(--conversion-surface);color:var(--conversion-text);border-color:var(--conversion-border)}
 .uplink-mbe-size-panel {margin-block-start:var(--wa-space-l);padding:var(--wa-space-l);border:var(--wa-border-width-s) solid var(--conversion-border);border-radius:var(--wa-border-radius-l);background:var(--conversion-surface);color:var(--conversion-text)}

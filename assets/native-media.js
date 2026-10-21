@@ -7,11 +7,27 @@
 		return;
 	}
 
-	await Promise.all( ['wa-button','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout'].map( tag => customElements.whenDefined( tag ) ) );
+	await Promise.all( ['wa-button','wa-button-group','wa-input','wa-textarea','wa-select','wa-option','wa-tab-group','wa-tab','wa-tab-panel','wa-badge','wa-tag','wa-callout'].map( tag => customElements.whenDefined( tag ) ) );
 
 	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button[id][aria-label]' ).forEach( control => {
-		const tooltip = document.createElement( 'wa-tooltip' ); tooltip.setAttribute( 'for', control.id ); tooltip.textContent = control.getAttribute( 'title' ) || control.getAttribute( 'aria-label' ); control.removeAttribute( 'title' ); control.after( tooltip );
+		const tooltip = document.createElement( 'wa-tooltip' ); tooltip.setAttribute( 'for', control.id ); tooltip.textContent = control.getAttribute( 'title' ) || control.getAttribute( 'aria-label' ); control.removeAttribute( 'title' ); library.closest( '.uplink-mbe-native-wrap' ).append( tooltip );
 	} );
+
+	// Keep the state announced by the focusable shadow button in sync with its host.
+	async function mirrorButtonState( control ) {
+		await control.updateComplete;
+		const button = control.shadowRoot?.querySelector( 'button, a' );
+		if ( ! button ) return;
+		for ( const name of [ 'aria-pressed', 'aria-expanded', 'aria-controls' ] ) {
+			if ( control.hasAttribute( name ) ) button.setAttribute( name, control.getAttribute( name ) );
+			else button.removeAttribute( name );
+		}
+		if ( 'ariaControlsElements' in button ) button.ariaControlsElements = ( control.getAttribute( 'aria-controls' ) || '' ).split( /\s+/ ).map( id => document.getElementById( id ) ).filter( Boolean );
+	}
+	library.closest( '.uplink-mbe-native-wrap' ).querySelectorAll( 'wa-button' ).forEach( mirrorButtonState );
+	new MutationObserver( changes => {
+		for ( const change of changes ) if ( change.target.matches( 'wa-button' ) ) mirrorButtonState( change.target );
+	} ).observe( library.closest( '.uplink-mbe-native-wrap' ), { subtree: true, attributes: true, attributeFilter: [ 'aria-pressed', 'aria-expanded', 'aria-controls' ] } );
 
 	const elements = {
 		wrap: document.querySelector( '.uplink-mbe-native-wrap' ),
