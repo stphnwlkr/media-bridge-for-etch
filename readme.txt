@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.8.1
+Stable tag: 2.8.2
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -110,6 +110,9 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.8.2 =
+Fixes a Gutenberg editor error when clicking a Ramka Gallery thumbnail.
 
 = 2.8.1 =
 Improves attachment saving and adds crop options and EXIF photo details to Ramka Gallery.
@@ -281,6 +284,9 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.8.2 =
+* Fixes an issue where clicking a Ramka Gallery thumbnail in Gutenberg could open the image inside the editing frame and trigger an editor error. Thumbnails now select the gallery block in the editor.
 
 = 2.8.1 =
 * Saves changes to title, alt text, caption, and description when you leave a field, including when you click into another field or press Tab. Save also commits changes. Typing no longer triggers save requests.
