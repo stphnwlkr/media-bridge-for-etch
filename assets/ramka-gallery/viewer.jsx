@@ -9,14 +9,30 @@ function Icon( { name } ) {
 		close: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
 		plus: <><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="11" x2="11" y1="8" y2="14" /><line x1="8" x2="14" y1="11" y2="11" /></>,
 		minus: <><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /><line x1="8" x2="14" y1="11" y2="11" /></>,
+		aperture: <><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><path d="M12 8H21M16 12V21M8 12V3M12 16H3" /></>,
 	};
 	return <svg width={ name === 'close' ? 18 : 16 } height={ name === 'close' ? 18 : 16 } viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
 		{ glyphs[ name ] }
 	</svg>;
 }
 
+function PhotoDetails( { rows, label } ) {
+	const [ open, setOpen ] = React.useState( false );
+	const id = React.useId();
+	return <>
+		<button type="button" className="uplink-ramka-control" aria-label={ label } data-tooltip={ label }
+			aria-controls={ id } aria-expanded={ open } onClick={ () => setOpen( ! open ) }>
+			<Icon name="aperture" />
+		</button>
+		<section id={ id } className="uplink-ramka-photo-details" aria-label={ label } hidden={ ! open }>
+			<dl>{ rows.map( ( { label, value } ) => <React.Fragment key={ label }><dt>{ label }</dt><dd>{ value }</dd></React.Fragment> ) }</dl>
+		</section>
+	</>;
+}
+
 function Viewer( { items, visible, options, dir } ) {
 	const [ peek, setPeek ] = React.useState( options.openingView !== 'theater' );
+	const [ activeIndex, setActiveIndex ] = React.useState( 0 );
 	const strings = options.strings;
 	const strip = items.length > 1;
 	const extra = items.length - visible;
@@ -34,7 +50,7 @@ function Viewer( { items, visible, options, dir } ) {
 	} : undefined;
 	const layoutLabel = peek ? strings.theater : strings.peek;
 
-	return <Lightbox.Root dir={ dir } morphTo="closest" awaitImageDecode={ false } scrollTriggerIntoView={ [
+	return <Lightbox.Root dir={ dir } morphTo="closest" awaitImageDecode={ false } onValueChange={ setActiveIndex } scrollTriggerIntoView={ [
 		{ type: 'onChange', behavior: 'instant' },
 		{ type: 'onOpenComplete', behavior: 'instant' },
 	] }>
@@ -43,7 +59,7 @@ function Viewer( { items, visible, options, dir } ) {
 				const overflow = index === visible - 1 && extra > 0;
 				return <Lightbox.Trigger key={ index } index={ index } className="uplink-ramka-tile"
 					crossfade={ overflow ? 'both' : undefined } aria-label={ overflow ? options.moreLabel : photo.alt || photo.caption || undefined }>
-					{ ( { imageRef } ) => <span className="uplink-ramka-tile-frame">
+					{ ( { imageRef } ) => <span className="uplink-ramka-tile-frame" style={ { '--uplink-ramka-photo-ratio': photo.ratio } }>
 						<img ref={ imageRef } src={ photo.thumb } srcSet={ photo.srcSet } sizes={ photo.sizes }
 							alt={ photo.alt } width={ photo.thumbWidth } height={ photo.thumbHeight } loading="lazy" decoding="async" draggable={ false } />
 						{ overflow && <span className="uplink-ramka-more" aria-hidden="true">+{ options.moreCount }</span> }
@@ -80,6 +96,7 @@ function Viewer( { items, visible, options, dir } ) {
 						<Lightbox.ZoomOut className="uplink-ramka-segment" aria-label={ strings.zoomOut } data-tooltip={ strings.zoomOut }><Icon name="minus" /></Lightbox.ZoomOut>
 						<Lightbox.ZoomIn className="uplink-ramka-segment" aria-label={ strings.zoomIn } data-tooltip={ strings.zoomIn }><Icon name="plus" /></Lightbox.ZoomIn>
 					</div>
+					{ items[ activeIndex ]?.exif.length > 0 && <PhotoDetails key={ activeIndex } rows={ items[ activeIndex ].exif } label={ strings.exif } /> }
 					<Lightbox.Close className="uplink-ramka-control" aria-label={ strings.close } data-tooltip={ strings.close }><Icon name="close" /></Lightbox.Close>
 				</div>
 				<div className={ 'lightbox-demo-chrome-bottom lightbox-demo-chrome-hide uplink-ramka-bottom' + ( strip ? '' : ' lightbox-demo-chrome-bottom-solo' ) }>
@@ -116,6 +133,7 @@ function readPhoto( link ) {
 		sizes: image.getAttribute( 'sizes' ) || undefined,
 		alt: image.alt,
 		caption: link.dataset.caption,
+		exif: JSON.parse( link.dataset.exif || '[]' ),
 		width,
 		height,
 		ratio: width / height,

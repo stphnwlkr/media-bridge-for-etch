@@ -2140,6 +2140,7 @@ button.uplink-mbe-modal-collection-toggle:focus-visible {
 }
 
 .uplink-mbe-modal-inspector-notice:not(:empty) {
+	margin-top: 8px;
 	min-height: 20px;
 	padding: 7px 9px;
 	border-color: var(--mbe-modal-border);

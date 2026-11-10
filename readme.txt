@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.8.0
+Stable tag: 2.8.1
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -110,6 +110,9 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.8.1 =
+Improves attachment saving and adds crop options and EXIF photo details to Ramka Gallery.
 
 = 2.8.0 =
 Adds Ramka Gallery as a separate block and adds opening-view and photo-limit settings to Collection Gallery.
@@ -278,6 +281,13 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.8.1 =
+* Saves changes to title, alt text, caption, and description when you leave a field, including when you click into another field or press Tab. Save also commits changes. Typing no longer triggers save requests.
+* Shows the save confirmation below the inspector controls so it stays clear of the buttons.
+* Defaults Ramka Gallery to a cropped mosaic and adds tile aspect-ratio options for original proportions, square, 4:3, 16:9, and 4:5. The lightbox shows the full photo.
+* Adds an aperture button to view available EXIF photo details in the Ramka lightbox.
+* Fixes oversized lazy-loaded thumbnails that could make the gallery jump when changing photos.
 
 = 2.8.0 =
 * Adds the separate Ramka Gallery block with the demo’s masonry photo wall, Peek and Theater views, scroll-snap navigation, zoom, and pull-to-dismiss.

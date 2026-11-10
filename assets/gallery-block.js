@@ -574,6 +574,20 @@
 							onChange: ( value ) => setAttributes( { visibleImageLimit: value } ),
 						} ),
 						el( SelectControl, {
+							label: __( 'Tile aspect ratio', 'media-bridge-for-etch' ),
+							value: attributes.ramkaTileAspect || 'mosaic',
+							help: __( 'Sets the crop on the gallery page. The lightbox shows the full photo.', 'media-bridge-for-etch' ),
+							options: [
+								{ label: __( 'Cropped mosaic', 'media-bridge-for-etch' ), value: 'mosaic' },
+								{ label: __( 'Original proportions', 'media-bridge-for-etch' ), value: 'original' },
+								{ label: __( 'Square (1:1)', 'media-bridge-for-etch' ), value: '1/1' },
+								{ label: __( 'Landscape (4:3)', 'media-bridge-for-etch' ), value: '4/3' },
+								{ label: __( 'Widescreen (16:9)', 'media-bridge-for-etch' ), value: '16/9' },
+								{ label: __( 'Portrait (4:5)', 'media-bridge-for-etch' ), value: '4/5' },
+							],
+							onChange: ( value ) => setAttributes( { ramkaTileAspect: value } ),
+						} ),
+						el( SelectControl, {
 							label: __( 'Opening view', 'media-bridge-for-etch' ),
 							value: attributes.lightboxOpeningView,
 							options: [

@@ -8,6 +8,7 @@ use WP_REST_Response;
 use WP_Term;
 
 final class Collection_Gallery {
+	private const RAMKA_TILE_ASPECTS = array( 'mosaic', 'original', '1/1', '4/3', '16/9', '4/5' );
 	private const SHORTCODE = 'etch_collection_gallery';
 	private Provider_Interface $etch;
 
@@ -84,9 +85,14 @@ final class Collection_Gallery {
 		if ( $collection_block ) {
 			wp_register_style( 'uplink-mbe-ramka-gallery', UPLINK_MBE_URL . 'assets/ramka-gallery/viewer.css', array(), UPLINK_MBE_ASSET_VERSION );
 			wp_register_script( 'uplink-mbe-ramka-gallery', UPLINK_MBE_URL . 'assets/ramka-gallery/viewer.js', array( 'react', 'react-dom' ), UPLINK_MBE_ASSET_VERSION, true );
-			$ramka_attributes = array_intersect_key( $collection_block->attributes, array_flip( array( 'collectionId', 'includeChildren', 'sortOrder', 'limit', 'visibleImageLimit', 'lightboxOpeningView' ) ) );
+			$ramka_attributes = array_intersect_key( $collection_block->attributes, array_flip( array( 'collectionId', 'includeChildren', 'sortOrder', 'limit', 'visibleImageLimit', 'lightboxOpeningView', 'lightboxShowExif', 'lightboxExifFields' ) ) );
 			$ramka_attributes['limit']['default'] = 14;
 			$ramka_attributes['visibleImageLimit']['default'] = 12;
+			$ramka_attributes['ramkaTileAspect'] = array(
+				'type'    => 'string',
+				'enum'    => self::RAMKA_TILE_ASPECTS,
+				'default' => 'mosaic',
+			);
 			register_block_type(
 				'uplinkpress/ramka-gallery',
 				array(
@@ -744,6 +750,7 @@ final class Collection_Gallery {
 				'height' => $full[2],
 				'thumb' => $thumb,
 				'caption' => $caption ?: wp_strip_all_tags( $attachment->post_title ),
+				'exif' => $this->lightbox_exif( $id, $attributes ),
 			);
 		}
 		if ( ! $photos ) {
@@ -773,6 +780,7 @@ final class Collection_Gallery {
 				'zoomIn' => __( 'Zoom in', 'media-bridge-for-etch' ),
 				'zoomOut' => __( 'Zoom out', 'media-bridge-for-etch' ),
 				'thumbnails' => __( 'Photo thumbnails', 'media-bridge-for-etch' ),
+				'exif' => __( 'Photo details', 'media-bridge-for-etch' ),
 				/* translators: 1: Current photo number. 2: Total photos. */
 				'counter' => __( '%1$d of %2$d', 'media-bridge-for-etch' ),
 			),
@@ -781,19 +789,23 @@ final class Collection_Gallery {
 		foreach ( $photos as $index => $photo ) {
 			$stack = $more && $index === $visible - 1;
 			$tiles[] = sprintf(
-				'<a class="uplink-ramka-tile" href="%1$s" data-width="%2$d" data-height="%3$d" data-caption="%4$s"%5$s><span class="uplink-ramka-tile-frame">%6$s%7$s</span></a>',
+				'<a class="uplink-ramka-tile" href="%1$s" data-width="%2$d" data-height="%3$d" data-caption="%4$s"%5$s%8$s><span class="uplink-ramka-tile-frame" style="--uplink-ramka-photo-ratio:%2$d / %3$d">%6$s%7$s</span></a>',
 				esc_url( $photo['url'] ),
 				$photo['width'],
 				$photo['height'],
 				esc_attr( $photo['caption'] ),
 				$stack ? ' aria-label="' . esc_attr( $more_label ) . '"' : '',
 				$photo['thumb'],
-				$stack ? '<span class="uplink-ramka-more" aria-hidden="true">+' . esc_html( $more_count ) . '</span>' : ''
+				$stack ? '<span class="uplink-ramka-more" aria-hidden="true">+' . esc_html( $more_count ) . '</span>' : '',
+				$photo['exif'] ? ' data-exif="' . esc_attr( wp_json_encode( $photo['exif'] ) ) . '"' : ''
 			);
 		}
 		return sprintf(
 			'<div %1$s><div class="uplink-ramka-grid"%2$s>%3$s</div>%4$s</div>',
-			get_block_wrapper_attributes( array( 'data-uplink-ramka-gallery' => wp_json_encode( $options ) ) ),
+			get_block_wrapper_attributes( array(
+				'data-uplink-ramka-gallery' => wp_json_encode( $options ),
+				'data-ramka-aspect' => $attributes['ramkaTileAspect'],
+			) ),
 			12 === $visible ? ' data-demo-wall' : '',
 			implode( '', array_slice( $tiles, 0, $visible ) ),
 			$more ? '<template>' . implode( '', array_slice( $tiles, $visible ) ) . '</template>' : ''
@@ -870,6 +882,7 @@ final class Collection_Gallery {
 			'sizeSlug'        => in_array( $size, $sizes, true ) ? $size : 'large',
 			'imageCrop'       => ! empty( $attributes['imageCrop'] ),
 			'aspectRatio'     => in_array( $ratio, $ratios, true ) ? $ratio : '1/1',
+			'ramkaTileAspect' => in_array( $attributes['ramkaTileAspect'] ?? '', self::RAMKA_TILE_ASPECTS, true ) ? $attributes['ramkaTileAspect'] : 'mosaic',
 			'randomOrder'     => 'random' === $sort,
 			'sortOrder'       => $sort,
 			'showTitle'       => ! empty( $attributes['showTitle'] ),

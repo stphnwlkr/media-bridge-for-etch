@@ -27,6 +27,7 @@
 }
 .uplink-ramka-tile-frame {
 	display: grid;
+	aspect-ratio: var(--uplink-ramka-tile-ratio, var(--uplink-ramka-photo-ratio));
 	border-radius: inherit;
 }
 .uplink-ramka-tile-frame > img,
@@ -38,7 +39,8 @@
 	display: block;
 	width: 100%;
 	height: 100%;
-	aspect-ratio: var(--uplink-ramka-tile-ratio, auto);
+	min-height: 0;
+	contain-intrinsic-size: none;
 	object-fit: cover;
 	user-select: none;
 }
@@ -105,6 +107,26 @@
 	display: flex;
 	gap: 0.5rem;
 }
+.uplink-ramka-photo-details {
+	position: absolute;
+	inset-block-start: calc(100% + 0.5rem);
+	inset-inline-end: 0;
+	box-sizing: border-box;
+	width: min(20rem, calc(100vw - 1.5rem));
+	max-height: calc(100dvh - 5rem);
+	overflow: auto;
+	overscroll-behavior: contain;
+	padding: 0.875rem 1rem;
+	border: 1px solid rgb(255 255 255 / 25%);
+	border-radius: 0.75rem;
+	background: #171717;
+	color: #fafafa;
+	font-size: 0.875rem;
+}
+.uplink-ramka-photo-details[hidden] { display: none; }
+.uplink-ramka-photo-details dl { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; margin: 0; }
+.uplink-ramka-photo-details dt { color: #d4d4d4; }
+.uplink-ramka-photo-details dd { margin: 0; overflow-wrap: anywhere; }
 .uplink-ramka-control,
 .uplink-ramka-zoom-controls {
 	box-sizing: border-box;
@@ -692,28 +714,33 @@
    `--lightbox-select-vt-*` on Slides (or a parent). */
 
 /* The landing demo's twelve-tile wall has a deliberate crop rhythm. */
-.uplink-ramka-grid[data-demo-wall] > :nth-child(1) { --uplink-ramka-tile-ratio: 3/2; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(2) { --uplink-ramka-tile-ratio: 4/5; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(3) { --uplink-ramka-tile-ratio: 12/7; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(4) { --uplink-ramka-tile-ratio: 1; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(5) { --uplink-ramka-tile-ratio: 16/9; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(6) { --uplink-ramka-tile-ratio: 1; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(7) { --uplink-ramka-tile-ratio: 16/11; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(8) { --uplink-ramka-tile-ratio: 4/5; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(9) { --uplink-ramka-tile-ratio: 4/3; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(10) { --uplink-ramka-tile-ratio: 16/9; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(11) { --uplink-ramka-tile-ratio: 4/5; }
-.uplink-ramka-grid[data-demo-wall] > :nth-child(12) { --uplink-ramka-tile-ratio: 16/15; }
+[data-ramka-aspect="1/1"] { --uplink-ramka-tile-ratio: 1; }
+[data-ramka-aspect="4/3"] { --uplink-ramka-tile-ratio: 4 / 3; }
+[data-ramka-aspect="16/9"] { --uplink-ramka-tile-ratio: 16 / 9; }
+[data-ramka-aspect="4/5"] { --uplink-ramka-tile-ratio: 4 / 5; }
+
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 1) { --uplink-ramka-tile-ratio: 3/2; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 2) { --uplink-ramka-tile-ratio: 4/5; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 3) { --uplink-ramka-tile-ratio: 12/7; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 4) { --uplink-ramka-tile-ratio: 1; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 5) { --uplink-ramka-tile-ratio: 16/9; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 6) { --uplink-ramka-tile-ratio: 1; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 7) { --uplink-ramka-tile-ratio: 16/11; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 8) { --uplink-ramka-tile-ratio: 4/5; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 9) { --uplink-ramka-tile-ratio: 4/3; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 10) { --uplink-ramka-tile-ratio: 16/9; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 11) { --uplink-ramka-tile-ratio: 4/5; }
+[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 12) { --uplink-ramka-tile-ratio: 16/15; }
 @media (max-width: 767px) {
-	.uplink-ramka-grid[data-demo-wall] > :is(:nth-child(5), :nth-child(9)) { break-before: column; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid[data-demo-wall] > :is(:nth-child(5), :nth-child(9)) { break-before: column; }
 }
 @media (min-width: 768px) {
-	.uplink-ramka-grid[data-demo-wall] > :is(:nth-child(4), :nth-child(7), :nth-child(10)) { break-before: column; }
-	.uplink-ramka-grid[data-demo-wall] > :nth-child(6) { --uplink-ramka-tile-ratio: 16/15; }
-	.uplink-ramka-grid[data-demo-wall] > :nth-child(7) { --uplink-ramka-tile-ratio: 5/3; }
-	.uplink-ramka-grid[data-demo-wall] > :nth-child(8) { --uplink-ramka-tile-ratio: 5/6; }
-	.uplink-ramka-grid[data-demo-wall] > :nth-child(9) { --uplink-ramka-tile-ratio: 10/7; }
-	.uplink-ramka-grid[data-demo-wall] > :nth-child(12) { --uplink-ramka-tile-ratio: 16/11; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid[data-demo-wall] > :is(:nth-child(4), :nth-child(7), :nth-child(10)) { break-before: column; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 6) { --uplink-ramka-tile-ratio: 16/15; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 7) { --uplink-ramka-tile-ratio: 5/3; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 8) { --uplink-ramka-tile-ratio: 5/6; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 9) { --uplink-ramka-tile-ratio: 10/7; }
+	[data-ramka-aspect="mosaic"] .uplink-ramka-grid > :nth-child(12n + 12) { --uplink-ramka-tile-ratio: 16/11; }
 }
 @media (prefers-reduced-motion: reduce) {
 	.uplink-ramka-backdrop, .uplink-ramka-content,

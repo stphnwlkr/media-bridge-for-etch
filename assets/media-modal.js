@@ -261,7 +261,7 @@
 			'click .uplink-mbe-modal-inspector-insert': 'insertInspected',
 			'click .uplink-mbe-modal-inspector-tab': 'switchInspectorTab',
 			'keydown .uplink-mbe-modal-inspector-tab': 'navigateInspectorTabs',
-			'input .uplink-mbe-modal-inspector-title, .uplink-mbe-modal-inspector-alt, .uplink-mbe-modal-inspector-caption, .uplink-mbe-modal-inspector-description': 'scheduleInspectorSave',
+			'input .uplink-mbe-modal-inspector-title, .uplink-mbe-modal-inspector-alt, .uplink-mbe-modal-inspector-caption, .uplink-mbe-modal-inspector-description': 'markInspectorDirty',
 			'change .uplink-mbe-modal-inspector-title, .uplink-mbe-modal-inspector-alt, .uplink-mbe-modal-inspector-caption, .uplink-mbe-modal-inspector-description': 'saveInspectorChange',
 			'change .uplink-mbe-modal-inspector-decorative': 'toggleDecorative',
 			'submit .uplink-mbe-modal-search': 'searchMedia',
@@ -328,7 +328,6 @@
 			this.inspectedId = 0;
 			this.inspectorTab = 'details';
 			this.inspectorDirty = false;
-			this.inspectorSaveTimer = null;
 			this.inspectorSaveChain = Promise.resolve( true );
 			this.inspectorSavesPending = 0;
 			this.pendingSelectionId = 0;
@@ -476,7 +475,7 @@
 			this.$inspectorDecorative = $( '<input type="checkbox" class="uplink-mbe-modal-inspector-decorative" />' );
 			this.$inspectorCaption = $( '<textarea rows="3" class="uplink-mbe-modal-inspector-caption" />' );
 			this.$inspectorDescription = $( '<textarea rows="4" class="uplink-mbe-modal-inspector-description" />' );
-			this.$inspectorNotice = $( '<p class="uplink-mbe-modal-inspector-notice screen-reader-text" aria-live="polite" />' );
+			this.$inspectorNotice = $( '<p class="uplink-mbe-modal-inspector-notice" role="status" />' );
 			this.$inspectorReplace = $( '<button type="button" class="button" />' ).text( config.strings.replaceAction ).attr( { title: window.uplinkMbeReplacement?.strings.title || 'Replace file', 'aria-label': window.uplinkMbeReplacement?.strings.title || 'Replace file' } ).prepend( config.actionIcons.replace );
 			this.$inspectorReplace.on( 'click', async () => {
 				if ( ! await this.persistInspectorChanges() ) return;
@@ -529,13 +528,13 @@
 					this.$inspectorFilePanel,
 					this.$inspectorExifPanel,
 					this.$inspectorOptimizationPanel,
-					this.$inspectorNotice,
 					$( '<div class="uplink-mbe-modal-inspector-actions" />' ).append(
 						this.$inspectorEditImage,
-					this.$inspectorReplace,
+						this.$inspectorReplace,
 						$( '<button type="button" class="button uplink-mbe-modal-inspector-save" />' ).text( config.strings.saveAction ).attr( { title: config.strings.saveChanges, 'aria-label': config.strings.saveChanges } ).prepend( config.actionIcons.save ),
 						this.$inspectorInsert
-					)
+					),
+					this.$inspectorNotice
 				)
 			);
 			this.$content = $( '<div class="uplink-mbe-modal-content" />' ).append(
@@ -583,7 +582,6 @@
 
 		remove() {
 			window.clearTimeout( this.searchTimer );
-			window.clearTimeout( this.inspectorSaveTimer );
 			if ( this.inspectorDirty ) this.persistInspectorChanges();
 			this.controller.$el.closest( '.media-modal' ).removeClass( 'uplink-mbe-collections-active uplink-mbe-has-selection uplink-mbe-has-inspector uplink-mbe-metadata-only' );
 			return wp.media.View.prototype.remove.apply( this, arguments );
@@ -954,7 +952,6 @@
 		showInspector( id ) {
 			const media = this.media.find( ( item ) => Number( item.id ) === Number( id ) );
 			if ( ! media ) return;
-			window.clearTimeout( this.inspectorSaveTimer );
 			this.inspectorDirty = false;
 			const opening = ! this.inspectedId;
 			this.inspectedId = Number( id );
@@ -1087,30 +1084,31 @@
 			this.$( '.uplink-mbe-modal-inspector-save' ).prop( 'disabled', this.inspectorSavesPending > 0 || JSON.stringify( this.inspectorValues() ) === this.inspectorSavedValues );
 		},
 
-		scheduleInspectorSave() {
+		markInspectorDirty() {
 			if ( ! this.inspectedId ) return;
 			this.inspectorDirty = true;
+			if ( this.$inspectorNotice.hasClass( 'is-saved' ) ) {
+				this.$inspectorNotice.removeClass( 'is-saved' ).text( '' );
+			}
 			this.updateInspectorSaveState();
 			this.syncInspectorAttachmentModel( this.inspectorValues() );
-			window.clearTimeout( this.inspectorSaveTimer );
-			this.inspectorSaveTimer = window.setTimeout( () => this.persistInspectorChanges(), 500 );
 		},
 
 		saveInspectorChange() {
 			if ( ! this.inspectedId ) return;
-			this.inspectorDirty = true;
-			this.updateInspectorSaveState();
-			this.syncInspectorAttachmentModel( this.inspectorValues() );
-			window.clearTimeout( this.inspectorSaveTimer );
+			this.markInspectorDirty();
 			this.persistInspectorChanges();
 		},
 
-		persistInspectorChanges( force = false ) {
-			if ( ! this.inspectedId || ( ! force && ! this.inspectorDirty ) ) return this.inspectorSaveChain;
-			window.clearTimeout( this.inspectorSaveTimer );
+		persistInspectorChanges() {
+			if ( ! this.inspectedId || ! this.inspectorDirty ) return this.inspectorSaveChain;
 			const values = this.inspectorValues();
 			const attachmentId = Number( values.attachment_id );
+			const snapshot = JSON.stringify( values );
 			this.inspectorDirty = false;
+			if ( ! this.inspectorSavesPending && snapshot === this.inspectorSavedValues ) {
+				return Promise.resolve( true );
+			}
 			this.syncInspectorAttachmentModel( values );
 			this.inspectorSavesPending += 1;
 			this.updateInspectorSaveState();
@@ -1123,25 +1121,27 @@
 				.then( async () => {
 					let saved = false;
 					try {
-						const data = await request( 'uplink_mbe_update_attachment', values );
-						const index = this.media.findIndex( ( item ) => Number( item.id ) === attachmentId );
-						if ( index >= 0 ) this.media[ index ] = data;
-						if ( this.inspectedId === attachmentId ) this.inspectorSavedValues = JSON.stringify( values );
+						if ( this.inspectedId !== attachmentId || snapshot !== this.inspectorSavedValues ) {
+							const data = await request( 'uplink_mbe_update_attachment', values );
+							const index = this.media.findIndex( ( item ) => Number( item.id ) === attachmentId );
+							if ( index >= 0 ) this.media[ index ] = data;
+							if ( this.inspectedId === attachmentId ) this.inspectorSavedValues = snapshot;
+						}
 						saved = true;
 						return true;
 					} catch ( error ) {
 						if ( this.inspectedId === attachmentId ) {
 							this.inspectorDirty = true;
-							this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
-							window.uplinkMbeToast( error.message, 'error' );
+							this.$inspectorNotice.removeClass( 'is-saving is-saved' ).addClass( 'is-error' ).text( error.message );
 						}
 						return false;
 					} finally {
 						this.inspectorSavesPending = Math.max( 0, this.inspectorSavesPending - 1 );
 						this.updateInspectorSaveState();
 						if ( saved && this.inspectedId === attachmentId && 0 === this.inspectorSavesPending ) {
-							this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
-							window.uplinkMbeToast( config.strings.saved );
+							const upToDate = snapshot === JSON.stringify( this.inspectorValues() );
+							this.inspectorDirty = ! upToDate;
+							this.$inspectorNotice.removeClass( 'is-saving is-error' ).toggleClass( 'is-saved', upToDate ).text( upToDate ? config.strings.saved : '' );
 						}
 					}
 				} );
@@ -1151,11 +1151,10 @@
 		async saveInspector( event ) {
 			event?.preventDefault?.();
 			const attachmentId = this.inspectedId;
-			if ( ! await this.persistInspectorChanges( true ) || this.inspectedId !== attachmentId ) return;
+			if ( ! await this.persistInspectorChanges() || this.inspectedId !== attachmentId || this.inspectorDirty ) return;
 			this.renderMedia();
 			this.showInspector( attachmentId );
-			this.$inspectorNotice.text( '' ).removeClass( 'is-saving is-error is-saved' );
-			window.uplinkMbeToast( config.strings.saved );
+			this.$inspectorNotice.addClass( 'is-saved' ).text( config.strings.saved );
 		},
 
 		editInspectedImage( event ) {
