@@ -51,7 +51,10 @@
 			const blockProps = useBlockProps( { className: 'uplink-mbe-gallery-editor', ref: previewRef } );
 			const openLightboxPreview = () => {
 				const images = previewRef.current
-					? Array.from( previewRef.current.querySelectorAll( '.wp-block-image img' ) ).map( ( image ) => {
+					? [
+						...previewRef.current.querySelectorAll( '.wp-block-image img' ),
+						...( previewRef.current.querySelector( 'template[data-uplink-mbe-gallery-overflow]' )?.content.querySelectorAll( '.wp-block-image img' ) || [] ),
+					].map( ( image ) => {
 						const trigger = image.closest( '.uplink-mbe-custom-lightbox-trigger' );
 						return {
 							src: trigger ? trigger.dataset.uplinkMbeSrc : ( image.currentSrc || image.src ),
@@ -226,6 +229,30 @@
 								{ label: __( 'No interaction', 'media-bridge-for-etch' ), value: 'none' },
 							],
 							onChange: ( value ) => setAttributes( { lightboxMode: value } ),
+						} ),
+						attributes.lightboxMode === 'custom' && el( ToggleControl, {
+							label: __( 'Peek and Theater viewer', 'media-bridge-for-etch' ),
+							checked: attributes.lightboxPhotoViewer,
+							help: __( 'Let visitors switch between Peek with neighboring photos and Theater with one photo.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { lightboxPhotoViewer: value } ),
+						} ),
+						attributes.lightboxMode === 'custom' && attributes.lightboxPhotoViewer && el( SelectControl, {
+							label: __( 'Opening view', 'media-bridge-for-etch' ),
+							value: attributes.lightboxOpeningView,
+							options: [
+								{ label: __( 'Peek', 'media-bridge-for-etch' ), value: 'peek' },
+								{ label: __( 'Theater', 'media-bridge-for-etch' ), value: 'theater' },
+							],
+							help: __( 'Applies when the gallery opens without fullscreen slideshow autoplay.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { lightboxOpeningView: value } ),
+						} ),
+						attributes.lightboxMode === 'custom' && el( RangeControl, {
+							label: __( 'Photos visible on page', 'media-bridge-for-etch' ),
+							value: attributes.visibleImageLimit,
+							min: 0,
+							max: 100,
+							help: __( 'Use 0 to show all photos. A +N tile opens the remaining photos in the lightbox.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { visibleImageLimit: value } ),
 						} ),
 						attributes.lightboxMode === 'custom' && el( ToggleControl, {
 							label: __( 'Show title in lightbox', 'media-bridge-for-etch' ),
@@ -507,4 +534,65 @@
 		isActive: [ 'layout' ],
 		scope: [ 'inserter' ],
 	} );
+	registerBlockType( 'uplinkpress/ramka-gallery', {
+		edit( { attributes, setAttributes } ) {
+			const blockProps = useBlockProps();
+			const collection = el( SelectControl, {
+				label: config.managerLabel || __( 'Photo collection', 'media-bridge-for-etch' ),
+				value: attributes.collectionId,
+				options: collectionOptions,
+				onChange: ( value ) => setAttributes( { collectionId: Number( value ) } ),
+			} );
+			return el( element.Fragment, null,
+				el( InspectorControls, null,
+					el( PanelBody, { title: __( 'Gallery settings', 'media-bridge-for-etch' ) },
+						collection,
+						el( ToggleControl, {
+							label: __( 'Include child folders', 'media-bridge-for-etch' ),
+							checked: attributes.includeChildren,
+							onChange: ( value ) => setAttributes( { includeChildren: value } ),
+						} ),
+						el( SelectControl, {
+							label: __( 'Image order', 'media-bridge-for-etch' ),
+							value: attributes.sortOrder || 'date',
+							options: [
+								{ label: __( 'Newest first', 'media-bridge-for-etch' ), value: 'date' },
+								{ label: __( 'Custom order', 'media-bridge-for-etch' ), value: 'custom' },
+								{ label: __( 'Random', 'media-bridge-for-etch' ), value: 'random' },
+							],
+							onChange: ( value ) => setAttributes( { sortOrder: value } ),
+						} ),
+						el( RangeControl, {
+							label: __( 'Maximum photos', 'media-bridge-for-etch' ),
+							value: attributes.limit, min: 1, max: 100,
+							onChange: ( value ) => setAttributes( { limit: value } ),
+						} ),
+						el( RangeControl, {
+							label: __( 'Photos visible on page', 'media-bridge-for-etch' ),
+							value: attributes.visibleImageLimit, min: 0, max: 100,
+							help: __( 'Use 0 to show all photos.', 'media-bridge-for-etch' ),
+							onChange: ( value ) => setAttributes( { visibleImageLimit: value } ),
+						} ),
+						el( SelectControl, {
+							label: __( 'Opening view', 'media-bridge-for-etch' ),
+							value: attributes.lightboxOpeningView,
+							options: [
+								{ label: __( 'Peek', 'media-bridge-for-etch' ), value: 'peek' },
+								{ label: __( 'Theater', 'media-bridge-for-etch' ), value: 'theater' },
+							],
+							onChange: ( value ) => setAttributes( { lightboxOpeningView: value } ),
+						} )
+					)
+				),
+				el( 'div', blockProps, attributes.collectionId
+					? el( ServerSideRender, { block: 'uplinkpress/ramka-gallery', attributes, skipBlockSupportAttributes: true } )
+					: el( Placeholder, { icon: 'format-gallery', label: __( 'Ramka Gallery', 'media-bridge-for-etch' ) }, collection )
+				)
+			);
+		},
+		save() {
+			return null;
+		},
+	} );
+
 } )( window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.element, window.wp.i18n, window.wp.serverSideRender );

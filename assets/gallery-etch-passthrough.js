@@ -42,6 +42,9 @@
 		showTitle: false,
 		showCaptions: false,
 		lightboxMode: 'custom',
+		lightboxPhotoViewer: false,
+		lightboxOpeningView: 'peek',
+		visibleImageLimit: 0,
 		limit: 24,
 		gap: 8,
 	};
@@ -437,6 +440,12 @@
 			{ value: 'native', label: 'Native WordPress lightbox' },
 			{ value: 'none', label: 'No interaction' },
 		] );
+		field( form, 'checkbox', 'lightboxPhotoViewer', 'Peek and Theater viewer' );
+		field( form, 'select', 'lightboxOpeningView', 'Opening view', [
+			{ value: 'peek', label: 'Peek' },
+			{ value: 'theater', label: 'Theater' },
+		] );
+		field( form, 'number', 'visibleImageLimit', 'Photos visible on page (0 shows all)', [ { min: 0, max: 100, step: 1 } ] );
 		field( form, 'checkbox', 'lightboxSlideshow', 'Enable fullscreen slideshow' );
 		field( form, 'checkbox', 'lightboxAutoplay', 'Autoplay when lightbox opens' );
 		field( form, 'number', 'lightboxInterval', 'Lightbox seconds between images', [ { min: 2, max: 30, step: 1 } ] );
@@ -458,6 +467,10 @@
 			form.elements.namedItem( 'columns' ).closest( 'label' ).hidden = slider;
 			const customLightbox = form.elements.namedItem( 'lightboxMode' ).value === 'custom';
 			form.elements.namedItem( 'sliderShowSlideshow' ).disabled = ! customLightbox || ! form.elements.namedItem( 'lightboxSlideshow' ).checked;
+			const photoViewer = form.elements.namedItem( 'lightboxPhotoViewer' );
+			photoViewer.closest( 'label' ).hidden = ! customLightbox;
+			form.elements.namedItem( 'lightboxOpeningView' ).closest( 'label' ).hidden = ! customLightbox || ! photoViewer.checked;
+			form.elements.namedItem( 'visibleImageLimit' ).closest( 'label' ).hidden = ! customLightbox;
 			form.elements.namedItem( 'lightboxSlideshow' ).closest( 'label' ).hidden = ! customLightbox;
 			for ( const name of [ 'lightboxAutoplay', 'lightboxInterval', 'lightboxLoop' ] ) form.elements.namedItem( name ).closest( 'label' ).hidden = ! customLightbox || ! form.elements.namedItem( 'lightboxSlideshow' ).checked;
 		};
@@ -465,6 +478,7 @@
 		form.elements.namedItem( 'sliderProgressPlacement' ).addEventListener( 'change', updateLayoutFields );
 		form.elements.namedItem( 'sliderShowStatus' ).addEventListener( 'change', updateLayoutFields );
 		form.elements.namedItem( 'lightboxMode' ).addEventListener( 'change', updateLayoutFields );
+		form.elements.namedItem( 'lightboxPhotoViewer' ).addEventListener( 'change', updateLayoutFields );
 		form.elements.namedItem( 'lightboxSlideshow' ).addEventListener( 'change', updateLayoutFields );
 		updateLayoutFields();
 

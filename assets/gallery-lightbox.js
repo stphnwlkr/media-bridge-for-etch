@@ -1,9 +1,16 @@
+/**
+ * Original editable gallery/lightbox source for Uplink Media Bridge for Etch.
+ * This file is handwritten, not generated or minified. No build step is required.
+ * Source and third-party build information are documented in readme.txt.
+ */
 ( function () {
 	'use strict';
 
 	let active = null;
 	let previousFocus = null;
 	let zoom = 1;
+	let changingLightbox = false;
+	const transitionName = 'uplink-mbe-gallery-photo';
 	const reducedMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' );
 	const strings = window.uplinkMbeGalleryLightbox || {};
 
@@ -21,7 +28,10 @@
 	}
 
 	function collectItems( gallery ) {
-		return Array.from( gallery.querySelectorAll( '.uplink-mbe-custom-lightbox-trigger' ) ).map( ( trigger ) => {
+		const selector = '.uplink-mbe-custom-lightbox-trigger';
+		const overflow = gallery.querySelector( 'template[data-uplink-mbe-gallery-overflow]' );
+		const triggers = [ ...gallery.querySelectorAll( selector ), ...( overflow?.content.querySelectorAll( selector ) || [] ) ];
+		return triggers.map( ( trigger ) => {
 			const image = trigger.querySelector( 'img' );
 			let exif = [];
 			try { const rows = JSON.parse( trigger.dataset.uplinkMbeExif || '[]' ); if ( Array.isArray( rows ) ) exif = rows.filter( ( row ) => row && typeof row.label === 'string' && typeof row.value === 'string' ); } catch ( error ) {}
@@ -155,6 +165,25 @@
 		counter.setAttribute( 'aria-hidden', 'true' );
 		toolbar.appendChild( counter );
 
+		const photoViewer = gallery.dataset.uplinkMbeLightboxPhotoViewer === 'true';
+		if ( photoViewer && items.length > 1 ) {
+			overlay.classList.toggle( 'is-peek-view', gallery.dataset.uplinkMbeLightboxOpeningView !== 'theater' );
+			const view = button( 'uplink-mbe-custom-lightbox-control uplink-mbe-photo-view-toggle', '', '' );
+			const syncView = () => {
+				const peek = overlay.classList.contains( 'is-peek-view' );
+				const label = peek ? ( strings.theaterLabel || 'Switch to Theater view' ) : ( strings.peekLabel || 'Switch to Peek view' );
+				view.setAttribute( 'aria-label', label );
+				view.title = label;
+				view.textContent = peek ? '▣' : '▯▮▯';
+			};
+			view.addEventListener( 'click', () => {
+				overlay.classList.toggle( 'is-peek-view' );
+				syncView();
+			} );
+			syncView();
+			toolbar.appendChild( view );
+		}
+
 		let fullscreenButton = null;
 		if ( gallery.dataset.uplinkMbeLightboxFullscreen === 'true' && document.fullscreenEnabled ) {
 			fullscreenButton = button( 'uplink-mbe-custom-lightbox-control', strings.fullscreenEnter || 'Enter fullscreen', '⛶' );
@@ -200,6 +229,16 @@
 		stage.className = 'uplink-mbe-custom-lightbox-stage';
 		const previous = button( 'uplink-mbe-custom-lightbox-navigation is-previous', strings.previousLabel || 'Previous image', '‹' );
 		const next = button( 'uplink-mbe-custom-lightbox-navigation is-next', strings.nextLabel || 'Next image', '›' );
+		if ( photoViewer && items.length > 1 ) {
+			for ( const control of [ previous, next ] ) {
+				const preview = document.createElement( 'img' );
+				preview.alt = '';
+				const arrow = document.createElement( 'span' );
+				arrow.textContent = control.textContent;
+				arrow.setAttribute( 'aria-hidden', 'true' );
+				control.replaceChildren( preview, arrow );
+			}
+		}
 		const content = document.createElement( 'div' );
 		content.className = 'uplink-mbe-custom-lightbox-content';
 		const media = document.createElement( 'div' );
@@ -259,7 +298,45 @@
 		overlay.appendChild( dialog );
 		document.body.appendChild( overlay );
 
-		active = { controlsTimer: null, controlsPlaying: false, keyboardControls: false, slideshow: false, playing: false, playbackTimer: null, slideshowFullscreen: false, interval: Math.max( 2000, Math.min( 30000, Number( gallery.dataset.uplinkMbeLightboxInterval ) || 5000 ) ), loop: gallery.dataset.uplinkMbeLightboxLoop !== 'false', startSlideshow: startSlideshowButton, play, slidePrevious, slideNext, exifWrap, exifButton, exifPanel, gallery, items, index, overlay, dialog, media, image, title, caption, info, counter, live, thumbnails, previous, next, close, fullscreenButton, zoomOut, zoomIn, zoomReset, resizeObserver: null };
+		active = {
+			controlsTimer: null,
+			controlsPlaying: false,
+			keyboardControls: false,
+			slideshow: false,
+			playing: false,
+			playbackTimer: null,
+			slideshowFullscreen: false,
+			interval: Math.max( 2000, Math.min( 30000, Number( gallery.dataset.uplinkMbeLightboxInterval ) || 5000 ) ),
+			loop: gallery.dataset.uplinkMbeLightboxLoop !== 'false',
+			startSlideshow: startSlideshowButton,
+			play,
+			slidePrevious,
+			slideNext,
+			exifWrap,
+			exifButton,
+			exifPanel,
+			gallery,
+			items,
+			index,
+			overlay,
+			dialog,
+			media,
+			image,
+			title,
+			caption,
+			info,
+			counter,
+			live,
+			thumbnails,
+			previous,
+			next,
+			close,
+			fullscreenButton,
+			zoomOut,
+			zoomIn,
+			zoomReset,
+			resizeObserver: null,
+		};
 		// Activity reveals controls without restarting the independent image timer.
 		for ( const type of [ 'pointermove', 'pointerdown' ] ) dialog.addEventListener( type, () => {
 			if ( active?.dialog !== dialog ) return;
@@ -271,19 +348,114 @@
 			active.resizeObserver = new ResizeObserver( syncInfoWidth );
 			active.resizeObserver.observe( media );
 		}
+		if ( photoViewer ) {
+			overlay.classList.add( 'has-photo-viewer' );
+			bindPhotoGestures( active );
+		}
 		return active;
 	}
 
-	function setZoom( value ) {
+	function bindPhotoGestures( lightbox ) {
+		const { media, image } = lightbox;
+		let gesture = null;
+		let lastTap = null;
+		const distance = ( first, second ) => Math.hypot( first.clientX - second.clientX, first.clientY - second.clientY );
+
+		media.addEventListener( 'touchstart', ( event ) => {
+			if ( lightbox.slideshow || lightbox !== active ) return;
+			const [ first, second ] = event.touches;
+			if ( second ) {
+				gesture = { index: lightbox.index, pinch: Math.max( 1, distance( first, second ) ), zoom };
+				lastTap = null;
+				image.style.removeProperty( '--uplink-mbe-photo-drag' );
+				return;
+			}
+			gesture = { index: lightbox.index, x: first.clientX, y: first.clientY, zoom };
+		}, { passive: true } );
+
+		media.addEventListener( 'touchmove', ( event ) => {
+			if ( ! gesture || lightbox !== active || lightbox.slideshow || gesture.index !== lightbox.index ) return;
+			const [ first, second ] = event.touches;
+			const bounds = media.getBoundingClientRect();
+			if ( second ) {
+				if ( lightbox.zoomIn && gesture.pinch > 0 ) {
+					setZoom( gesture.zoom * distance( first, second ) / gesture.pinch, ( first.clientX + second.clientX ) / 2 - bounds.left, ( first.clientY + second.clientY ) / 2 - bounds.top );
+				}
+			} else if ( ! gesture.pinch ) {
+				const x = first.clientX - gesture.x;
+				const y = first.clientY - gesture.y;
+				gesture.moved ||= Math.hypot( x, y ) >= 12;
+				if ( zoom > 1 ) {
+					gesture.moved ||= x !== 0 || y !== 0;
+					media.scrollLeft -= x;
+					media.scrollTop -= y;
+					gesture.x = first.clientX;
+					gesture.y = first.clientY;
+				} else if ( ! reducedMotion.matches ) {
+					const vertical = y > Math.abs( x );
+					image.style.setProperty( '--uplink-mbe-photo-drag', vertical ? `0 ${ y * 0.65 }px` : `${ x * 0.35 }px 0` );
+				}
+			}
+		}, { passive: true } );
+
+		const finish = ( event ) => {
+			image.style.removeProperty( '--uplink-mbe-photo-drag' );
+			const start = gesture;
+			gesture = null;
+			if ( ! start || start.pinch || lightbox !== active || lightbox.slideshow || start.index !== lightbox.index || event.type === 'touchcancel' ) {
+				lastTap = null;
+				return;
+			}
+			const [ touch ] = event.changedTouches;
+			const x = touch.clientX - start.x;
+			const y = touch.clientY - start.y;
+			if ( start.zoom === 1 && y > 85 && y > Math.abs( x ) * 1.25 ) {
+				close();
+			} else if ( start.zoom === 1 && Math.abs( x ) > 50 && Math.abs( x ) > Math.abs( y ) * 1.25 ) {
+				const rtl = getComputedStyle( media ).direction === 'rtl';
+				showItem( lightbox.index + ( ( x < 0 ) !== rtl ? 1 : -1 ) );
+			} else if ( lightbox.zoomIn && Math.hypot( x, y ) < 12 && ! start.moved ) {
+				const now = performance.now();
+				if ( lastTap && now - lastTap.time < 300 && distance( touch, lastTap.touch ) < 30 ) {
+					const bounds = media.getBoundingClientRect();
+					setZoom( zoom > 1 ? 1 : 2, touch.clientX - bounds.left, touch.clientY - bounds.top );
+					lastTap = null;
+					return;
+				}
+				lastTap = { time: now, touch };
+				return;
+			}
+			lastTap = null;
+		};
+		media.addEventListener( 'touchend', finish, { passive: true } );
+		media.addEventListener( 'touchcancel', finish, { passive: true } );
+		media.addEventListener( 'wheel', ( event ) => {
+			if ( ! event.ctrlKey || ! lightbox.zoomIn || lightbox.slideshow || lightbox !== active ) return;
+			event.preventDefault();
+			const bounds = media.getBoundingClientRect();
+			setZoom( zoom * Math.exp( -event.deltaY * 0.01 ), event.clientX - bounds.left, event.clientY - bounds.top );
+		}, { passive: false } );
+	}
+
+	function setZoom( value, anchorX, anchorY ) {
 		if ( ! active ) {
 			return;
 		}
+		const previousZoom = zoom;
+		const { media } = active;
 		zoom = Math.max( 1, Math.min( 3, value ) );
 		active.image.style.transform = `scale(${ zoom })`;
-		active.media.classList.toggle( 'is-zoomed', zoom > 1 );
+		media.classList.toggle( 'is-zoomed', zoom > 1 );
 		if ( 1 === zoom ) {
-			active.media.scrollTop = 0;
-			active.media.scrollLeft = 0;
+			media.scrollTop = 0;
+			media.scrollLeft = 0;
+		} else if ( active.gallery.dataset.uplinkMbeLightboxPhotoViewer === 'true' ) {
+			const x = anchorX ?? media.clientWidth / 2;
+			const y = anchorY ?? media.clientHeight / 2;
+			const ratio = zoom / previousZoom;
+			const rtlOffset = getComputedStyle( media ).direction === 'rtl' ? media.clientWidth : 0;
+			media.scrollLeft = ( media.scrollLeft + x - rtlOffset ) * ratio - x + rtlOffset;
+			media.scrollTop = ( media.scrollTop + y ) * ratio - y;
 		}
 		if ( active.zoomReset ) {
 			active.zoomReset.textContent = `${ Math.round( zoom * 100 ) }%`;
@@ -328,7 +500,17 @@
 		} );
 		body.appendChild( list );
 		active.exifPanel.replaceChildren( header, body );
-		active.image.src = item.src;
+		if ( active.gallery.dataset.uplinkMbeLightboxPhotoViewer === 'true' && item.thumb !== item.src ) {
+			const { image } = active;
+			const full = new Image();
+			image.src = item.thumb;
+			full.onload = () => {
+				if ( active?.image === image && active.items[ active.index ] === item ) image.src = item.src;
+			};
+			full.src = item.src;
+		} else {
+			active.image.src = item.src;
+		}
 		active.image.alt = item.alt;
 		active.title.textContent = item.title;
 		active.caption.textContent = item.caption;
@@ -348,6 +530,11 @@
 		if ( active.slideshow && [ active.slidePrevious, active.slideNext ].includes( document.activeElement ) && document.activeElement.disabled ) active.play.focus();
 		active.previous.disabled = active.items.length < 2;
 		active.next.disabled = active.items.length < 2;
+		if ( active.previous.firstElementChild ) {
+			const count = active.items.length;
+			active.previous.firstElementChild.src = active.items[ ( active.index + count - 1 ) % count ].thumb;
+			active.next.firstElementChild.src = active.items[ ( active.index + 1 ) % count ].thumb;
+		}
 		Array.from( active.thumbnails.children ).forEach( ( thumbnail, thumbnailIndex ) => {
 			const current = thumbnailIndex === active.index;
 			thumbnail.classList.toggle( 'is-current', current );
@@ -361,26 +548,75 @@
 		syncSlideshow();
 	}
 
+	function photoInViewport( photo ) {
+		const bounds = photo?.getBoundingClientRect();
+		return bounds?.width && bounds.height && bounds.bottom > 0 && bounds.right > 0 &&
+			bounds.top < window.innerHeight && bounds.left < window.innerWidth;
+	}
+
+	function transitionPhoto( from, update ) {
+		if ( reducedMotion.matches || ! document.startViewTransition || ! photoInViewport( from ) ) {
+			update();
+			return;
+		}
+		changingLightbox = true;
+		from.style.viewTransitionName = transitionName;
+		let to;
+		const transition = document.startViewTransition( () => {
+			from.style.removeProperty( 'view-transition-name' );
+			to = update();
+			if ( to ) to.style.viewTransitionName = transitionName;
+		} );
+		transition.ready.catch( () => {} ).then( () => {
+			to?.style.removeProperty( 'view-transition-name' );
+			changingLightbox = false;
+		} );
+	}
+
 	function open( gallery, trigger, directSlideshow = false, returnFocus = trigger ) {
+		if ( active || changingLightbox ) return;
 		const items = collectItems( gallery );
-		const index = items.findIndex( ( item ) => item.trigger === trigger );
+		const showMore = ! directSlideshow && trigger?.hasAttribute( 'data-uplink-mbe-gallery-more' );
+		const index = items.findIndex( ( item ) => showMore ? ! item.trigger.isConnected : item.trigger === trigger );
 		if ( ! items.length || index < 0 ) {
 			return;
 		}
 		gallery.dispatchEvent( new CustomEvent( 'uplink-mbe-lightbox-opening' ) );
 		previousFocus = returnFocus;
-		const lightbox = createLightbox( gallery, items, index );
-		lightbox.overlay.hidden = false;
-		document.documentElement.classList.add( 'uplink-mbe-lightbox-open' );
-		showItem( index );
-		if ( lightbox.startSlideshow && ( directSlideshow || gallery.dataset.uplinkMbeLightboxAutoplay === 'true' ) ) startSlideshow( directSlideshow || ! reducedMotion.matches );
-		else lightbox.close.focus();
+		const autoplay = gallery.dataset.uplinkMbeLightboxAutoplay === 'true';
+		const show = () => {
+			const lightbox = createLightbox( gallery, items, index );
+			lightbox.overlay.hidden = false;
+			document.documentElement.classList.add( 'uplink-mbe-lightbox-open' );
+			showItem( index );
+			if ( lightbox.startSlideshow && ( directSlideshow || autoplay ) ) startSlideshow( directSlideshow || ! reducedMotion.matches );
+			else lightbox.close.focus();
+			return lightbox.image;
+		};
+		if ( gallery.dataset.uplinkMbeLightboxPhotoViewer === 'true' && ! showMore && ! directSlideshow && ! autoplay ) {
+			transitionPhoto( trigger.querySelector( 'img' ), show );
+		} else {
+			show();
+		}
 	}
 
 	function close() {
-		if ( ! active ) {
+		if ( ! active || changingLightbox ) {
 			return;
 		}
+		const thumbnail = active.items[ active.index ].trigger.querySelector( 'img' );
+		if ( active.gallery.dataset.uplinkMbeLightboxPhotoViewer === 'true' && ! active.slideshow && ! document.fullscreenElement &&
+			zoom === 1 && photoInViewport( thumbnail ) && thumbnail.checkVisibility?.() !== false ) {
+			transitionPhoto( active.image, () => {
+				removeLightbox();
+				return thumbnail;
+			} );
+		} else {
+			removeLightbox();
+		}
+	}
+
+	function removeLightbox() {
 		clearTimeout( active.playbackTimer );
 		clearTimeout( active.controlsTimer );
 		if ( document.fullscreenElement === active.dialog ) {

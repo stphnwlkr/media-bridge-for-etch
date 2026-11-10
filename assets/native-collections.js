@@ -8,6 +8,55 @@
 
 	let uploadCollection = 0;
 	const uploaders = new Set();
+	const libraryViews = new Set();
+	const completedUploads = new WeakSet();
+	let uploadRefreshTimer = null;
+	let uploadRefreshVersion = 0;
+
+	// Taxonomy-filtered WordPress queries do not observe the global upload queue.
+	// Requery the current view after uploads finish, including Cimo-processed files.
+	function scheduleLibraryRefresh() {
+		window.clearTimeout( uploadRefreshTimer );
+		uploadRefreshTimer = window.setTimeout( () => {
+			for ( const view of libraryViews ) {
+				if ( ! view.el?.isConnected ) { libraryViews.delete( view ); continue; }
+				if ( view.uplinkMbeNativeListMode ) continue;
+				view.collection?.props?.set( 'uplink_mbe_refresh', `${ Date.now() }-${ ++uploadRefreshVersion }` );
+				const panel = view.uplinkMbeNativeCollectionsPanel;
+				if ( panel?.isConnected ) refreshCollectionState( view, panel ).catch( () => {} );
+			}
+		}, 150 );
+	}
+
+	// WordPress 7.2 REST uploads do not send Plupload multipart parameters.
+	// Capture the selected destination now and verify it through our nonce-protected
+	// assignment endpoint once the final attachment model has completed uploading.
+	function watchUpload( attachment ) {
+		const destination = uploadCollection;
+		const complete = async () => {
+			if ( ! attachment.get( 'id' ) || attachment.get( 'uploading' ) || completedUploads.has( attachment ) ) return;
+			completedUploads.add( attachment );
+			attachment.off( 'change sync', complete );
+			try {
+				if ( destination && config.canAssign ) await request( 'uplink_mbe_assign_media', {
+					media_ids: JSON.stringify( [ Number( attachment.get( 'id' ) ) ] ), collection: destination, mode: 'add',
+				} );
+			} catch ( error ) {
+				window.uplinkMbeToast?.( error.message, 'error' );
+			} finally {
+				scheduleLibraryRefresh();
+			}
+		};
+		attachment.on( 'change sync', complete );
+		complete();
+	}
+	wp.Uploader?.queue?.on( 'add', watchUpload );
+	wp.Uploader?.queue?.each( watchUpload );
+	wp.media.model?.Attachments?.all?.on( 'destroy', scheduleLibraryRefresh );
+	$( document ).ajaxSuccess( ( event, xhr, settings, response ) => {
+		const action = typeof settings.data === 'string' ? new URLSearchParams( settings.data ).get( 'action' ) : settings.data?.action;
+		if ( [ 'save-attachment-compat', 'save-attachment', 'delete-post', 'delete-attachment' ].includes( action ) && response?.success !== false ) scheduleLibraryRefresh();
+	} );
 	const childrenByParent = new Map();
 	const collapsedCollections = new Set();
 	let collectionOrderSaving = false;
@@ -885,6 +934,7 @@
 		if ( ! view?.el || view.uplinkMbeNativeCollectionsPanel?.isConnected ) {
 			return;
 		}
+		libraryViews.add( view );
 		if ( ! view.el.isConnected ) {
 			if ( ! view.uplinkMbeNativeCollectionsPending ) {
 				view.uplinkMbeNativeCollectionsPending = true;
@@ -1200,11 +1250,16 @@
 	function updateUploadParams() {
 		if ( window.wpUploaderInit?.multipart_params ) {
 			window.wpUploaderInit.multipart_params.uplink_mbe_collection = uploadCollection;
+			window.wpUploaderInit.multipart_params.uplink_mbe_collection_nonce = config.collectionNonce;
 		}
 		if ( window.uploader?.settings?.multipart_params ) {
 			window.uploader.settings.multipart_params.uplink_mbe_collection = uploadCollection;
+			window.uploader.settings.multipart_params.uplink_mbe_collection_nonce = config.collectionNonce;
 		}
-		uploaders.forEach( ( uploader ) => uploader.param?.( 'uplink_mbe_collection', uploadCollection ) );
+		uploaders.forEach( ( uploader ) => {
+			uploader.param?.( 'uplink_mbe_collection', uploadCollection );
+			uploader.param?.( 'uplink_mbe_collection_nonce', config.collectionNonce );
+		} );
 	}
 
 	function createDestinationSelect() {
@@ -1300,7 +1355,11 @@
 		uploaderPrototype.init = function () {
 			uploaders.add( this );
 			this.param?.( 'uplink_mbe_collection', uploadCollection );
-			return originalUploaderInit.apply( this, arguments );
+			this.param?.( 'uplink_mbe_collection_nonce', config.collectionNonce );
+			const result = originalUploaderInit.apply( this, arguments );
+			this.uploader?.bind?.( 'FileUploaded', scheduleLibraryRefresh );
+			this.uploader?.bind?.( 'UploadComplete', scheduleLibraryRefresh );
+			return result;
 		};
 	}
 

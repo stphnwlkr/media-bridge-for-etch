@@ -24,6 +24,22 @@ final class Upload_Workspace {
 		return $locations;
 	}
 
+	/** Keep original uploads in the WordPress library, independently of collection controls. */
+	public static function native_assets(): void {
+		$settings = Plugin::settings();
+		if ( ! current_user_can( 'upload_files' ) || ! defined( 'CIMO_FILE' ) || ( 'native' === $settings['provider'] && ! empty( $settings['default_media_screen'] ) ) ) return;
+		$screen = get_current_screen();
+		if ( ! $screen || ! in_array( $screen->base, array( 'upload', 'media', 'post' ), true ) ) return;
+		wp_enqueue_style( 'uplink-mbe-native-upload', UPLINK_MBE_URL . 'assets/native-upload.css', array(), UPLINK_MBE_ASSET_VERSION );
+		global $pagenow;
+		$dependencies = 'media-new.php' === $pagenow ? array( 'jquery', 'plupload-handlers' ) : array( 'media-views', 'jquery' );
+		wp_enqueue_script( 'uplink-mbe-native-upload', UPLINK_MBE_URL . 'assets/native-upload.js', $dependencies, UPLINK_MBE_ASSET_VERSION, true );
+		wp_localize_script( 'uplink-mbe-native-upload', 'uplinkMbeNativeUpload', array(
+			'keepOriginals' => __( 'Keep originals', 'media-bridge-for-etch' ),
+			'help' => __( 'Skip Cimo compression for this upload to preserve the original file and embedded EXIF. WordPress may still generate image sizes. Resets after the upload finishes or the dialog closes.', 'media-bridge-for-etch' ),
+		) );
+	}
+
 	/** Keep shared overrides after every workspace feature loaded on this page. */
 	public static function ui_assets( array $dependencies ): void {
 		$handle = 'uplink-mbe-workspace-ui';

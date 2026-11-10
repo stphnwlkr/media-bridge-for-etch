@@ -21,18 +21,22 @@ final class Plugin {
 	}
 
 	public static function bootstrap(): void {
-		add_action( 'admin_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
-		add_action( 'wp_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
 		if ( ! self::etch_is_active() ) {
 			if ( is_admin() ) {
 				add_action( 'admin_notices', array( self::class, 'dependency_notice' ) );
 			}
 			return;
 		}
+		add_action( 'admin_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
+		add_action( 'wp_enqueue_scripts', array( self::class, 'toast_assets' ), 1 );
 		self::instance();
 	}
 
 	public static function toast_assets(): void {
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if ( ! $screen || ( ! in_array( $screen->base, array( 'upload', 'media', 'post' ), true ) && ! in_array( $screen->id, array( 'media_page_etch-collections', 'media_page_media-bridge-for-etch', 'settings_page_media-bridge-for-etch-network' ), true ) ) ) return;
+		}
 		// Frontend controls only load in the authenticated Etch builder.
 		if ( ! is_admin() && ( ! current_user_can( 'upload_files' ) || 'magic' !== sanitize_key( wp_unslash( $_GET['etch'] ?? '' ) ) ) ) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_enqueue_style( 'uplink-mbe-toasts', UPLINK_MBE_URL . 'assets/toasts.css', array(), UPLINK_MBE_ASSET_VERSION );
@@ -41,13 +45,7 @@ final class Plugin {
 	}
 
 	public static function activate(): void {
-		if ( ! self::etch_is_active() ) {
-			wp_die(
-				esc_html__( 'Uplink Media Bridge for Etch requires the Etch plugin to be installed and active.', 'media-bridge-for-etch' ),
-				esc_html__( 'Etch is required', 'media-bridge-for-etch' ),
-				array( 'back_link' => true )
-			);
-		}
+		// Activation stays silent and safe; integrations boot only while Etch is active.
 		self::migrate_options();
 	}
 
@@ -56,7 +54,7 @@ final class Plugin {
 			return;
 		}
 		?>
-		<div hidden data-uplink-mbe-toast="error"><p><?php esc_html_e( 'Uplink Media Bridge for Etch is inactive because the required Etch plugin is not active.', 'media-bridge-for-etch' ); ?></p></div>
+		<div class="notice notice-warning"><p><?php esc_html_e( 'Uplink Media Bridge for Etch needs Etch to enable its features. Install and activate Etch to continue.', 'media-bridge-for-etch' ); ?></p></div>
 		<?php
 	}
 
@@ -83,6 +81,7 @@ final class Plugin {
 		}
 		new File_Replacement();
 		new Image_Conversion();
+		new Image_Sizes();
 		new Etch_Asset_Manager();
 		new Native_Media_Library( $this->providers['etch'], is_admin() );
 		add_action( 'init', array( $this, 'boot' ), 100 );

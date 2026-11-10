@@ -1,0 +1,11 @@
+.uplink-mbe-native-keep-originals {
+	margin: 0 auto 18px;
+	padding: 12px 16px;
+	max-width: 540px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	text-align: start;
+}
+.uplink-mbe-native-keep-originals label { font-weight: 600; }
+.uplink-mbe-native-keep-originals p.description { margin: 6px 0 0; font-size: 13px; }

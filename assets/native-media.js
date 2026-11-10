@@ -1583,6 +1583,7 @@
 		const activeFilter = filters.find( ( [ key ] ) => key === state.healthFilter ) || filters[ 0 ];
 		elements.healthDescription.textContent = activeFilter[ 2 ];
 		elements.healthDescription.hidden = false;
+		document.dispatchEvent( new CustomEvent( 'uplink-mbe-health-render', { detail: { ids: 'missing_sizes' === state.healthFilter ? ( state.health.ids?.missing_sizes || [] ) : [] } } ) );
 		const issueCount = Number( state.health.counts?.all_issues || 0 );
 		elements.healthTabCount.textContent = String( issueCount );
 		const total = Number( state.health.total || 0 );
@@ -3061,6 +3062,7 @@
 	} );
 	elements.libraryTab.addEventListener( 'click', () => setWorkspaceMode( 'library' ) );
 	elements.healthTab.addEventListener( 'click', () => setWorkspaceMode( 'health' ) );
+	document.addEventListener( 'uplink-mbe-image-sizes-saved', async () => { await loadHealth( true ); loadState(); } );
 	elements.healthRescan.addEventListener( 'click', async () => {
 		await loadHealth( true );
 		state.page = 1;
@@ -3334,11 +3336,12 @@
 			openAttachmentModal( attachment, elements.upload );
 		};
 		frame.uplinkMbeRefreshUploadResults = () => loadState();
-		frame.uplinkMbeHandleCreatedAttachment = ( id ) => {
+		frame.uplinkMbeHandleCreatedAttachment = ( id, destination = frame.uplinkMbeUploadDestinationId ) => {
 			createdAttachmentChain = createdAttachmentChain.then( async () => {
 				const attachmentId = Number( id );
 				if ( ! attachmentId ) return;
-				const destinationId = Number( frame.uplinkMbeUploadDestinationId ) || 0;
+				await window.uplinkMbeImageSizeRepair?.afterUpload( attachmentId );
+				const destinationId = Number( destination ) || 0;
 
 				if ( destinationId ) {
 					try {

@@ -20,6 +20,7 @@ final class Etch_Asset_Manager {
 			return;
 		}
 		$asset_version = (string) max(
+			(int) filemtime( UPLINK_MBE_PATH . 'assets/etch-asset-index.js' ),
 			(int) filemtime( UPLINK_MBE_PATH . 'assets/etch-asset-manager.css' ),
 			(int) filemtime( UPLINK_MBE_PATH . 'assets/etch-asset-manager.js' )
 		);
@@ -31,14 +32,21 @@ final class Etch_Asset_Manager {
 			$asset_version
 		);
 		wp_enqueue_script(
-			'uplink-mbe-etch-asset-manager',
-			UPLINK_MBE_URL . 'assets/etch-asset-manager.js',
+			'uplink-mbe-etch-asset-index',
+			UPLINK_MBE_URL . 'assets/etch-asset-index.js',
 			array(),
 			$asset_version,
 			true
 		);
-		wp_localize_script(
+		wp_enqueue_script(
 			'uplink-mbe-etch-asset-manager',
+			UPLINK_MBE_URL . 'assets/etch-asset-manager.js',
+			array( 'uplink-mbe-etch-asset-index' ),
+			$asset_version,
+			true
+		);
+		wp_localize_script(
+			'uplink-mbe-etch-asset-index',
 			'uplinkMbeEtchAssetManager',
 			array(
 				'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
@@ -60,64 +68,48 @@ final class Etch_Asset_Manager {
 			wp_send_json_error( array( 'message' => __( 'You cannot access the media library.', 'media-bridge-for-etch' ) ), 403 );
 		}
 
-		$taxonomy       = 'etch_collection';
-		$attachment_ids = get_posts(
+		$attachments = get_posts(
 			array(
 				'post_type'              => 'attachment',
 				'post_status'            => 'inherit',
 				'posts_per_page'         => -1,
 				'orderby'                => 'ID',
 				'order'                  => 'DESC',
-				'fields'                 => 'ids',
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => true,
-				'update_post_term_cache' => true,
+				'update_post_term_cache' => false,
 			)
 		);
-		$collection_ids = array_fill_keys( array_map( 'intval', $attachment_ids ), array() );
-		if ( $attachment_ids && taxonomy_exists( $taxonomy ) ) {
-			$relationships = wp_get_object_terms( $attachment_ids, $taxonomy, array( 'fields' => 'all_with_object_id' ) );
+
+		$collection_ids = array_fill_keys( array_map( static fn( $attachment ) => (int) $attachment->ID, $attachments ), array() );
+		$collections = array();
+		if ( $attachments && taxonomy_exists( 'etch_collection' ) ) {
+			$relationships = wp_get_object_terms( array_keys( $collection_ids ), 'etch_collection', array( 'fields' => 'all_with_object_id' ) );
 			if ( ! is_wp_error( $relationships ) ) {
-				foreach ( $relationships as $relationship ) {
-					$object_id = (int) $relationship->object_id;
-					if ( isset( $collection_ids[ $object_id ] ) ) {
-						$collection_ids[ $object_id ][] = (int) $relationship->term_id;
-					}
-				}
+				foreach ( $relationships as $relationship ) $collection_ids[ (int) $relationship->object_id ][] = (int) $relationship->term_id;
 			}
 		}
-
+		if ( taxonomy_exists( 'etch_collection' ) ) {
+			$terms = get_terms( array( 'taxonomy' => 'etch_collection', 'hide_empty' => false ) );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) $collections[] = array( 'id' => (int) $term->term_id, 'parentId' => (int) $term->parent );
+			}
+		}
 		$assets = array();
-		foreach ( $attachment_ids as $attachment_id ) {
-			$attachment_id = (int) $attachment_id;
-			$mime_type     = (string) get_post_mime_type( $attachment_id );
-			$file          = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
-			$file_name     = $file ? wp_basename( $file ) : (string) get_the_title( $attachment_id );
-			$extension     = strtolower( (string) pathinfo( $file_name, PATHINFO_EXTENSION ) );
-			$is_font       = 0 === strpos( $mime_type, 'font/' ) || in_array( $extension, array( 'woff', 'woff2', 'ttf', 'otf' ), true );
-			$assets[]      = array(
-				'id'            => $attachment_id,
-				'fileName'      => $file_name,
-				'mimeType'      => $mime_type,
-				'altText'       => (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-				'collectionIds' => $collection_ids[ $attachment_id ] ?? array(),
-				'fontUrl'       => $is_font ? (string) wp_get_attachment_url( $attachment_id ) : '',
+		foreach ( $attachments as $attachment ) {
+			$attachment_id = (int) $attachment->ID;
+			$file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
+			$metadata = wp_get_attachment_metadata( $attachment_id );
+			$assets[] = array(
+				'id' => $attachment_id,
+				'fileName' => $file ? wp_basename( $file ) : (string) $attachment->post_title,
+				'searchName' => ! empty( $metadata['file'] ) ? wp_basename( $metadata['file'] ) : (string) get_the_title( $attachment_id ),
+				'mimeType' => (string) $attachment->post_mime_type,
+				'fontUrl' => (string) wp_get_attachment_url( $attachment_id ),
+				'altText' => (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+				'collectionIds' => $collection_ids[ $attachment_id ],
 			);
 		}
-
-		$collections = array();
-		if ( taxonomy_exists( $taxonomy ) ) {
-			$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => false ) );
-			if ( ! is_wp_error( $terms ) ) {
-				foreach ( $terms as $term ) {
-					$collections[] = array(
-						'id'       => (int) $term->term_id,
-						'parentId' => (int) $term->parent,
-					);
-				}
-			}
-		}
-
 		wp_send_json_success( array( 'assets' => $assets, 'collections' => $collections ) );
 	}
 }

@@ -1,0 +1,721 @@
+/* Ramka landing demo skin. Adapted from the MIT-licensed upstream demo.
+   The WordPress-specific rules translate the demo's Tailwind utilities. */
+@font-face {
+	font-family: "Uplink Ramka Inter";
+	font-style: normal;
+	font-weight: 100 900;
+	font-display: swap;
+	src: url("./inter-latin.woff2") format("woff2");
+}
+.uplink-ramka-grid {
+	column-count: 3;
+	column-gap: 0.5rem;
+}
+.uplink-ramka-tile {
+	display: block;
+	width: 100%;
+	margin: 0 0 0.5rem;
+	padding: 0;
+	appearance: none;
+	border: 0;
+	border-radius: 0.5rem;
+	overflow: hidden;
+	background: #171717;
+	break-inside: avoid;
+	scroll-margin-block: 3rem;
+	cursor: pointer;
+}
+.uplink-ramka-tile-frame {
+	display: grid;
+	border-radius: inherit;
+}
+.uplink-ramka-tile-frame > img,
+.uplink-ramka-more,
+.uplink-ramka-tile-frame::after {
+	grid-area: 1 / 1;
+}
+.uplink-ramka-tile-frame > img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	aspect-ratio: var(--uplink-ramka-tile-ratio, auto);
+	object-fit: cover;
+	user-select: none;
+}
+.uplink-ramka-tile-frame::after {
+	z-index: 2;
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 12%);
+	pointer-events: none;
+	content: "";
+}
+.uplink-ramka-more {
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	background: rgb(0 0 0 / 35%);
+	color: #fff;
+	font: 600 1.875rem/1 "Uplink Ramka Inter", system-ui, sans-serif;
+	letter-spacing: -0.025em;
+	text-shadow: 0 1px 12px rgb(0 0 0 / 45%);
+}
+.uplink-ramka-tile:focus-visible,
+.uplink-ramka-content button:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+.uplink-ramka-backdrop,
+.uplink-ramka-content {
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	position: fixed;
+	inset: 0 auto auto 0;
+	width: 100dvw;
+	height: 100dvh;
+	z-index: 100000;
+}
+.uplink-ramka-backdrop { background: #000; }
+.uplink-ramka-content {
+	display: flex;
+	flex-direction: column;
+	overscroll-behavior: contain;
+	outline: none;
+	color: #fafafa;
+	font-family: "Uplink Ramka Inter", system-ui, sans-serif;
+}
+.uplink-ramka-slides {
+	flex: 1;
+	min-height: 0;
+	gap: 1.25rem;
+	scrollbar-width: none;
+}
+.uplink-ramka-slides::-webkit-scrollbar { display: none; }
+.uplink-ramka-slide { box-sizing: border-box; height: 100%; }
+.uplink-ramka-media { overflow: hidden; }
+.uplink-ramka-tile-frame > img,
+.uplink-ramka-media img,
+.uplink-ramka-content .lightbox-demo-thumbnail-strip img {
+	border-radius: 0;
+	user-select: none;
+}
+.uplink-ramka-top {
+	position: absolute;
+	inset-inline-end: 0.75rem;
+	top: calc(0.75rem + env(safe-area-inset-top, 0px));
+	z-index: 30;
+	display: flex;
+	gap: 0.5rem;
+}
+.uplink-ramka-control,
+.uplink-ramka-zoom-controls {
+	box-sizing: border-box;
+	display: inline-flex;
+	height: 2.25rem;
+	flex-shrink: 0;
+	justify-content: center;
+	align-items: center;
+	border: 1px solid rgb(255 255 255 / 25%);
+	border-radius: 999px;
+	background: rgb(23 23 23 / 45%);
+	color: #fff;
+	box-shadow: 0 0 0 0.5px #000, 0 0.5px 1px rgb(0 0 0 / 45%), 0 1px 2px rgb(0 0 0 / 35%), inset 0 0.5px 0 rgb(255 255 255 / 14%);
+	backdrop-filter: blur(40px) saturate(1.5);
+}
+.uplink-ramka-control,
+.uplink-ramka-segment {
+	position: relative;
+	width: 2.25rem;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+}
+.uplink-ramka-segment {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: #fff;
+}
+.uplink-ramka-segment:first-child {
+	border-start-start-radius: 999px;
+	border-end-start-radius: 999px;
+}
+.uplink-ramka-segment:last-child {
+	border-start-end-radius: 999px;
+	border-end-end-radius: 999px;
+}
+.uplink-ramka-segment + .uplink-ramka-segment::before {
+	position: absolute;
+	inset-block: 22%;
+	inset-inline-start: 0;
+	width: 1px;
+	background: rgb(255 255 255 / 20%);
+	content: "";
+}
+.uplink-ramka-control:hover,
+.uplink-ramka-segment:hover {
+	background-image: linear-gradient(rgb(255 255 255 / 8%), rgb(255 255 255 / 8%));
+}
+.uplink-ramka-segment:disabled { opacity: 0.3; pointer-events: none; }
+@media (hover: hover) {
+	.uplink-ramka-top [data-tooltip]::after {
+		position: absolute;
+		top: calc(100% + 4px);
+		left: 50%;
+		padding: 6px 12px;
+		border-radius: 6px;
+		background: #fafafa;
+		color: #171717;
+		font: 400 12px/1.25 "Uplink Ramka Inter", system-ui, sans-serif;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transform: translateX(-50%) scale(0.95);
+		transition: opacity 150ms, transform 150ms;
+		content: attr(data-tooltip);
+	}
+	.uplink-ramka-top > :last-child::after {
+		left: auto;
+		inset-inline-end: 0;
+		transform: scale(0.95);
+	}
+	.uplink-ramka-top [data-tooltip]:is(:hover, :focus-visible)::after {
+		opacity: 1;
+		transition-delay: 600ms;
+	}
+}
+.uplink-ramka-bottom {
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0 0.75rem calc(1rem + env(safe-area-inset-bottom, 0px));
+	pointer-events: none;
+}
+.uplink-ramka-info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 100%;
+	text-align: center;
+}
+.uplink-ramka-caption {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	color: #fafafa;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.25;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.uplink-ramka-counter { color: #a3a3a3; font: 11px/1.25 "Uplink Ramka Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.uplink-ramka-content .uplink-ramka-desktop { display: none; }
+
+@media (min-width: 768px) {
+	.uplink-ramka-grid { column-count: 4; column-gap: 0.75rem; }
+	.uplink-ramka-tile { margin-bottom: 0.75rem; border-radius: 0.75rem; }
+	.uplink-ramka-more { font-size: 2.25rem; }
+	.uplink-ramka-slides:not(.lightbox-demo-slides-snug) { gap: 0; }
+	.uplink-ramka-media { border-radius: 0.5rem; }
+	.uplink-ramka-media::after {
+		position: absolute;
+		inset: 0;
+		z-index: 10;
+		border-radius: inherit;
+		box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 12%);
+		pointer-events: none;
+		content: "";
+	}
+	.uplink-ramka-content .uplink-ramka-desktop { display: inline-flex; }
+	.uplink-ramka-content .lightbox-demo-thumbnail-strip { display: block; pointer-events: auto; }
+	.uplink-ramka-counter { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/**
+ * Open/close opacity for demo Backdrop + Content.
+ * Attach `.lightbox-demo-backdrop` / `.lightbox-demo-content` in chrome.
+ * Backdrop open opacity is then modulated by pull — see pull-progress.css.
+ *
+ * @docsExcerpt open-close-css
+ * @docsExcerptTitle Open / close CSS
+ */
+
+.lightbox-demo-backdrop {
+  opacity: 0;
+  /* Fade duration cascade: pull snap-back vars while a dismiss springs back,
+     otherwise the library-written --lightbox-vt-duration (the Root's
+     `viewTransition` preset timing, always published on the Portal host —
+     with or without a running morph). */
+  transition: opacity
+    var(--lightbox-pull-snap-duration, var(--lightbox-vt-duration, 360ms))
+    var(--lightbox-pull-snap-easing, var(--ease-out-expo));
+}
+
+/* First frame when `data-open` appears — then pull-progress.css owns open opacity. */
+@starting-style {
+  .lightbox-demo-backdrop[data-open] {
+    opacity: 0;
+  }
+}
+
+.lightbox-demo-content {
+  opacity: 0;
+  /* --lightbox-vt-duration keeps the surface, scrim and image resolving
+     together: same preset clock during a morph (documentElement) and on the
+     plain fade path (Portal host). */
+  transition: opacity var(--lightbox-vt-duration, 360ms) var(--ease-out-expo);
+}
+
+.lightbox-demo-content[data-open] {
+  opacity: 1;
+}
+
+@starting-style {
+  .lightbox-demo-content[data-open] {
+    opacity: 0;
+  }
+}
+
+/**
+ * Chrome inset tokens on Content — one source of truth for Slide padding and
+ * snug slide width. Not library API; set/consume in docs chrome only.
+ */
+
+.lightbox-demo-content {
+  /*
+   * Mobile: equal top/bottom so the media is perfectly vertically centered.
+   * 4rem clears the close button row above and the caption + counter cluster
+   * below (no thumbnail-strip on mobile).
+   */
+  --lightbox-inset-top: calc(4rem + env(safe-area-inset-top, 0px));
+  --lightbox-inset-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  --lightbox-inset-inline: 0px;
+}
+
+@media (min-width: 768px) {
+  .lightbox-demo-content {
+    /*
+     * Roomier desktop letterbox. Bottom = thumbnail-strip row (5.125rem:
+     * 4.5rem thumbs + indicator padding) + one-line info bar (~1.75rem incl.
+     * gap) + the same optical gap the media keeps to the corner controls
+     * above, so the letterbox reads symmetric.
+     */
+    --lightbox-inset-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+    --lightbox-inset-bottom: calc(8.625rem + env(safe-area-inset-bottom, 0px));
+    --lightbox-inset-inline: 3rem;
+  }
+}
+
+/*
+ * Solo (no thumbnail strip — single item or `thumbnails="never"`): the desktop
+ * bottom band only holds the caption + counter placard, so shrink it to match
+ * the top inset and keep the letterbox symmetric. Mobile is already symmetric.
+ */
+@media (min-width: 768px) {
+  .lightbox-demo-content-solo {
+    --lightbox-inset-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/*
+ * Solo bottom band: center the placard between the media edge and the safe
+ * area instead of pinning it to the viewport edge (overrides the Tailwind
+ * bottom padding on the chrome-bottom element).
+ */
+.lightbox-demo-chrome-bottom-solo {
+  justify-content: center;
+  min-height: var(--lightbox-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/*
+ * Snug uses the same bottom insets as bleed (thumbnail-strip desktop-only). Inline
+ * token is a scrollport gutter for the md+ width formula — not per-slide padding.
+ */
+.lightbox-demo-content-snug {
+  --lightbox-inset-inline: 0px;
+}
+
+@media (min-width: 768px) {
+  .lightbox-demo-content-snug {
+    --lightbox-inset-inline: 2rem;
+  }
+}
+
+/*
+ * Resting chrome letterbox on Slide (not Zoom). Item/Zoom fill the content box;
+ * zoomed media can still paint into this padding under chrome.
+ */
+.lightbox-demo-slide-pad {
+  padding-top: var(--lightbox-inset-top);
+  padding-bottom: var(--lightbox-inset-bottom);
+  padding-inline: var(--lightbox-inset-inline);
+  /* Default track: one scrollport per slide (bleed + snug mobile). */
+  flex: 0 0 100%;
+  min-width: 100%;
+}
+
+/* Snug: no horizontal pad on each card — gutter is the width formula only. */
+.lightbox-demo-content-snug .lightbox-demo-slide-pad {
+  padding-inline: 0;
+}
+
+/*
+ * Default bleed track — one scrollport width per slide. Slides geometry
+ * assumes center snap (built into Lightbox.Slide).
+ *
+ * Scoped to the demo skin's own Slides: a bare `[data-ramka-slide]` selector
+ * would match every ramka slide in the docs app — including other skins on
+ * preset pages, whose `@layer utilities` rules lose to any unlayered global
+ * rule. The generic copy-paste form shown in the composition docs lives in
+ * `slide-track.excerpt.css`.
+ */
+.lightbox-demo-slides [data-ramka-slide] {
+  flex: 0 0 100%;
+  min-width: 100%;
+}
+
+/**
+ * Fade Backdrop (and snug sibling slides) with pull-to-dismiss progress
+ * (open/close base fade lives in open-close.css). Chrome fades separately via
+ * Chrome fades separately via `.lightbox-demo-chrome-hide` below.
+ *
+ * @docsExcerpt pull-progress-css
+ * @docsExcerptTitle Pull progress CSS
+ */
+
+.lightbox-demo-backdrop[data-open] {
+  /* --lightbox-pull-progress: 0 → 1 while dragging */
+  opacity: calc(1 - var(--lightbox-pull-progress, 0) * 0.6);
+}
+
+.lightbox-demo-backdrop[data-pulling] {
+  transition: none; /* follow the finger */
+}
+
+/*
+ * Snug gallery slides — inactive cards track pull (`--lightbox-pull-progress`)
+ * and zoom (`--lightbox-zoom-progress`, 0→1 by +1× above min). Zoom filter has
+ * no transition (1:1 with progress); pull opacity snaps back via snap vars.
+ */
+/* Filter tracks pull + zoom with no transition (would lag the finger/pinch).
+   Opacity still eases with pull snap-back.
+   Inactive items only; `[data-active]` opts the active item back out. */
+/* md+ only: below md the snug track is one full-width slide per scrollport
+   (see snug-slides.css), so the sibling dim is invisible — skip the
+   per-frame restyle/repaint on mobile. */
+@media (min-width: 768px) {
+  .lightbox-demo-slide-snug [data-ramka-item] {
+    transition: opacity var(--lightbox-pull-snap-duration, 500ms)
+      var(--lightbox-pull-snap-easing, var(--ease-out-expo));
+  }
+
+  .lightbox-demo-slide-snug [data-ramka-item]:not([data-active]) {
+    --lb-snug-dim: max(var(--lightbox-pull-progress, 0), var(--lightbox-zoom-progress, 0));
+    opacity: calc(1 - var(--lightbox-pull-progress, 0) * 0.85);
+    filter: opacity(calc(1 - var(--lb-snug-dim)))
+      blur(calc(var(--lb-snug-dim) * 6px));
+  }
+
+  /* No transition while pulling or dismissing — it only serves snap-back. */
+  .lightbox-demo-content:is([data-pulling], [data-pull-dismissing])
+    .lightbox-demo-slide-snug
+    [data-ramka-item] {
+    transition: none;
+  }
+}
+
+.lightbox-demo-content[data-zoomed] .lightbox-demo-slide-snug:has([data-ramka-item][data-active]) {
+  z-index: 1;
+}
+
+/* Chrome fade — visibility keeps hidden controls out of tab order. */
+.lightbox-demo-chrome-hide {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 200ms,
+    visibility 0s linear 0s;
+}
+
+@starting-style {
+  .lightbox-demo-chrome-hide {
+    opacity: 0;
+  }
+}
+
+.lightbox-demo-content:is([data-pulling], [data-pull-dismissing]) .lightbox-demo-chrome-hide {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms,
+    visibility 0s linear 200ms;
+}
+
+.lightbox-demo-content[data-zoomed] .lightbox-demo-chrome-bottom.lightbox-demo-chrome-hide {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms,
+    visibility 0s linear 200ms;
+}
+
+/*
+ * Zoomed media must never slide under the thumbnail strip: while zoomed
+ * (including the zoom-in animation — `data-zoomed` arms at commit, and stays
+ * through zoom-out), the slides paint above the fading bottom band. Only the
+ * bottom band drops — the top controls (zoom/close) keep their z-30 above
+ * the media so they stay clickable on desktop.
+ */
+.lightbox-demo-content[data-zoomed] .lightbox-demo-slides {
+  z-index: 10;
+}
+
+.lightbox-demo-content[data-zoomed] .lightbox-demo-chrome-bottom {
+  z-index: 0;
+}
+
+@media (max-width: 767px) {
+  .lightbox-demo-content[data-zoomed] .lightbox-demo-chrome-top.lightbox-demo-chrome-hide {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 200ms,
+      visibility 0s linear 200ms;
+  }
+}
+
+/*
+ * Individual controls that bow out while zoomed even though the top chrome
+ * stays (e.g. the theater/peek toggle — flipping layouts would remount the
+ * track and drop the zoom). Pair with .lightbox-demo-chrome-hide for the
+ * resting opacity/visibility/transition base.
+ */
+.lightbox-demo-content[data-zoomed] .lightbox-demo-zoom-hide {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms,
+    visibility 0s linear 200ms;
+}
+
+
+
+/**
+ * Snug slides track + responsive slide width.
+ *
+ * Mobile (< md): full scrollport width like bleed (via slide-pad flex). End spacers off.
+ *
+ * Desktop (md+): aspect width from `--lightbox-snug-ratio` on each card;
+ * ::before/::after sized to center the first/last card, minus one track `gap`
+ * (flex gap sits between each pseudo-element and its adjacent slide).
+ */
+
+.lightbox-demo-slides-snug {
+  --lightbox-snug-gap: 1.25rem;
+  --lightbox-snug-slide-width-start: min(
+    calc(100cqw - 2 * var(--lightbox-inset-inline)),
+    calc(
+      (100cqh - var(--lightbox-inset-top) - var(--lightbox-inset-bottom)) *
+        var(--lightbox-snug-ratio-start, 1)
+    )
+  );
+  --lightbox-snug-slide-width-end: min(
+    calc(100cqw - 2 * var(--lightbox-inset-inline)),
+    calc(
+      (100cqh - var(--lightbox-inset-top) - var(--lightbox-inset-bottom)) *
+        var(--lightbox-snug-ratio-end, 1)
+    )
+  );
+  gap: var(--lightbox-snug-gap);
+}
+
+.lightbox-demo-content-snug .lightbox-demo-slide-snug {
+  --lightbox-snug-slide-width: min(
+    calc(100cqw - 2 * var(--lightbox-inset-inline)),
+    calc(
+      (100cqh - var(--lightbox-inset-top) - var(--lightbox-inset-bottom)) *
+        var(--lightbox-snug-ratio)
+    )
+  );
+}
+
+@media (min-width: 768px) {
+  .lightbox-demo-content-snug .lightbox-demo-slide-snug {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: var(--lightbox-snug-slide-width);
+  }
+
+  .lightbox-demo-slides-snug::before,
+  .lightbox-demo-slides-snug::after {
+    content: '';
+    pointer-events: none;
+  }
+
+  .lightbox-demo-slides-snug::before {
+    flex: 0 0
+      calc(
+        (100cqw - var(--lightbox-snug-slide-width-start)) / 2 - var(--lightbox-snug-gap)
+      );
+  }
+
+  .lightbox-demo-slides-snug::after {
+    flex: 0 0
+      calc((100cqw - var(--lightbox-snug-slide-width-end)) / 2 - var(--lightbox-snug-gap));
+  }
+}
+
+/**
+ * Docs-only thumbnail-strip cosmetics (default gallery chrome).
+ *
+ * Library ThumbnailStrip owns midline padding, overflow clip, and the
+ * ScrollTimeline → track transform link. Selection chrome here is a simple
+ * floating square. Aspect-morph nine-slice lives on the debug recipes page.
+ */
+
+.lightbox-demo-thumbnail-strip {
+  --lightbox-demo-thumb-h: 4.5rem;
+  --lightbox-demo-thumbnail-strip-fade: 40px;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  /* Fits the floating indicator's overhang (3px gap + 2px stroke). */
+  padding-block: 0.3125rem;
+  /*
+   * Soft clip on both edges. Stops at 25/50/75% of the fade use smoothstep
+   * alphas (t²(3−2t)) so the dissolve eases in/out instead of a hard ramp.
+   */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.156) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.25),
+    rgb(0 0 0 / 0.5) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.5),
+    rgb(0 0 0 / 0.844) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.75),
+    #000 var(--lightbox-demo-thumbnail-strip-fade),
+    #000 calc(100% - var(--lightbox-demo-thumbnail-strip-fade)),
+    rgb(0 0 0 / 0.844) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.75),
+    rgb(0 0 0 / 0.5) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.5),
+    rgb(0 0 0 / 0.156) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.25),
+    rgb(0 0 0 / 0) 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.156) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.25),
+    rgb(0 0 0 / 0.5) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.5),
+    rgb(0 0 0 / 0.844) calc(var(--lightbox-demo-thumbnail-strip-fade) * 0.75),
+    #000 var(--lightbox-demo-thumbnail-strip-fade),
+    #000 calc(100% - var(--lightbox-demo-thumbnail-strip-fade)),
+    rgb(0 0 0 / 0.844) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.75),
+    rgb(0 0 0 / 0.5) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.5),
+    rgb(0 0 0 / 0.156) calc(100% - var(--lightbox-demo-thumbnail-strip-fade) * 0.25),
+    rgb(0 0 0 / 0) 100%
+  );
+}
+
+/*
+ * Hidden until the library has positioned the track against the Slides
+ * scroller (`data-positioned`, set in a layout effect before first client
+ * paint). Client-side opens carry the attribute on their first painted frame,
+ * so this never hides anything there. It only matters for pages that
+ * server-render an open lightbox (URL-synced state deep links): scroll/transform
+ * positions cannot be serialized into HTML, so the SSR'd strip sits at offset
+ * 0 until hydration — a strip pointing at the wrong photo reads as broken,
+ * a strip fading in a beat late reads as loading.
+ */
+.lightbox-demo-thumbnail-strip:not([data-positioned]) {
+  opacity: 0;
+}
+
+.lightbox-demo-thumbnail-strip[data-positioned] {
+  opacity: 1;
+  transition: opacity 200ms ease-out;
+}
+
+.lightbox-demo-thumbnail-strip [data-ramka-thumbnail-strip-track] {
+  display: flex;
+  width: max-content;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+.lightbox-demo-thumbnail-strip [role='tab'] {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  width: var(--lightbox-demo-thumb-h);
+  height: var(--lightbox-demo-thumb-h);
+  flex-shrink: 0;
+  overflow: hidden;
+  margin: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.lightbox-demo-thumbnail-strip [role='tab'] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Stationary midline square — same size as a thumb + 3px gap + 2px stroke. */
+.lightbox-demo-thumbnail-strip-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: calc(var(--lightbox-demo-thumb-h) + 10px);
+  height: calc(var(--lightbox-demo-thumb-h) + 10px);
+  border-radius: calc(0.5rem + 3px);
+  border: 2px solid #fff;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+
+/* Thumb-jump slides crossfade CSS is injected by the library — tune with
+   `--lightbox-select-vt-*` on Slides (or a parent). */
+
+/* The landing demo's twelve-tile wall has a deliberate crop rhythm. */
+.uplink-ramka-grid[data-demo-wall] > :nth-child(1) { --uplink-ramka-tile-ratio: 3/2; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(2) { --uplink-ramka-tile-ratio: 4/5; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(3) { --uplink-ramka-tile-ratio: 12/7; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(4) { --uplink-ramka-tile-ratio: 1; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(5) { --uplink-ramka-tile-ratio: 16/9; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(6) { --uplink-ramka-tile-ratio: 1; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(7) { --uplink-ramka-tile-ratio: 16/11; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(8) { --uplink-ramka-tile-ratio: 4/5; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(9) { --uplink-ramka-tile-ratio: 4/3; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(10) { --uplink-ramka-tile-ratio: 16/9; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(11) { --uplink-ramka-tile-ratio: 4/5; }
+.uplink-ramka-grid[data-demo-wall] > :nth-child(12) { --uplink-ramka-tile-ratio: 16/15; }
+@media (max-width: 767px) {
+	.uplink-ramka-grid[data-demo-wall] > :is(:nth-child(5), :nth-child(9)) { break-before: column; }
+}
+@media (min-width: 768px) {
+	.uplink-ramka-grid[data-demo-wall] > :is(:nth-child(4), :nth-child(7), :nth-child(10)) { break-before: column; }
+	.uplink-ramka-grid[data-demo-wall] > :nth-child(6) { --uplink-ramka-tile-ratio: 16/15; }
+	.uplink-ramka-grid[data-demo-wall] > :nth-child(7) { --uplink-ramka-tile-ratio: 5/3; }
+	.uplink-ramka-grid[data-demo-wall] > :nth-child(8) { --uplink-ramka-tile-ratio: 5/6; }
+	.uplink-ramka-grid[data-demo-wall] > :nth-child(9) { --uplink-ramka-tile-ratio: 10/7; }
+	.uplink-ramka-grid[data-demo-wall] > :nth-child(12) { --uplink-ramka-tile-ratio: 16/11; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.uplink-ramka-backdrop, .uplink-ramka-content,
+	.uplink-ramka-content .lightbox-demo-chrome-hide { transition-duration: 0ms; }
+}

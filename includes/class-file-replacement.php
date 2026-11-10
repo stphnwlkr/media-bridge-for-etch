@@ -19,6 +19,10 @@ final class File_Replacement {
 
 	public function assets(): void {
 		if ( empty( Plugin::settings()['file_replacement'] ) || ! current_user_can( 'upload_files' ) ) return;
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if ( ! $screen || ( ! in_array( $screen->base, array( 'upload', 'media', 'post' ), true ) && 'media_page_etch-collections' !== $screen->id ) ) return;
+		} elseif ( 'magic' !== sanitize_key( wp_unslash( $_GET['etch'] ?? '' ) ) ) return; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only builder context.
 		Upload_Workspace::assets();
 		wp_enqueue_style( 'uplink-mbe-file-replacement', UPLINK_MBE_URL . 'assets/file-replacement.css', array(), UPLINK_MBE_ASSET_VERSION );
 		Upload_Workspace::ui_assets( array( 'uplink-mbe-file-replacement' ) );

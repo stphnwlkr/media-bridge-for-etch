@@ -79,6 +79,22 @@
 	line-height: 0;
 }
 
+.wp-block-uplinkpress-collection-gallery .uplink-mbe-custom-lightbox-trigger[data-uplink-mbe-gallery-more] {
+	position: relative;
+}
+
+.wp-block-uplinkpress-collection-gallery .uplink-mbe-custom-lightbox-trigger[data-uplink-mbe-gallery-more]::after {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	border-radius: inherit;
+	background: rgb(0 0 0 / 65%);
+	color: #fff;
+	font: 600 clamp(1.25rem, 4vw, 3rem)/1 system-ui, sans-serif;
+	content: "+" attr(data-uplink-mbe-gallery-more);
+}
+
 .wp-block-uplinkpress-collection-gallery .uplink-mbe-custom-lightbox-trigger:focus-visible {
 	position: relative;
 	z-index: 3;
@@ -531,6 +547,96 @@ html.uplink-mbe-lightbox-open body {
 	object-fit: contain !important;
 	transform-origin: center;
 	transition: transform 160ms ease;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow) .uplink-mbe-custom-lightbox-media {
+	touch-action: none;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow) {
+	padding: clamp(0px, 0.9vw, 12px) 0;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow) .uplink-mbe-custom-lightbox-dialog {
+	width: 100%;
+	height: 100%;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.has-vertical-thumbnails) .uplink-mbe-custom-lightbox-thumbnails {
+	justify-content: safe center;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer .uplink-mbe-custom-lightbox-image {
+	translate: var(--uplink-mbe-photo-drag, none);
+	transform-origin: top left;
+	transition: none;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer .uplink-mbe-custom-lightbox-media:dir(rtl) > .uplink-mbe-custom-lightbox-image {
+	transform-origin: top right;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer .uplink-mbe-custom-lightbox-navigation img {
+	display: none;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow) .uplink-mbe-custom-lightbox-stage {
+	position: relative;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow):not(.is-peek-view) .uplink-mbe-custom-lightbox-navigation {
+	position: absolute;
+	z-index: 1;
+	inset-inline-start: 4px;
+}
+
+.uplink-mbe-custom-lightbox.has-photo-viewer:not(.is-slideshow):not(.is-peek-view) .uplink-mbe-custom-lightbox-navigation.is-next {
+	inset-inline-start: auto;
+	inset-inline-end: 4px;
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view:not(.is-slideshow) .uplink-mbe-custom-lightbox-stage {
+	grid-template-columns: clamp(44px, 9vw, 185px) minmax(0, 1fr) clamp(44px, 9vw, 185px);
+	gap: clamp(6px, 1vw, 20px);
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view:not(.is-slideshow) .uplink-mbe-custom-lightbox-navigation {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 8px;
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view:not(.is-slideshow) .uplink-mbe-custom-lightbox-navigation img {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view .uplink-mbe-custom-lightbox-navigation span {
+	z-index: 1;
+	padding: 0 8px 5px;
+	border-radius: 4px;
+	background: #111a;
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view .uplink-mbe-custom-lightbox-navigation:not(:is(:hover, :focus-visible)) span {
+	opacity: 0;
+}
+
+.uplink-mbe-custom-lightbox.is-peek-view:not(.is-slideshow) .uplink-mbe-custom-lightbox-media {
+	border-radius: 8px;
+}
+
+::view-transition-group(uplink-mbe-gallery-photo) {
+	animation-duration: 260ms;
 }
 
 .uplink-mbe-custom-lightbox-info {

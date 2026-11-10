@@ -16,27 +16,41 @@ final class Image_References {
 		uksort( $out, static fn( $a, $b ) => strlen( $b ) <=> strlen( $a ) );
 		return $out;
 	}
-	private static function objects( $value ): bool {
-		if ( is_object( $value ) ) return true;
-		if ( is_array( $value ) ) foreach ( $value as $item ) if ( self::objects( $item ) ) return true;
-		return false;
-	}
+	/** Bound the entire traversal, including nested serialized strings and cycles. */
 	public static function replace( string $raw, array $map ): string {
-		if ( is_serialized( $raw ) ) {
-			// Never instantiate classes from database values while rewriting references.
-			$value = @unserialize( $raw, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Class creation is explicitly disabled.
-			if ( self::objects( $value ) ) return $raw;
-			$walk = static function ( $item ) use ( &$walk, $map ) {
-				if ( is_string( $item ) ) return self::replace( $item, $map );
-				if ( is_array( $item ) ) foreach ( $item as $key => $child ) $item[ $key ] = $walk( $child );
-				return $item;
-			};
-			$new = $walk( $value );
-			return $new === $value ? $raw : serialize( $new ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Preserve the existing database serialization format.
-		}
 		if ( ! $map ) return $raw;
-		$pattern = '~(?<![a-zA-Z0-9:])(?:' . implode( '|', array_map( static fn( $url ) => preg_quote( $url, '~' ), array_keys( $map ) ) ) . ')(?![a-zA-Z0-9._%+\x7e-])~';
+		$remaining = 10000;
+		$safe = true;
+		$result = self::rewrite( $raw, $map, 0, $remaining, $safe );
+		return $safe ? $result : $raw;
+	}
+	private static function rewrite( string $raw, array $map, int $depth, int &$remaining, bool &$safe ): string {
+		if ( ! $safe || $depth > 64 || --$remaining < 0 ) { $safe = false; return $raw; }
+		if ( is_serialized( $raw ) ) {
+			// Do not instantiate objects. The traversal below also rejects objects and cycles.
+			$value = @unserialize( $raw, array( 'allowed_classes' => false, 'max_depth' => 64 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Bounded decoding with class creation disabled.
+			if ( false === $value && 'b:0;' !== $raw ) { $safe = false; return $raw; }
+			$changed = false;
+			$new = self::walk( $value, $map, $depth + 1, $remaining, $safe, $changed );
+			return $safe && $changed ? serialize( $new ) : $raw; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Preserve the existing database serialization format.
+		}
+		$pattern = '~(?<![a-zA-Z0-9:])(?:' . implode( '|', array_map( static fn( $url ) => preg_quote( $url, '~' ), array_keys( $map ) ) ) . ')(?![a-zA-Z0-9._%+\\x7e-])~';
 		return preg_replace_callback( $pattern, static fn( $m ) => $map[ $m[0] ], $raw ) ?? $raw;
+	}
+	private static function walk( $value, array $map, int $depth, int &$remaining, bool &$safe, bool &$changed ) {
+		if ( ! $safe || $depth > 64 || --$remaining < 0 || is_object( $value ) ) { $safe = false; return $value; }
+		if ( is_string( $value ) ) {
+			$new = self::rewrite( $value, $map, $depth + 1, $remaining, $safe );
+			$changed = $changed || $new !== $value;
+			return $new;
+		}
+		if ( is_array( $value ) ) {
+			foreach ( $value as $key => $child ) {
+				$value[ $key ] = self::walk( $child, $map, $depth + 1, $remaining, $safe, $changed );
+				if ( ! $safe ) break;
+			}
+		}
+		return $value;
 	}
 	/** Must run inside the conversion transaction. Journal supports nontransactional rollback. */
 	public static function update( array $urls, array &$journal ): int {

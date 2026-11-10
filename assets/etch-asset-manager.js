@@ -28,8 +28,14 @@
 	let uniformPreference;
 	let uniformOrigin;
 	let sizeControlId = 0;
-	let manifestPromise;
+	const coreObservers = new Map();
+	const dirtyCores = new Set();
+	const previewJobs = new WeakMap();
+	const identifiedTiles = new WeakMap();
+	let refreshFrame = 0;
 	const fontFacePromises = new Map();
+	const loadedFontFaces = new Set();
+	let fontRevision = 0;
 	const fontPreviewData = new WeakMap();
 	const fontPreviewObserver = 'IntersectionObserver' in window ? new IntersectionObserver( function ( entries ) {
 		entries.forEach( function ( entry ) {
@@ -41,41 +47,9 @@
 		} );
 	}, { rootMargin: '160px' } ) : null;
 
-	function loadManifest() {
-		if ( manifestPromise ) {
-			return manifestPromise;
-		}
-		if ( ! config.ajaxUrl || ! config.nonce ) {
-			manifestPromise = Promise.resolve( null );
-			return manifestPromise;
-		}
-		const body = new URLSearchParams( {
-			action: 'uplink_mbe_etch_asset_manifest',
-			nonce: config.nonce,
-		} );
-		manifestPromise = window.fetch( config.ajaxUrl, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-			body: body.toString(),
-		} ).then( function ( response ) {
-			if ( ! response.ok ) {
-				throw new Error( 'Font preview index request failed.' );
-			}
-			return response.json();
-		} ).then( function ( response ) {
-			if ( ! response?.success || ! Array.isArray( response.data?.assets ) ) {
-				throw new Error( 'Font preview index is unavailable.' );
-			}
-			return response.data;
-		} ).catch( function () {
-			return null;
-		} );
-		return manifestPromise;
-	}
-
 	function fontExtension( asset ) {
-		return ( asset?.fileName || asset?.fontUrl || '' ).split( '.' ).pop().split( /[?#]/ )[ 0 ].toLowerCase();
+		// Etch's fileName can be an editable title without an extension.
+		return ( asset?.fontUrl || asset?.fileName || '' ).split( /[?#]/ )[ 0 ].split( '.' ).pop().toLowerCase();
 	}
 
 	function isFontAsset( asset ) {
@@ -86,84 +60,121 @@
 		if ( ! preview?.isConnected || ! isFontAsset( asset ) || 'function' !== typeof window.FontFace ) {
 			return;
 		}
-		const family = 'uplink-mbe-etch-font-' + String( asset.id );
-		let promise = fontFacePromises.get( asset.id );
+		const revision = fontRevision;
+		const key = asset.id + ':' + asset.fontUrl;
+		const family = 'uplink-mbe-etch-font-' + String( asset.id ) + '-' + revision;
+		let promise = fontFacePromises.get( key );
 		if ( ! promise ) {
 			const face = new FontFace( family, 'url(' + JSON.stringify( asset.fontUrl ) + ')' );
 			promise = face.load().then( function ( loadedFace ) {
-				document.fonts.add( loadedFace );
+				if ( revision === fontRevision ) {
+					document.fonts.add( loadedFace );
+					loadedFontFaces.add( loadedFace );
+				}
 				return family;
 			} );
-			fontFacePromises.set( asset.id, promise );
+			fontFacePromises.set( key, promise );
 		}
 		try {
-			preview.style.fontFamily = await promise;
+			const loadedFamily = await promise;
+			if ( revision !== fontRevision || ! preview.isConnected ) return;
+			preview.style.fontFamily = loadedFamily;
 			preview.classList.add( 'is-loaded' );
 		} catch ( error ) {
-			fontFacePromises.delete( asset.id );
+			if ( fontFacePromises.get( key ) === promise ) fontFacePromises.delete( key );
 			preview.classList.add( 'is-failed' );
 		}
 	}
 
-	function visibleSearchQuery( core ) {
-		const inputs = core.querySelectorAll( 'input[type="search"], input[type="text"]' );
-		for ( const input of inputs ) {
-			if ( ! input.disabled && null !== input.offsetParent ) {
-				return input.value.trim().toLowerCase();
-			}
+	function nativeAssetId( element ) {
+		if ( ! element ) return 0;
+		for ( const name of [ 'data-asset-id', 'data-media-id', 'data-attachment-id' ] ) {
+			const id = Number( element.getAttribute( name ) );
+			if ( Number.isSafeInteger( id ) && id > 0 ) return id;
 		}
-		return '';
+		return 0;
 	}
 
-	function selectedCollectionId( core ) {
-		const collection = core.querySelector( '.collection-list__item--selected[data-collection-id]' );
-		if ( collection ) {
-			return Number( collection.dataset.collectionId );
-		}
-		const sidebarItems = Array.from( core.querySelectorAll( '.asset-sidebar > .asset-sidebar__item' ) );
-		const selected = sidebarItems.findIndex( function ( item ) {
-			return item.getAttribute( 'selected' ) === 'true';
-		} );
-		return 1 === selected ? -1 : null;
+	function detailAsset( core, manifest ) {
+		const details = core.querySelector( '.details-content' );
+		if ( ! details ) return undefined;
+		const badge = details.querySelector( '.id-badge-content' )?.textContent.match( /^\s*ID\s*(\d+)\s*$/ );
+		const id = nativeAssetId( details ) || Number( badge?.[ 1 ] || 0 );
+		if ( id ) return manifest.byId.get( id );
+		const path = details.querySelector( '.details-path-basename' )?.textContent.trim();
+		const extension = details.querySelector( '.details-path-ext' )?.textContent.trim() || '';
+		return path ? manifest.byPath.get( path + extension ) : undefined;
 	}
 
-	function collectionFamily( collectionId, collections ) {
-		const ids = new Set( [ collectionId ] );
-		let changed = true;
-		while ( changed ) {
-			changed = false;
-			collections.forEach( function ( collection ) {
-				if ( ids.has( Number( collection.parentId ) ) && ! ids.has( Number( collection.id ) ) ) {
-					ids.add( Number( collection.id ) );
-					changed = true;
-				}
-			} );
+	function tileAsset( tile, manifest ) {
+		const id = nativeAssetId( tile ) || nativeAssetId( tile.parentElement );
+		if ( id ) return manifest.byId.get( id );
+		const src = tile.querySelector( 'img' )?.getAttribute( 'src' );
+		if ( src ) {
+			try { return manifest.byUrl.get( new URL( src, window.location.href ).href ); } catch ( error ) { return undefined; }
 		}
-		return ids;
+		// Etch keys grid wrappers by attachment ID. Remember only identities
+		// established by native attachment details, never by array position.
+		return manifest.byId.get( identifiedTiles.get( tile ) );
 	}
 
-	function filteredAssets( core, manifest ) {
-		const collectionId = selectedCollectionId( core );
-		const collectionIds = collectionId && collectionId > 0 ? collectionFamily( collectionId, manifest.collections || [] ) : null;
-		const query = visibleSearchQuery( core );
+	function visibleAssets( core, manifest ) {
+		const selected = core.querySelector( '.collection-list__item--selected[data-collection-id]' );
+		let collectionId = selected ? Number( selected.dataset.collectionId ) : 0;
+		if ( ! selected ) {
+			const sidebar = Array.from( core.querySelectorAll( '.asset-sidebar > .asset-sidebar__item' ) );
+			if ( sidebar.findIndex( function ( item ) { return item.getAttribute( 'selected' ) === 'true'; } ) === 1 ) collectionId = -1;
+		}
+		const family = new Set( [ collectionId ] );
+		if ( collectionId > 0 ) {
+			if ( ! Array.isArray( manifest.collections ) ) return null;
+			let previousSize;
+			do {
+				previousSize = family.size;
+				manifest.collections.forEach( function ( collection ) {
+					if ( family.has( Number( collection.parentId ) ) ) family.add( Number( collection.id ) );
+				} );
+			} while ( family.size !== previousSize );
+		}
+		if ( collectionId && manifest.assets.some( function ( asset ) { return ! asset.collectionIds; } ) ) return null;
+		const search = core.querySelector( '.asset-core__search input' )?.value.trim().toLowerCase() || '';
+		// Etch's grid preserves the native media request's descending ID order.
+		// The public list API returns a different order, so normalize explicitly.
 		return manifest.assets.filter( function ( asset ) {
-			if ( -1 === collectionId && asset.collectionIds.length ) {
-				return false;
-			}
-			if ( collectionIds && ! asset.collectionIds.some( function ( id ) { return collectionIds.has( Number( id ) ); } ) ) {
-				return false;
-			}
-			if ( query ) {
-				const haystack = [ asset.fileName, asset.altText, asset.mimeType ].join( ' ' ).toLowerCase();
-				return haystack.includes( query );
-			}
-			return true;
-		} );
+			if ( collectionId === -1 && asset.collectionIds.length ) return false;
+			if ( collectionId > 0 && ! asset.collectionIds.some( function ( id ) { return family.has( id ); } ) ) return false;
+			return ! search || [ asset.searchName, asset.altText, asset.mimeType ].some( function ( value ) { return value.toLowerCase().includes( search ); } );
+		} ).sort( function ( a, b ) { return b.id - a.id; } );
+	}
+
+	function gridSnapshot( core, manifest, tiles, detail ) {
+		const assets = visibleAssets( core, manifest );
+		// Opaque font placeholders expose no ID or URL. Restore their previews
+		// only when the complete native view agrees with the current snapshot.
+		if ( ! assets || assets.length !== tiles.length ) return null;
+		const selectionCount = tiles.filter( function ( tile ) { return tile.classList.contains( 'asset-grid-item--selected' ); } ).length;
+		for ( let index = 0; index < tiles.length; index += 1 ) {
+			const tile = tiles[ index ];
+			const asset = assets[ index ];
+			const nativeId = nativeAssetId( tile ) || nativeAssetId( tile.parentElement );
+			if ( nativeId && nativeId !== asset.id ) return null;
+			const known = tileAsset( tile, manifest );
+			if ( known && known.id !== asset.id ) return null;
+			const image = tile.querySelector( 'img' );
+			if ( image && image.getAttribute( 'alt' ) !== asset.searchName ) return null;
+			if ( detail && tile.classList.contains( 'asset-grid-item--selected' ) && selectionCount === 1 && detail.id !== asset.id ) return null;
+		}
+		return assets;
 	}
 
 	function removeFontPreview( tile ) {
 		tile.classList.remove( fontItemClass );
-		tile.querySelector( '.' + fontPreviewClass )?.remove();
+		const preview = tile.querySelector( '.' + fontPreviewClass );
+		if ( preview ) {
+			fontPreviewObserver?.unobserve( preview );
+			fontPreviewData.delete( preview );
+			preview.remove();
+		}
 		delete tile.dataset.uplinkMbeFontId;
 	}
 
@@ -203,7 +214,12 @@
 			return;
 		}
 		details.classList.remove( 'uplink-mbe-etch-detail-font' );
-		details.querySelector( '.uplink-mbe-etch-detail-font-preview' )?.remove();
+		const preview = details.querySelector( '.uplink-mbe-etch-detail-font-preview' );
+		if ( preview ) {
+			fontPreviewObserver?.unobserve( preview );
+			fontPreviewData.delete( preview );
+			preview.remove();
+		}
 		delete details.dataset.uplinkMbeFontId;
 	}
 
@@ -238,27 +254,23 @@
 	}
 
 	function enhanceFontPreviews( core ) {
-		loadManifest().then( function ( manifest ) {
-			if ( ! manifest || ! core.isConnected ) {
-				return;
-			}
-			const assets = filteredAssets( core, manifest );
-			let assetIndex = 0;
-			core.querySelectorAll( '.asset-grid > div' ).forEach( function ( wrapper ) {
-				const tile = wrapper.querySelector( ':scope > .asset-grid-item' );
-				if ( ! tile ) {
-					return;
-				}
-				if ( tile.classList.contains( 'asset-grid-item--uploading' ) ) {
-					removeFontPreview( tile );
-					return;
-				}
-				syncFontPreview( tile, assets[ assetIndex ] );
-				assetIndex += 1;
+		if ( ! window.uplinkMbeEtchAssetIndex ) return;
+		if ( ! core.querySelector( '.asset-grid-item, .details-content' ) ) return;
+		const job = {};
+		previewJobs.set( core, job );
+		window.uplinkMbeEtchAssetIndex.getIndex().then( function ( manifest ) {
+			if ( ! manifest || ! core.isConnected || previewJobs.get( core ) !== job ) return;
+			const selected = core.querySelectorAll( '.asset-grid-item--selected:not(.asset-grid-item--uploading)' );
+			const detail = detailAsset( core, manifest );
+			if ( selected.length === 1 && detail ) identifiedTiles.set( selected[ 0 ], detail.id );
+			const tiles = Array.from( core.querySelectorAll( '.asset-grid-item:not(.asset-grid-item--uploading)' ) );
+			const snapshot = gridSnapshot( core, manifest, tiles, detail );
+			core.querySelectorAll( '.asset-grid-item--uploading' ).forEach( removeFontPreview );
+			tiles.forEach( function ( tile, index ) {
+				const asset = tileAsset( tile, manifest ) || snapshot?.[ index ];
+				syncFontPreview( tile, asset );
 			} );
-			const selectedTile = core.querySelector( '.asset-grid-item--selected[data-uplink-mbe-font-id]' );
-			const selectedId = Number( selectedTile?.dataset.uplinkMbeFontId || 0 );
-			syncDetailFontPreview( core, manifest.assets.find( function ( asset ) { return asset.id === selectedId; } ) );
+			syncDetailFontPreview( core, detail );
 		} );
 	}
 
@@ -701,12 +713,12 @@
 						event.preventDefault();
 						event.stopImmediatePropagation();
 					}
-					window.requestAnimationFrame( refresh );
+					refresh();
 					return;
 				}
 				setPreference( false );
 				setActive( core, button, false );
-				window.requestAnimationFrame( refresh );
+				refresh();
 			}, true );
 			divider.before( button, sizeWidget );
 		}
@@ -723,30 +735,117 @@
 		}
 	}
 
+	function queueCore( core ) {
+		if ( ! core.isConnected ) return;
+		dirtyCores.add( core );
+		if ( refreshFrame ) return;
+		refreshFrame = window.requestAnimationFrame( function () {
+			refreshFrame = 0;
+			const batch = Array.from( dirtyCores );
+			dirtyCores.clear();
+			batch.forEach( function ( current ) {
+				if ( current.isConnected ) setupCore( current );
+			} );
+		} );
+	}
+
 	function refresh() {
-		document.querySelectorAll( '.asset-core' ).forEach( setupCore );
+		coreObservers.forEach( function ( currentObserver, core ) { queueCore( core ); } );
+	}
+
+	function ownNode( node ) {
+		const element = node.nodeType === 1 ? node : node.parentElement;
+		return element?.closest( '.' + fontPreviewClass + ', .uplink-mbe-etch-detail-font-preview, .' + sizeWidgetClass + ', .' + buttonClass + ', .' + sidebarResizeClass );
+	}
+
+	function releaseFontPreviews( root ) {
+		const selector = '.' + fontPreviewClass + ', .uplink-mbe-etch-detail-font-preview';
+		const previews = Array.from( root.querySelectorAll?.( selector ) || [] );
+		if ( root.matches?.( selector ) ) previews.push( root );
+		previews.forEach( function ( preview ) {
+			fontPreviewObserver?.unobserve( preview );
+			fontPreviewData.delete( preview );
+		} );
+	}
+
+	function relevantMutation( record ) {
+		if ( ownNode( record.target ) ) return false;
+		if ( record.type === 'attributes' && record.attributeName === 'class' ) {
+			const nativeClasses = function ( value ) { return ( value || '' ).split( /\s+/ ).filter( function ( name ) { return name && ! name.startsWith( 'uplink-mbe-' ); } ).sort().join( ' ' ); };
+			return nativeClasses( record.oldValue ) !== nativeClasses( record.target.getAttribute( 'class' ) );
+		}
+		if ( record.type === 'childList' ) {
+			return Array.from( record.addedNodes ).concat( Array.from( record.removedNodes ) ).some( function ( node ) { return ! ownNode( node ); } );
+		}
+		return true;
+	}
+
+	function discoverCores( root ) {
+		const cores = Array.from( root.querySelectorAll?.( '.asset-core' ) || [] );
+		if ( root.matches?.( '.asset-core' ) ) cores.push( root );
+		cores.forEach( function ( core ) {
+			if ( coreObservers.has( core ) || ! core.isConnected ) return;
+			const currentObserver = new MutationObserver( function ( records ) {
+				records.forEach( function ( record ) {
+					Array.from( record.removedNodes || [] ).forEach( function ( node ) {
+						if ( ! node.isConnected ) releaseFontPreviews( node );
+					} );
+				} );
+				if ( records.some( relevantMutation ) ) queueCore( core );
+			} );
+			coreObservers.set( core, currentObserver );
+			currentObserver.observe( core, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: [ 'class', 'src', 'data-asset-id', 'data-media-id', 'data-attachment-id' ] } );
+			queueCore( core );
+		} );
 	}
 
 	function start() {
-		refresh();
-		observer = new MutationObserver( refresh );
+		discoverCores( document );
+		// The page observer only discovers manager mounts. Builder edits do not
+		// trigger a full-page query or refresh of an already mounted manager.
+		observer = new MutationObserver( function ( records ) {
+			records.forEach( function ( record ) {
+				Array.from( record.addedNodes ).forEach( function ( node ) {
+					if ( node.nodeType === 1 && ! node.parentElement?.closest( '.asset-core' ) ) discoverCores( node );
+				} );
+			} );
+			coreObservers.forEach( function ( currentObserver, core ) {
+				if ( ! core.isConnected ) {
+					releaseFontPreviews( core );
+					currentObserver.disconnect();
+					coreObservers.delete( core );
+					dirtyCores.delete( core );
+					previewJobs.delete( core );
+				}
+			} );
+		} );
 		observer.observe( document.body, { childList: true, subtree: true } );
+		window.uplinkMbeEtchAssetIndex?.subscribe( function () {
+			fontRevision += 1;
+			fontFacePromises.clear();
+			loadedFontFaces.forEach( function ( face ) { document.fonts.delete( face ); } );
+			loadedFontFaces.clear();
+			coreObservers.forEach( function ( currentObserver, core ) {
+				previewJobs.delete( core );
+				core.querySelectorAll( '.' + fontItemClass ).forEach( removeFontPreview );
+				removeDetailFontPreview( core );
+				queueCore( core );
+			} );
+		} );
 		document.addEventListener( 'pointerdown', function ( event ) {
 			if ( ! event.target.closest( '.' + sizeWidgetClass ) ) {
 				closeSizePopovers();
 			}
 		} );
 		document.addEventListener( 'click', function ( event ) {
-			if ( event.target.closest( '.asset-core' ) ) {
-				window.requestAnimationFrame( refresh );
-			}
+			const core = event.target.closest( '.asset-core' );
+			if ( core ) queueCore( core );
 		} );
 		document.addEventListener( 'input', function ( event ) {
-			if ( event.target.closest( '.asset-core' ) ) {
-				window.requestAnimationFrame( refresh );
-			}
+			const core = event.target.closest( '.asset-core' );
+			if ( core ) queueCore( core );
 		} );
-		document.addEventListener( 'keydown', function ( event ) {
+		window.addEventListener( 'keydown', function ( event ) {
 			if ( event.key !== 'Escape' || ! document.querySelector( '.' + sizeButtonClass + '[aria-expanded="true"]' ) ) {
 				return;
 			}

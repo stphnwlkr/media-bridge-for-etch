@@ -32,6 +32,8 @@ final class Native_Media_Library {
 		add_filter( 'redirect_post_location', array( $this, 'preserve_image_editor_context' ), 10, 2 );
 		add_action( 'wp_enqueue_media', array( $this, 'media_modal_assets' ) );
 		add_action( 'wp_enqueue_media', array( $this, 'native_collection_assets' ), 20 );
+		add_action( 'wp_enqueue_media', array( Upload_Workspace::class, 'native_assets' ), 30 );
+		add_action( 'admin_enqueue_scripts', array( Upload_Workspace::class, 'native_assets' ) );
 		add_filter( 'ajax_query_attachments_args', array( $this, 'filter_native_collection_query' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_native_media_list_query' ) );
 		add_filter( 'attachment_fields_to_edit', array( $this, 'native_collection_attachment_field' ), 20, 2 );
@@ -256,6 +258,7 @@ final class Native_Media_Library {
 			array(
 				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 				'nonce'       => wp_create_nonce( self::NONCE ),
+				'collectionNonce' => wp_create_nonce( 'uplink_mbe_native_collection' ),
 				'collections' => $this->native_collection_data(),
 				'counts'      => $this->native_collection_counts(),
 				'parentCountDisplay' => Plugin::settings()['parent_count_display'],
@@ -433,6 +436,7 @@ final class Native_Media_Library {
 		}
 
 		$html     = '<input type="hidden" name="attachments[' . (int) $attachment->ID . '][uplink_mbe_collections_present]" value="1">';
+		$html    .= wp_nonce_field( 'uplink_mbe_native_collection', 'attachments[' . (int) $attachment->ID . '][uplink_mbe_collections_nonce]', false, false );
 		$html    .= '<div class="uplink-mbe-native-assignment-list">';
 		$rendered = array();
 		$render_group = function ( array $collection, bool $is_child = false ) use ( &$render_group, &$rendered, $children_by_parent, $assigned, $attachment ): string {
@@ -491,9 +495,11 @@ final class Native_Media_Library {
 		if ( ! $this->native_collections_are_enabled() || empty( $attachment['uplink_mbe_collections_present'] ) ) {
 			return $post;
 		}
+		$nonce = $attachment['uplink_mbe_collections_nonce'] ?? '';
+		if ( ! is_string( $nonce ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $nonce ) ), 'uplink_mbe_native_collection' ) || ! current_user_can( 'upload_files' ) ) return $post;
 		$attachment_id = absint( $post['ID'] ?? 0 );
 		$taxonomy      = get_taxonomy( $this->etch->taxonomy() );
-		if ( ! $attachment_id || ! $taxonomy || ! current_user_can( 'edit_post', $attachment_id ) || ! current_user_can( $taxonomy->cap->assign_terms ) ) {
+		if ( ! $attachment_id || 'attachment' !== get_post_type( $attachment_id ) || ! $taxonomy || ! current_user_can( 'edit_post', $attachment_id ) || ! current_user_can( $taxonomy->cap->assign_terms ) ) {
 			return $post;
 		}
 
@@ -512,7 +518,8 @@ final class Native_Media_Library {
 		if ( ! $this->native_collections_are_enabled() ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- WordPress verifies the upload request before creating the attachment.
+		$nonce = isset( $_REQUEST['uplink_mbe_collection_nonce'] ) && is_string( $_REQUEST['uplink_mbe_collection_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['uplink_mbe_collection_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'uplink_mbe_native_collection' ) || ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_post', $attachment_id ) || 'attachment' !== get_post_type( $attachment_id ) ) return;
 		$collection_id = absint( $_REQUEST['uplink_mbe_collection'] ?? 0 );
 		$taxonomy      = get_taxonomy( $this->etch->taxonomy() );
 		if ( ! $collection_id || ! $taxonomy || ! current_user_can( $taxonomy->cap->assign_terms ) || ! $this->etch->get_term( $collection_id ) ) {
@@ -928,6 +935,10 @@ final class Native_Media_Library {
 				<div class="uplink-mbe-native-title-group">
 					<div class="uplink-mbe-native-title-row">
 					<h1><?php echo esc_html( $manager_label ); ?></h1>
+					<span class="uplink-mbe-heading-version"><?php
+						/* translators: %s is the installed plugin version. */
+						printf( esc_html__( 'Version %s', 'media-bridge-for-etch' ), esc_html( UPLINK_MBE_VERSION ) );
+					?></span>
 					<button type="button" class="uplink-mbe-info-toggle" id="uplink-mbe-info-toggle" aria-expanded="false" aria-controls="uplink-mbe-info-popup" aria-label="<?php echo esc_attr( $about_label ); ?>">
 							<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
 						</button>
@@ -2557,6 +2568,7 @@ final class Native_Media_Library {
 			return $result;
 		}
 		$attachment_id = absint( $matches[1] );
+		if ( 'attachment' !== get_post_type( $attachment_id ) || ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_post', $attachment_id ) ) return $result;
 		$file          = get_attached_file( $attachment_id );
 		if ( $attachment_id && $file && is_readable( $file ) ) {
 			$this->etch_optimization_before[ $attachment_id ] = (int) filesize( $file );
@@ -2569,6 +2581,7 @@ final class Native_Media_Library {
 			return $response;
 		}
 		$attachment_id = absint( $matches[1] );
+		if ( 'attachment' !== get_post_type( $attachment_id ) || ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_post', $attachment_id ) ) return $response;
 		$original_size = absint( $this->etch_optimization_before[ $attachment_id ] ?? 0 );
 		unset( $this->etch_optimization_before[ $attachment_id ] );
 		$status = $response instanceof \WP_HTTP_Response ? $response->get_status() : 500;

@@ -103,6 +103,18 @@
 			"type": "string",
 			"default": "custom"
 		},
+		"lightboxPhotoViewer": {
+			"type": "boolean",
+			"default": false
+		},
+		"lightboxOpeningView": {
+			"type": "string",
+			"default": "peek"
+		},
+		"visibleImageLimit": {
+			"type": "number",
+			"default": 0
+		},
 		"lightboxShowTitle": {
 			"type": "boolean",
 			"default": true

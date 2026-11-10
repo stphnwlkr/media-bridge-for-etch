@@ -4,10 +4,12 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
+
+Version 2.8.0 adds Ramka Gallery as a separate block, with the demo’s dark lightbox, Peek and Theater views, and a +N photo tile. Both gallery blocks let you set the opening view and the number of visible photos.
 
 == Description ==
 

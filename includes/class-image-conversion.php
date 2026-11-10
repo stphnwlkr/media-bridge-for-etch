@@ -228,9 +228,37 @@ final class Image_Conversion {
 			$info = wp_getimagesize( $path );
 			if ( ! $info || $info['mime'] !== self::FORMATS[ $format ] || $info[0] !== $expected['width'] || $info[1] !== $expected['height'] ) self::fail( __( 'Converted dimensions or format do not match the original image size.', 'media-bridge-for-etch' ) );
 		}
-		$temp = wp_tempnam( 'mbe-conversion' );
-		// phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- Upload origin, actual MIME and dimensions were validated above; keep staging outside public uploads.
-		if ( ! $temp || ! move_uploaded_file( $path, $temp ) ) self::fail( __( 'Could not stage the converted file.', 'media-bridge-for-etch' ) );
+		if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
+		// Keep uncommitted images outside public uploads while retaining WordPress upload checks.
+		$staging_dir = static function ( $dirs ) {
+			$dirs['path'] = untrailingslashit( get_temp_dir() );
+			$dirs['basedir'] = $dirs['path'];
+			$dirs['subdir'] = '';
+			$dirs['url'] = '';
+			$dirs['baseurl'] = '';
+			$dirs['error'] = false;
+			return $dirs;
+		};
+		$upload['name'] = 'mbe-conversion-' . wp_generate_uuid4() . '.' . $format;
+		$upload['type'] = self::FORMATS[ $format ];
+		// WordPress cannot read JPEG XL dimensions yet. Accept only this staged file,
+		// whose signature was checked above and whose real MIME is verified by fileinfo.
+		$jxl_type = static function ( $checked, $file, $filename ) use ( $path, $format ) {
+			if ( 'jxl' === $format && $file === $path && 'jxl' === strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) ) && class_exists( '\finfo' ) && 'image/jxl' === ( new \finfo( FILEINFO_MIME_TYPE ) )->file( $file ) ) {
+				return array( 'ext' => 'jxl', 'type' => 'image/jxl', 'proper_filename' => false );
+			}
+			return $checked;
+		};
+		add_filter( 'upload_dir', $staging_dir );
+		if ( 'jxl' === $format ) add_filter( 'wp_check_filetype_and_ext', $jxl_type, 10, 3 );
+		try {
+			$handled = wp_handle_upload( $upload, array( 'test_form' => false, 'mimes' => array( $format => self::FORMATS[ $format ] ) ) );
+		} finally {
+			remove_filter( 'upload_dir', $staging_dir );
+			if ( 'jxl' === $format ) remove_filter( 'wp_check_filetype_and_ext', $jxl_type, 10 );
+		}
+		if ( ! empty( $handled['error'] ) || empty( $handled['file'] ) ) self::fail( __( 'Could not stage the converted file.', 'media-bridge-for-etch' ) );
+		$temp = $handled['file'];
 		if ( isset( $job['staged'][ $key ] ) ) wp_delete_file( $job['staged'][ $key ] );
 		$job['staged'][ $key ] = $temp; $job['format'] = $format; $job['quality'] = $quality;
 		update_option( 'uplink_mbe_conversion_' . $token, $job, false );

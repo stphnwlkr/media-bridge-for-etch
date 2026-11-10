@@ -4,7 +4,7 @@ Tags: etch, media, folders, wicked folders, happyfiles
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPL-3.0-or-later
 
 Manage Etch Collections directly in WordPress, with optional Wicked Folders or HappyFiles synchronization.
@@ -20,6 +20,10 @@ Etch must be installed and active. Wicked Folders and HappyFiles are optional in
 Use the WordPress Media Library with Etch Collection tools, or choose the Enhanced Media Manager with a customizable name, collection navigation, and grid, masonry, and list views. Settings are under Media > Uplink Media Bridge.
 
 The Enhanced Manager includes search, filters, adjustable thumbnail sizes, bulk collection assignments, attachment editing, and light, dark, or automatic appearance. The collection sidebar has a remembered draggable width in the WordPress, Enhanced, and Etch Asset Manager views. Media Health helps identify issues such as missing alt text, missing image sizes, and oversized files. Optional EXIF information shows available camera metadata.
+
+= AVIF uploads and missing image sizes =
+
+When the host cannot resize AVIF images, the browser automatically generates missing sizes during uploads. This works in the WordPress library and Enhanced Manager, including registered custom crops. Original AVIF files and their embedded EXIF stay unchanged; browser-generated copies omit EXIF. Keep the upload page open until processing finishes. Failed size generation can be retried without uploading the image again. Existing images can be repaired under Health > Missing image sizes. Local repair supports still AVIF originals up to 40 megapixels and 32 MB.
 
 = Collections and custom image order =
 
@@ -106,6 +110,18 @@ Deactivation and uninstall cleanup options are available in About. Review them b
 25. Etch Collections media manager in list view with thumbnails, file details, collection badges, status icons, and selection controls.
 
 == Upgrade Notice ==
+
+= 2.8.0 =
+Adds Ramka Gallery as a separate block and adds opening-view and photo-limit settings to Collection Gallery.
+
+= 2.7.7 =
+Restores automatic font grid previews removed in 2.7.6. Reload the Etch builder after updating.
+
+= 2.7.6 =
+Improves Etch Asset Manager index freshness, font matching, and refresh performance. Supports Etch 1.8's media API and older Etch versions. Unidentified font tiles show their preview after selection.
+
+= 2.7.2 =
+Adds automatic browser AVIF size generation on hosts without AVIF editing support, plus missing-size repair and safe retries.
 
 = 2.7.0 =
 Adds image-size optimization choices, compression exclusions, a unified Enhanced Manager UI, and drag-to-move collection assignments.
@@ -262,6 +278,52 @@ Insert Collection Slider and select a collection. Choose one image for a single-
 Example: [etch_collection_gallery collection="123" layout="slider" slides="4" carousel_tablet="2" carousel_mobile="1" nav_position="bottom" nav_alignment="end" nav_shape="pill" nav_content="icon"]
 
 == Changelog ==
+
+= 2.8.0 =
+* Adds the separate Ramka Gallery block with the demo’s masonry photo wall, Peek and Theater views, scroll-snap navigation, zoom, and pull-to-dismiss.
+* Adds a per-gallery opening view and visible photo limit with a +N tile in the Ramka Gallery and the existing custom Collection Gallery.
+
+= 2.7.7 =
+* Restores font previews before selection in the Etch Asset Manager grid, including collection and search views.
+* Validates the complete visible grid against a fresh media snapshot before matching font placeholders. Native IDs and source URLs remain preferred.
+* Keeps Etch 1.8 API support, the authenticated fallback for older Etch versions, stale-index protection, and batched refreshes. Compression and restoration are unchanged.
+
+= 2.7.6 =
+* Uses Etch 1.8's media read API when available, with the existing authenticated WordPress fallback for older Etch versions.
+* Refreshes the builder media index after successful media and collection changes, rejects stale in-flight results, and allows failed reads to recover.
+* Matches font previews by verified attachment identity instead of tile position. Unidentified font tiles keep Etch's placeholder until selection identifies the attachment.
+* Coalesces Asset Manager refreshes and ignores unrelated builder changes. Releases observers when the manager closes.
+* Fixes Escape closing native attachment details before the thumbnail-size popover. Media Bridge compression and restoration are unchanged.
+
+= 2.7.5 =
+* Uses the original Dark appearance spacing as the shared layout for Light, Dark and Auto, with 18px manager padding.
+
+= 2.7.4 =
+* Keeps manager spacing and height consistent in Light, Dark and Auto appearance modes, including mobile layouts.
+
+= 2.7.3 =
+* Fixes uploads being assigned to collections selected in previously closed media windows.
+* Captures each upload destination when the file enters the queue, including Uncategorized.
+* Shows the installed version beside the WordPress collection manager title.
+
+= 2.7.2 =
+* Automatically generates missing AVIF sizes in the browser when the host cannot resize AVIF uploads, including registered custom crops.
+* Adds manual repair of missing sizes in Media Health for existing images.
+* Preserves original AVIF files and embedded EXIF, and registers generated sizes for WordPress responsive images.
+* Shares a processing queue across upload callbacks, waits before completing enhanced uploads, and skips sizes already generated by WordPress's browser pipeline.
+* Shows progress and offers retry on the same attachment if size generation fails.
+* Validates upload permissions, attachment ownership, original-file fingerprints, dimensions and file types. Automatic processing follows WordPress upload/edit permissions; manual repair retains compression role restrictions.
+
+
+= 2.7.1 =
+* Adds Keep originals to native WordPress uploads to bypass Cimo and preserve embedded EXIF, with automatic reset after the upload or closing the dialog.
+* Repairs collection assignment and refresh after WordPress 7.2 REST uploads.
+* Adds explicit nonces and attachment permissions to native collection saves and upload assignments.
+* Uses WordPress upload validation for conversion staging and bounds serialized-reference traversal.
+* Allows silent activation without Etch; integration features wait for Etch and show an administrator notice.
+* Limits notification and replacement assets to the media/editor screens that use them.
+* Documents editable first-party source and the steps to rebuild the plugin package.
+
 
 = 2.7.0 =
 
@@ -746,6 +808,16 @@ OpenStreetMap terms: https://osmfoundation.org/wiki/Terms_of_Use
 OpenStreetMap privacy: https://osmfoundation.org/wiki/Privacy_Policy
 
 Bundled image encoders run locally. Codec source, build and license references are in assets/vendor/jsquash/SOURCES.md. Leaflet source and license are in assets/vendor/leaflet. This release uses GPL-3.0-or-later for compatibility with the bundled Apache-2.0 codec wrappers. Third-party libraries retain their own licenses.
+
+== Source code and builds ==
+
+The ZIP includes editable PHP, JavaScript and CSS for all first-party code. assets/gallery-lightbox.js is the original handwritten source, not a generated or minified bundle. Edit it directly; no npm, webpack, transpiler or compilation step is required. The separate Ramka Gallery uses a compiled viewer. Its editable entry, pinned upstream source, build steps and licenses are listed in assets/ramka-gallery/SOURCES.md.
+
+Development repository: https://github.com/stphnwlkr/media-bridge-for-etch
+
+To make an installable ZIP, place media-bridge-for-etch.php, uninstall.php, readme.txt, LICENSE and the includes, assets and blocks directories inside a media-bridge-for-etch folder and ZIP that folder. Development tests, reports and old builds are excluded from the runtime package. The development checkout also provides python3 tools/build.py for this packaging step.
+
+Bundled third-party assets retain their upstream source, build and license references in the sections below and their assets/vendor SOURCES.md files. Browser Image Compression includes readable original sources in its source map. Leaflet includes leaflet-src.js.
 
 == Third-party licenses ==
 

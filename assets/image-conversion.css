@@ -9,7 +9,7 @@
 .uplink-mbe-conversion-card {min-width:0;overflow:hidden;border:1px solid var(--mbe-border,#68707a);border-radius:12px;background:var(--conversion-surface);color:var(--conversion-text);padding:16px;box-shadow:0 2px 5px #0000000a}
 .uplink-mbe-conversion-card h4 {margin:0 0 14px!important;font-size:16px!important;line-height:1.3;color:inherit!important}
 .uplink-mbe-format-preview {min-width:0;overflow:hidden;border-radius:7px;background:var(--conversion-surface)}
-.uplink-mbe-format-preview>.uplink-mbe-preview-placeholder {display:block;width:100%;aspect-ratio:4/3;object-fit:contain;margin:0;opacity:.7}
+.uplink-mbe-format-preview>.uplink-mbe-preview-placeholder {display:block;width:100%;aspect-ratio:4/3;object-fit:contain;margin:0}
 .uplink-mbe-format-stats {display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;min-height:24px;margin:14px 0;font-size:13px;font-variant-numeric:tabular-nums;color:var(--conversion-muted)}
 .uplink-mbe-format-stats strong {font-size:18px;font-weight:650;color:var(--conversion-text)}
 .uplink-mbe-savings {font-size:12px;font-weight:600;color:var(--conversion-text)}

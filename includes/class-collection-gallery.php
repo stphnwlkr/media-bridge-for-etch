@@ -63,6 +63,8 @@ final class Collection_Gallery {
 				'closeLabel'      => __( 'Close gallery lightbox', 'media-bridge-for-etch' ),
 				'previousLabel'   => __( 'Previous image', 'media-bridge-for-etch' ),
 				'nextLabel'       => __( 'Next image', 'media-bridge-for-etch' ),
+				'peekLabel'       => __( 'Switch to Peek view', 'media-bridge-for-etch' ),
+				'theaterLabel'    => __( 'Switch to Theater view', 'media-bridge-for-etch' ),
 				'fullscreenEnter' => __( 'Enter fullscreen', 'media-bridge-for-etch' ),
 				'fullscreenExit'  => __( 'Exit fullscreen', 'media-bridge-for-etch' ),
 				'zoomIn'          => __( 'Zoom in', 'media-bridge-for-etch' ),
@@ -75,10 +77,32 @@ final class Collection_Gallery {
 				'imageStatus'     => __( 'Image %1$d of %2$d%3$s', 'media-bridge-for-etch' ),
 			)
 		);
-		register_block_type(
+		$collection_block = register_block_type(
 			UPLINK_MBE_PATH . 'blocks/collection-gallery',
 			array( 'render_callback' => array( $this, 'render_block' ) )
 		);
+		if ( $collection_block ) {
+			wp_register_style( 'uplink-mbe-ramka-gallery', UPLINK_MBE_URL . 'assets/ramka-gallery/viewer.css', array(), UPLINK_MBE_ASSET_VERSION );
+			wp_register_script( 'uplink-mbe-ramka-gallery', UPLINK_MBE_URL . 'assets/ramka-gallery/viewer.js', array( 'react', 'react-dom' ), UPLINK_MBE_ASSET_VERSION, true );
+			$ramka_attributes = array_intersect_key( $collection_block->attributes, array_flip( array( 'collectionId', 'includeChildren', 'sortOrder', 'limit', 'visibleImageLimit', 'lightboxOpeningView' ) ) );
+			$ramka_attributes['limit']['default'] = 14;
+			$ramka_attributes['visibleImageLimit']['default'] = 12;
+			register_block_type(
+				'uplinkpress/ramka-gallery',
+				array(
+					'api_version' => 3,
+					'title' => __( 'Ramka Gallery', 'media-bridge-for-etch' ),
+					'description' => __( 'A photo wall with the Ramka demo lightbox.', 'media-bridge-for-etch' ),
+					'category' => 'media',
+					'icon' => 'format-gallery',
+					'attributes' => $ramka_attributes,
+					'editor_script_handles' => array( 'uplink-mbe-gallery-block' ),
+					'style_handles' => array( 'uplink-mbe-ramka-gallery' ),
+					'view_script_handles' => array( 'uplink-mbe-ramka-gallery' ),
+					'render_callback' => array( $this, 'render_ramka_block' ),
+				)
+			);
+		}
 		add_shortcode( self::SHORTCODE, array( $this, 'render_shortcode' ) );
 	}
 
@@ -240,6 +264,10 @@ final class Collection_Gallery {
 		return $this->render( $attributes, true );
 	}
 
+	public function render_ramka_block( array $attributes ): string {
+		return $this->render( $attributes, true, true );
+	}
+
 	public function render_shortcode( array|string $attributes = array() ): string {
 		$attributes = shortcode_atts(
 			array(
@@ -279,6 +307,9 @@ final class Collection_Gallery {
 				'lightbox_caption' => 'true',
 				'lightbox_thumbnails' => 'true',
 				'lightbox_fullscreen' => 'true',
+				'lightbox_photo_viewer' => 'false',
+				'lightbox_opening_view' => 'peek',
+				'visible_image_limit' => 0,
 				'lightbox_zoom'    => 'true',
 				'lightbox_slideshow' => 'true',
 				'lightbox_autoplay' => 'false',
@@ -360,6 +391,9 @@ final class Collection_Gallery {
 				'lightboxShowCaption' => $this->to_bool( $attributes['lightbox_caption'] ),
 				'lightboxThumbnails' => $this->to_bool( $attributes['lightbox_thumbnails'] ),
 				'lightboxFullscreen' => $this->to_bool( $attributes['lightbox_fullscreen'] ),
+				'lightboxPhotoViewer' => $this->to_bool( $attributes['lightbox_photo_viewer'] ),
+				'lightboxOpeningView' => (string) $attributes['lightbox_opening_view'],
+				'visibleImageLimit' => (int) $attributes['visible_image_limit'],
 				'lightboxZoom'    => $this->to_bool( $attributes['lightbox_zoom'] ),
 				'lightboxSlideshow' => $this->to_bool( $attributes['lightbox_slideshow'] ),
 				'lightboxAutoplay' => $this->to_bool( $attributes['lightbox_autoplay'] ),
@@ -392,7 +426,7 @@ final class Collection_Gallery {
 		);
 	}
 
-	private function render( array $attributes, bool $is_block ): string {
+	private function render( array $attributes, bool $is_block, bool $ramka = false ): string {
 		$attributes = $this->sanitize_attributes( $attributes );
 		$term       = $this->etch->get_term( $attributes['collectionId'] );
 		if ( ! $term ) {
@@ -420,6 +454,10 @@ final class Collection_Gallery {
 		);
 		if ( ! $query->posts ) {
 			return $this->empty_message( __( 'No images were found in this collection.', 'media-bridge-for-etch' ), $is_block );
+		}
+
+		if ( $ramka ) {
+			return $this->render_ramka_gallery( $query->posts, $term, $attributes );
 		}
 
 		wp_enqueue_style( 'uplink-mbe-collection-gallery' );
@@ -504,6 +542,8 @@ final class Collection_Gallery {
 				'data-uplink-mbe-lightbox-autoplay' => $attributes['lightboxAutoplay'] ? 'true' : 'false',
 				'data-uplink-mbe-lightbox-interval' => (string) $attributes['lightboxInterval'],
 				'data-uplink-mbe-lightbox-loop' => $attributes['lightboxLoop'] ? 'true' : 'false',
+				'data-uplink-mbe-lightbox-photo-viewer' => $attributes['lightboxPhotoViewer'] ? 'true' : 'false',
+				'data-uplink-mbe-lightbox-opening-view' => $attributes['lightboxOpeningView'],
 				'data-uplink-mbe-lightbox-zoom'       => $attributes['lightboxZoom'] ? 'true' : 'false',
 			);
 		}
@@ -599,6 +639,25 @@ final class Collection_Gallery {
 			return '';
 		}
 
+		$overflow = '';
+		$visible_limit = $attributes['visibleImageLimit'];
+		if ( 'custom' === $attributes['lightboxMode'] && $visible_limit > 0 && $visible_limit < count( $image_blocks ) ) {
+			$hidden = array_slice( $image_blocks, $visible_limit );
+			$last = $visible_limit - 1;
+			$tile = new \WP_HTML_Tag_Processor( $image_blocks[ $last ]['innerHTML'] );
+			if ( $tile->next_tag( array( 'tag_name' => 'BUTTON', 'class_name' => 'uplink-mbe-custom-lightbox-trigger' ) ) ) {
+				$count = count( $hidden );
+				$tile->set_attribute( 'data-uplink-mbe-gallery-more', number_format_i18n( $count ) );
+				/* translators: %s: Number of additional photos. */
+				$label = _n( 'View %s more photo', 'View %s more photos', $count, 'media-bridge-for-etch' );
+				$tile->set_attribute( 'aria-label', sprintf( $label, number_format_i18n( $count ) ) );
+				$image_blocks[ $last ]['innerHTML'] = $tile->get_updated_html();
+				$image_blocks[ $last ]['innerContent'] = array( $image_blocks[ $last ]['innerHTML'] );
+				$image_blocks = array_slice( $image_blocks, 0, $visible_limit );
+				$overflow = '<template data-uplink-mbe-gallery-overflow>' . implode( '', array_column( $hidden, 'innerHTML' ) ) . '</template>';
+			}
+		}
+
 		$gallery_class = 'wp-block-gallery has-nested-images columns-' . $attributes['columns'];
 		if ( $attributes['imageCrop'] ) {
 			$gallery_class .= ' is-cropped';
@@ -661,7 +720,84 @@ final class Collection_Gallery {
 				$play_button, $slideshow_button
 			);
 		}
-		return sprintf( '<div %1$s>%2$s</div>', $wrapper, $rendered_gallery );
+		return sprintf( '<div %1$s>%2$s</div>', $wrapper, $rendered_gallery . $overflow );
+	}
+
+	private function render_ramka_gallery( array $attachments, WP_Term $term, array $attributes ): string {
+		$photos = array();
+		foreach ( $attachments as $attachment ) {
+			$id = (int) $attachment->ID;
+			$full = wp_get_attachment_image_src( $id, 'full' );
+			$thumb = wp_get_attachment_image(
+				$id,
+				'large',
+				false,
+				array( 'loading' => 'lazy', 'sizes' => '(min-width: 768px) 25vw, 33vw', 'draggable' => 'false' )
+			);
+			if ( ! $full || ! $thumb || ! $full[1] || ! $full[2] ) {
+				continue;
+			}
+			$caption = wp_strip_all_tags( (string) wp_get_attachment_caption( $id ) );
+			$photos[] = array(
+				'url' => $full[0],
+				'width' => $full[1],
+				'height' => $full[2],
+				'thumb' => $thumb,
+				'caption' => $caption ?: wp_strip_all_tags( $attachment->post_title ),
+			);
+		}
+		if ( ! $photos ) {
+			return '';
+		}
+
+		$total = count( $photos );
+		$visible = $attributes['visibleImageLimit'] ? min( $total, $attributes['visibleImageLimit'] ) : $total;
+		$more = $total - $visible;
+		$more_count = number_format_i18n( $more );
+		/* translators: %s: Number of additional photos. */
+		$more_label = $more ? sprintf( _n( 'Show %s more photo', 'Show %s more photos', $more, 'media-bridge-for-etch' ), $more_count ) : '';
+		$options = array(
+			'label' => $term->name,
+			'openingView' => $attributes['lightboxOpeningView'],
+			'moreLabel' => $more_label,
+			'moreCount' => $more_count,
+			'strings' => array(
+				'images' => __( 'Full-size images', 'media-bridge-for-etch' ),
+				'carousel' => __( 'carousel', 'media-bridge-for-etch' ),
+				'slide' => __( 'slide', 'media-bridge-for-etch' ),
+				'peek' => __( 'Switch to Peek layout', 'media-bridge-for-etch' ),
+				'theater' => __( 'Switch to Theater layout', 'media-bridge-for-etch' ),
+				'peekName' => __( 'Peek', 'media-bridge-for-etch' ),
+				'theaterName' => __( 'Theater', 'media-bridge-for-etch' ),
+				'close' => __( 'Close', 'media-bridge-for-etch' ),
+				'zoomIn' => __( 'Zoom in', 'media-bridge-for-etch' ),
+				'zoomOut' => __( 'Zoom out', 'media-bridge-for-etch' ),
+				'thumbnails' => __( 'Photo thumbnails', 'media-bridge-for-etch' ),
+				/* translators: 1: Current photo number. 2: Total photos. */
+				'counter' => __( '%1$d of %2$d', 'media-bridge-for-etch' ),
+			),
+		);
+		$tiles = array();
+		foreach ( $photos as $index => $photo ) {
+			$stack = $more && $index === $visible - 1;
+			$tiles[] = sprintf(
+				'<a class="uplink-ramka-tile" href="%1$s" data-width="%2$d" data-height="%3$d" data-caption="%4$s"%5$s><span class="uplink-ramka-tile-frame">%6$s%7$s</span></a>',
+				esc_url( $photo['url'] ),
+				$photo['width'],
+				$photo['height'],
+				esc_attr( $photo['caption'] ),
+				$stack ? ' aria-label="' . esc_attr( $more_label ) . '"' : '',
+				$photo['thumb'],
+				$stack ? '<span class="uplink-ramka-more" aria-hidden="true">+' . esc_html( $more_count ) . '</span>' : ''
+			);
+		}
+		return sprintf(
+			'<div %1$s><div class="uplink-ramka-grid"%2$s>%3$s</div>%4$s</div>',
+			get_block_wrapper_attributes( array( 'data-uplink-ramka-gallery' => wp_json_encode( $options ) ) ),
+			12 === $visible ? ' data-demo-wall' : '',
+			implode( '', array_slice( $tiles, 0, $visible ) ),
+			$more ? '<template>' . implode( '', array_slice( $tiles, $visible ) ) . '</template>' : ''
+		);
 	}
 
 	private function sanitize_progress_color( string $color ): string {
@@ -750,6 +886,9 @@ final class Collection_Gallery {
 			'lightboxShowCaption' => ! array_key_exists( 'lightboxShowCaption', $attributes ) || ! empty( $attributes['lightboxShowCaption'] ),
 			'lightboxThumbnails' => ! array_key_exists( 'lightboxThumbnails', $attributes ) || ! empty( $attributes['lightboxThumbnails'] ),
 			'lightboxFullscreen' => ! array_key_exists( 'lightboxFullscreen', $attributes ) || ! empty( $attributes['lightboxFullscreen'] ),
+			'lightboxPhotoViewer' => ! empty( $attributes['lightboxPhotoViewer'] ),
+			'lightboxOpeningView' => 'theater' === ( $attributes['lightboxOpeningView'] ?? 'peek' ) ? 'theater' : 'peek',
+			'visibleImageLimit' => max( 0, min( 100, (int) ( $attributes['visibleImageLimit'] ?? 0 ) ) ),
 			'lightboxZoom'    => ! array_key_exists( 'lightboxZoom', $attributes ) || ! empty( $attributes['lightboxZoom'] ),
 			'lightboxSizeSlug' => in_array( $lightbox_size, $sizes, true ) ? $lightbox_size : 'full',
 			'lightboxThumbnailPosition' => in_array( $lightbox_strip, array( 'horizontal', 'vertical' ), true ) ? $lightbox_strip : 'horizontal',
